@@ -3,10 +3,10 @@
  * Comment style (AGENTS.md Rule 49): comments are `/** … *\/`, never `//`.
  *
  * Reads every tracked JavaScript and TypeScript file, and the fenced TypeScript, JavaScript and Swift
- * examples of every Markdown file the repo owns. A `//` comment is allowed only as a directive a tool
- * reads (scripts/lib/comments.mjs lists them). The repo's own files also open every block comment
- * with `/**`; files the kit manages (the `files` of .claude/agent-config-kit.lock) keep the kit's
- * `/* … *\/` notes, so a sync never reports them as drift.
+ * examples of every Markdown file. A `//` comment is allowed only as a directive a tool reads
+ * (scripts/lib/comments.mjs lists them), in every file. The repo's own files also open every block
+ * comment with `/**`; files the kit manages (the `files` of .claude/agent-config-kit.lock) keep the
+ * kit's `/* … *\/` notes, and --fix never rewrites them: a `//` there means taking the file over first.
  *
  *   node scripts/check/comment-style.mjs         report; exit 1 on any finding
  *   node scripts/check/comment-style.mjs --fix   rewrite what can be rewritten, then report
@@ -45,11 +45,11 @@ function fences(markdown) {
 function check(file) {
   const owned = !managed.has(file);
   let source = readFileSync(file, 'utf8');
-  if (file.endsWith('.md') && !owned) return [];
   const parts = file.endsWith('.md')
     ? fences(source)
     : [{ start: 0, end: source.length, swift: false }];
-  if (fix) {
+  /** A kit-managed file is never rewritten in place: take it over (agent-sync own) first. */
+  if (fix && owned) {
     let out = source;
     for (const p of parts.toReversed()) {
       const { out: body } = rewrite(out.slice(p.start, p.end), owned, { swift: p.swift });
@@ -62,7 +62,11 @@ function check(file) {
   for (const p of file.endsWith('.md') ? fences(source) : parts) {
     for (const c of findings(source.slice(p.start, p.end), owned)) {
       const line = source.slice(0, p.start + c.start).split('\n').length;
-      found.push({ line, text: c.text.split('\n')[0].slice(0, 80) });
+      const text = c.text.split('\n')[0].slice(0, 80);
+      found.push({
+        line,
+        text: owned ? text : `${text}  (kit-managed: agent-sync own it, then --fix)`,
+      });
     }
   }
   return found;
