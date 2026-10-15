@@ -1,7 +1,7 @@
 # SSOT.md — `kira-backend`
 
 **Owner:** `@adhibuchori`
-**Last verified against repo:** `2026-10-15`
+**Last verified against repo:** `2026-10-16`
 
 > `CLAUDE.md` routes and `AGENTS.md` forbids; this file **describes**. It is the only one of the
 > three that goes stale on its own, hence the date above: if it is months old, treat it as a lead,
@@ -110,8 +110,8 @@ Every workflow starts from a pull-request event; nothing runs on a push or a sch
   `scripts/check/gates.list` that the staged files need.
 - **Quality gate** (`.github/workflows/quality-gate.yml`, calling agent-config-kit's
   `be-hono-quality-gate` workflow) — every pull request.
-- **Read-only checks** (`workflows-lint.yml`; `dependency-review.yml` and `codeql.yml` skip on a
-  private repository without GitHub Code Security) — every pull request.
+- **Read-only checks** (`workflows-lint.yml`, `dependency-review.yml`, `codeql.yml`) — every pull
+  request; the repository is public, so dependency review and CodeQL run at no cost.
 - **Deploy** — `.github/workflows/deploy.yml`, on a pull request merged into `prod`: it POSTs the
   Dokploy webhook (`DEPLOY_WEBHOOK_URL` secret), and Dokploy builds the `Dockerfile` from `prod`.
 - **AI-layer strip** — `.github/workflows/strip-ai.yml`, on the same merge: removes `.claude/`,
