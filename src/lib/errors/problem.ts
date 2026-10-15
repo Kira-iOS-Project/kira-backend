@@ -34,7 +34,7 @@ const TITLES = {
   META_HEALTH_UNHEALTHY: 'Service Unhealthy',
 } as const satisfies Record<ErrorCode, string>;
 
-/* An `HTTPException` comes from middleware that knows only a status (the body limit, the
+/** An `HTTPException` comes from middleware that knows only a status (the body limit, the
    timeout), so its code and its client-safe detail are chosen here from that status. */
 const HTTP_EXCEPTIONS: Readonly<Partial<Record<number, { code: ErrorCode; detail: string }>>> = {
   413: { code: 'REQUEST_TOO_LARGE', detail: 'The request body is larger than this API accepts.' },
@@ -52,7 +52,7 @@ type Problem = {
   fields?: Record<string, string>;
 };
 
-/* Unset only when a handler runs without `requestId()` in front of it, which is a unit test. */
+/** Unset only when a handler runs without `requestId()` in front of it, which is a unit test. */
 function requestIdOf(c: Context): string | undefined {
   const id: unknown = c.get('requestId');
   return typeof id === 'string' ? id : undefined;
@@ -139,7 +139,7 @@ export const validationHook: Hook<unknown, AppEnv, string, Response | undefined>
   });
 };
 
-/* The body's shape, for the OpenAPI document only: the handlers above build the JSON directly.
+/** The body's shape, for the OpenAPI document only: the handlers above build the JSON directly.
    `code` keeps its enum inline and `type` publishes the base, which is what clients read. */
 const problemSchema = z
   .object({

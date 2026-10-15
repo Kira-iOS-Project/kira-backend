@@ -105,6 +105,9 @@ that command and never work around a refusal. Details: `docs/unlock.md`.
 
 All code, comments, JSDoc, commit messages, and PR descriptions are written in **English**.
 
+Comments are `/** … */`, never `//` (AGENTS.md Rule 49). `bun run check:comments` finds a stray one;
+`node scripts/check/comment-style.mjs --fix` rewrites it.
+
 ---
 
 ## Commit Format

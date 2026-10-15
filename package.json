@@ -15,6 +15,7 @@
     "check:audit": "bun scripts/check/audit.ts",
     "prepare": "husky",
     "unlock": "bash scripts/ops/unlock.sh",
+    "check:comments": "node scripts/check/comment-style.mjs",
     "check:constants": "bun scripts/check/constants.ts",
     "check:dockerfile": "bun scripts/check/dockerfile.ts",
     "check:coverage-policy": "node scripts/check/coverage-policy.mjs",

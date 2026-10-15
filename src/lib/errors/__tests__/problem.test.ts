@@ -16,7 +16,7 @@ function contextFor(path = '/api/things', method = 'GET'): Context {
   return new Context(new Request(`http://localhost${path}`, { method }), { env: {}, path });
 }
 
-/* What the router hands its hook: the parse result plus the part of the request it validated. */
+/** What the router hands its hook: the parse result plus the part of the request it validated. */
 function hookInput<T>(result: z.ZodSafeParseResult<T>) {
   return { ...result, target: 'json' as const };
 }

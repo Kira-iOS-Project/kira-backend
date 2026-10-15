@@ -8,7 +8,7 @@ by a machine). A rule that only lives in prose is a wish — see `.claude/anti-p
 happens when one gets skipped.
 
 > **Numbers are append-only.** A new rule takes the next free number, whatever section it sits
-> in: Rules 42 and 43 live in §G. If several repos share this numbering, say so here and never
+> in: Rules 42, 43 and 49 live in §G. If several repos share this numbering, say so here and never
 > renumber locally. A review citing "Rule 12" otherwise means two different things depending on
 > who is reading, and the rule-citation check (`scripts/check/ai-config.sh`) disagrees with both.
 
@@ -32,7 +32,7 @@ session, and after that it stops trusting any rule in the file.
 | §D Database | Enforced | No table yet (`src/db/schema/schema.ts` holds only the `timestamps` bundle). Migrations run at boot. |
 | §E Testing | Enforced | Unit tier at 100% per file. No integration test yet; `src/test/config.ts` is ready for the first. |
 | §F Security | Partial | Rules 22, 23 and 25 bind. Rule 24 is N/A: no Redis and no rate limiter (see below). No auth yet: every route is public, and only `/health` exists. |
-| §G Code quality | Enforced | Applies as written, Rule 43 included (`src/lib/constants/`). |
+| §G Code quality | Enforced | Applies as written, Rules 43 (`src/lib/constants/`) and 49 (`check:comments`) included. |
 | §H Query & performance | Enforced | Binds from the first query; no query exists yet beyond the health check's `SELECT 1`. |
 | §I Runtime hardening | Enforced | Pool, CORS allowlist (empty by default: the iOS app needs none), request id, body limit, timeout and secure headers are in place. |
 
@@ -343,6 +343,13 @@ vocabulary (a provider SDK's status string, BullMQ's `'failed'`, `PromiseSettled
 literal independent, with the reason in `scripts/check/constants.config.json`. Enforced by
 `bun run check:constants`, which derives the vocabulary from each home rather than holding a copy
 of it.
+
+**Rule 49 — Comments are `/** … */`, never `//`.** A note above code, a file header, a trailing
+remark: all of them open with `/**`. The only `//` left is a directive a tool reads
+(`@ts-expect-error`, `oxlint-disable`, `v8 ignore`, a triple-slash reference). Files the kit manages
+keep its `/* … */` notes, so a sync never reports them as drift. Enforced by
+`bun run check:comments` (`scripts/check/comment-style.mjs`, which `--fix` rewrites). The owner's
+decision, 2026-10-16.
 
 ---
 

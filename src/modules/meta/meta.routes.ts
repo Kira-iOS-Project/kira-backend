@@ -16,7 +16,7 @@ export const healthRoute = createRoute({
       content: { 'application/json': { schema: healthResponseSchema } },
       description: 'The server and its database answer',
     },
-    /* The route reads no input, so no 422; 503 is HealthCheckFailedError. */
+    /** The route reads no input, so no 422; 503 is HealthCheckFailedError. */
     ...errorResponses(503),
   },
 });
