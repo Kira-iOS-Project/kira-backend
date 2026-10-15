@@ -20,7 +20,7 @@ repeated below — what follows is the part it cannot decide.
 - [ ] Async work goes through a queue rather than a direct call on the request path
 - [ ] `.env.<target>.example` updated if a new env var was added, and `src/env.ts`'s schema matches
 
-### If this PR touches `src/db/schema/`
+### If This PR Touches `src/db/schema/`
 
 Delete this block if the schema did not move.
 
@@ -31,7 +31,7 @@ Delete this block if the schema did not move.
       against dev while looking healthy in review.
 - [ ] Downgrade path either works or the migration says in a comment why it is one-way
 
-### If this PR touches queries (AGENTS.md §H)
+### If This PR Touches Queries (AGENTS.md §H)
 
 Delete this block if it added no database access.
 
