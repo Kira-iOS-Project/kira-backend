@@ -10,7 +10,7 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile --ignore-scripts
 
 COPY tsconfig.json ./
-COPY scripts/build ./scripts/build
+COPY scripts/bundle ./scripts/bundle
 COPY src ./src
 RUN bun run build
 

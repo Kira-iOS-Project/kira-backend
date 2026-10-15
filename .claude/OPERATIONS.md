@@ -86,6 +86,28 @@ changes, and CI runs them on every pull request. A new rule adds a probe of each
 probes, verify a hook by its effect: run `claude -p` in a disposable copy whose git remote is
 removed.
 
+## GitHub organization
+
+Both repositories live in `Kira-iOS-Project`, on GitHub's **free** plan. What that plan gives and
+withholds, as set on 2026-10-15:
+
+- **Members**: base permission *read*; only owners create repositories; forks of private
+  repositories are off. Turn on *Require two-factor authentication* (Settings → Authentication
+  security); the API cannot.
+- **Actions**, at the organization and on each repository: only GitHub's own actions and
+  `adhibuchori/*`, `oven-sh/setup-bun`, `astral-sh/setup-uv`, `zizmorcore/zizmor-action` and
+  `google-github-actions/auth` run; the `GITHUB_TOKEN` is read-only unless a job asks for more;
+  Actions never approves a pull request; workflows from forks do not run; logs and artifacts are kept
+  30 days. A new third-party action is refused until its pattern is added in both places.
+- **Repositories**: private, default branch `dev`, merge commits only (no squash, no rebase), no
+  wiki, projects or issues (tickets live in Linear).
+- **Not on the free plan for private repositories**: branch protection and rulesets, environments,
+  secret scanning and push protection, code scanning. So `dev` and `prod` are held by the kit's
+  hooks (Claude never pushes to them) and by working through pull requests; secrets are repository
+  secrets; gitleaks in the gates is the secret scan.
+- **Minutes**: 2,000 included per month for private repositories, macOS billed at 10×. With no
+  payment method the organization is never charged: jobs stop when the minutes run out.
+
 ## GitHub and CI
 
 - Never write GitHub's skip-CI marker anywhere in a commit message, PR title or PR body, not even to
@@ -189,7 +211,7 @@ Deploy target: Dokploy at `https://dokploy.codesheesh.com`, project **Kira**, en
 `production`, application `Back-End` (`kira-backend-fsnuxe`, id `Ze9r73epBM6X0J-3mLWcF`),
 `https://api-kira.serenitycode.tech`. Dokploy builds the `Dockerfile` from the `prod` branch of
 `git@github.com:Kira-iOS-Project/kira-backend.git` with the read-only deploy key
-`Back-End-Kira-Deploy-Key`. The `/agent-core:promote` and `/agent-deploy:promote-deploy` commands
+`Back-End-Kira-Deploy-Key` (a read-only deploy key on the repository; the organization allows deploy keys). The `/agent-core:promote` and `/agent-deploy:promote-deploy` commands
 read the adapter from here (`$DOKPLOY` is `https://dokploy.codesheesh.com/api`, and every call sends
 `-H "x-api-key: $CODESHEESH_DOKPLOY_API_TOKEN"`):
 
