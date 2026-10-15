@@ -27,7 +27,7 @@ session, and after that it stops trusting any rule in the file.
 | Section | Status | What that means here |
 |---|---|---|
 | §A Protocol | Enforced | Applies as written. Commits are `type: description`. |
-| §B Layer boundaries | Enforced | One module, `meta`, built to the full shape; the oxlint import rules bind every new one. |
+| §B Layer boundaries | Enforced | One module, `meta`, built to the full shape: routes, handler, service, repository. The oxlint import rules bind every new one; the service and handler overrides sit after the cross-module one, which used to replace them. |
 | §C Error contract | Enforced | `src/lib/errors/` is the whole contract; base `https://api-kira.serenitycode.tech/problems/`; `check:openapi` holds the spec side. |
 | §D Database | Enforced | No table yet (`src/db/schema/schema.ts` holds only the `timestamps` bundle). Migrations run at boot. |
 | §E Testing | Enforced | Unit tier at 100% per file. No integration test yet; `src/test/config.ts` is ready for the first. |
@@ -68,9 +68,9 @@ endpoint reporting a failed dependency inside a 200 response is the kind of thin
 | # | Rule | Enforcement |
 |---|------|-------------|
 | 1 | **Read first.** Identify every file a change touches before writing code. State what will change and why if the approach isn't obvious. This repo's commit convention is `type: description` (no scope). If a sibling repo uses `type(scope): subject`, that difference is deliberate — pick one format per repo and state it, rather than mixing both. | advisory |
-| 2 | **Simplicity first.** Minimal change that achieves the goal. Do not add abstractions — a repository layer, a shared test helper, a new lib module — that nothing currently needs. Reuse before writing, in this order: this codebase, the standard library (Web APIs, Bun and Node built-ins), Hono's and Drizzle's built-ins, a dependency already in `package.json`; only then add a dependency or new code. | advisory / `agent-be-hono:reviewer` |
+| 2 | **Simplicity first.** Minimal change that achieves the goal. Do not add abstractions — a shared test helper, a new lib module — that nothing currently needs. The repository is not one of them: Rule 4 makes it part of every module that touches the database. Reuse before writing, in this order: this codebase, the standard library (Web APIs, Bun and Node built-ins), Hono's and Drizzle's built-ins, a dependency already in `package.json`; only then add a dependency or new code. | advisory / `agent-be-hono:reviewer` |
 | 3 | **Surgical changes.** Do not touch files outside the task's scope, including reformatting code you didn't otherwise change. | advisory / `agent-be-hono:reviewer` |
-| 4 | **Service layer is mandatory. Repository is added only on escalation.** Default shape is `handler → service → db`. Add `<module>.repository.ts` only when at least one holds: the service coordinates multiple queries/tables · it needs a transaction · it holds policy worth unit-testing without a DB · the same query bundle is reused elsewhere · direct Drizzle access is hurting readability. Do not add a repository mechanically for single-query CRUD. | advisory / `agent-be-hono:reviewer` |
+| 4 | **Every module that touches the database has a service and a repository.** The shape is `routes → handler → service → repository → db`. The service holds the business rules and depends on the repository's type (the port), injected as a default parameter. `<module>.repository.ts` is the module's only file that imports `drizzle-orm`, `postgres` or `src/db`: it owns every query and every transaction boundary (Rule 10 gives its shape). A module with no data access has no repository. The owner's decision (2026-10-16): an explicit data-access layer in every module, over the kit's repository-on-escalation default. | `.oxlintrc.json` (services may not import `drizzle-orm`, `postgres` or `src/db`) / `agent-be-hono:reviewer` |
 
 ---
 
@@ -82,15 +82,15 @@ endpoint reporting a failed dependency inside a 200 response is the kind of thin
 |-------|------|-----------------|
 | Routes | `<module>.routes.ts` | `createRoute()` specs + `router.openapi(route, handler)` binding. Declares `responses`, including error responses via `errorResponses()` (`src/lib/errors/problem.ts`). |
 | Handler | `<module>.handler.ts` | HTTP glue only. Reads `c.req.valid(...)`, calls the service, shapes the response. Typed `RouteHandler<typeof route, AppEnv>`. ≤15 lines (Rule 28). No try/catch for domain errors. |
-| Service | `<module>.service.ts` | Pure business logic. Never imports `Context`. Dependencies injected via default parameters. Throws `DomainError` subclasses. |
-| Repository | `<module>.repository.ts` | Only on escalation (Rule 4). Owns transaction boundaries. |
+| Service | `<module>.service.ts` | Business rules. Never imports `Context`, `drizzle-orm`, `postgres` or `src/db`. Dependencies, the repository first, injected via default parameters. Throws `DomainError` subclasses. |
+| Repository | `<module>.repository.ts` | Every query and transaction boundary of the module (Rules 4 and 10): the port type, the Drizzle adapter, its default instance. The only layer that touches the database. |
 | Schema | `<module>.schema.ts` | Zod request/response schemas. |
 | Errors | `<module>.errors.ts` | Module-specific `DomainError` subclasses. |
 | Index | `index.ts` | Barrel — the ONLY file another module or `app.ts` may import from. |
 
 `src/modules/meta/` is the reference module, built to the full shape: copy it. A
 module that predates these rules and skips a layer is a deviation to record in Compliance Status,
-not a pattern to copy: **a new module gets a service.**
+not a pattern to copy: **a new module gets a service, and a repository when it touches the database.**
 
 Enforcement: `.oxlintrc.json` overrides for `src/modules/*/**`.
 
@@ -100,7 +100,7 @@ Enforcement: `.oxlintrc.json` overrides for `src/modules/*/**`.
 // FORBIDDEN — handler reaching into the DB directly
 import { db } from "../../db/client/index.ts";
 export const getThing: RouteHandler<typeof getThingRoute, AppEnv> = async (c) => {
-  const row = await db.select()... // no — this belongs in the service
+  const row = await db.select()... // no — this belongs in the repository, called by the service
   return c.json(row, 200);
 };
 
@@ -121,24 +121,24 @@ No `Context` import, ever. Dependencies come in as default parameters so a test 
 them with a plain object — no container, no mocking library:
 
 ```ts
-// src/modules/health/health.service.ts — an example
+// src/modules/meta/meta.service.ts
 export async function getHealthReport(
-  deps: { db?: DbLike; redis?: RedisLike } = {},
+  deps: { repository?: MetaRepository } = {},
 ): Promise<HealthResponse> {
-  const dbClient = deps.db ?? db;
-  const redisClient = deps.redis ?? redis;
+  const repository = deps.repository ?? metaRepository;
   // ...
 }
 ```
 
-Enforcement: advisory / `agent-be-hono:reviewer`.
+Enforcement: `.oxlintrc.json` — `src/modules/*/*.service.ts` forbids Hono, `drizzle-orm`, `postgres`
+and anything under `**/db/**`; `agent-be-hono:reviewer`.
 
 Tests do not replace modules one file at a time. External clients (Postgres, Redis, the queues,
 the auth library, every provider SDK) are replaced once, in the shared doubles under `src/test/`
 (`preload.ts` and the controls it exports), because `mock.module` is process-wide (see
 `.claude/anti-patterns/bun-mock-module-is-process-wide.md`); `bun run check:mocks` refuses a
-per-file replacement. A service that imports a client at module scope is therefore still testable:
-steer it through those controls.
+per-file replacement. A repository that imports a client at module scope is therefore still testable:
+pass a client to its factory, or steer it through those controls.
 
 **Rule 8 — Cross-module imports go through `index.ts` only**
 
@@ -159,9 +159,28 @@ creates a cycle the moment two modules share infrastructure.
 
 Enforcement: `.oxlintrc.json` — `src/lib/**` and `src/middlewares/**` forbid `**/modules/**`.
 
-**Rule 10 — Repository escalation criteria** — see Rule 4. Do not pre-build a repository
-"in case it's needed later" (YAGNI) — add it the commit a real escalation condition is met.
-Enforcement: advisory / `agent-be-hono:reviewer`.
+**Rule 10 — The repository's shape**
+
+```ts
+// src/modules/meta/meta.repository.ts
+export type MetaRepository = { ping(): Promise<void> };           // the port the service uses
+
+export function createMetaRepository(client: DbLike = db): MetaRepository {  // the Drizzle adapter
+  return { async ping() { await client.execute(sql`SELECT 1`); } };
+}
+
+export const metaRepository = createMetaRepository();             // the default instance
+```
+
+- One method per question the service asks, named for the domain (`findActiveByOwner`, never a
+  generic `findAll`/`save` or a base class shared by every repository).
+- Explicit column projection (Rule 30), an explicit `.limit()` on lists (Rule 29), transactions
+  inside one method (Rule 35). It returns rows shaped for the service and throws nothing of its own:
+  the service turns a failure into a `DomainError`.
+- Tests: the repository with a client double passed to its factory (and its SQL through `.toSQL()`
+  where the query's shape matters, Rule 33); the service with a repository double.
+
+Enforcement: `agent-be-hono:reviewer`.
 
 ---
 
@@ -491,11 +510,12 @@ export const thingResponseSchema = z
 // (ListThingsQuerySchema) with a { data, nextCursor } response schema.
 ```
 
-**Step 4 — Service** (`<name>.service.ts`) — pure logic, dependencies as default parameters so
-it is testable without a live DB (Rule 7), throws the module's domain errors. Never imports Hono;
-`.oxlintrc.json` enforces that.
+**Step 4 — Service** (`<name>.service.ts`) — business rules over the repository's port, taken as a
+default parameter so it is testable without a database (Rule 7); throws the module's domain errors.
+Never imports Hono, `drizzle-orm` or `src/db`; `.oxlintrc.json` enforces that.
 
-**Step 5 — Repository** (`<name>.repository.ts`) — only if Rule 4's escalation criteria are met.
+**Step 5 — Repository** (`<name>.repository.ts`) — required when the module touches the database
+(Rule 4), in the shape Rule 10 gives: the port, the factory over `client = db`, the default instance.
 Explicit column projection (Rule 30), an explicit `.limit()` (Rule 29), and an index for every
 filtered/sorted/joined column committed in the same PR (Rule 32).
 
