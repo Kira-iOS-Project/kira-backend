@@ -14,6 +14,7 @@ all	bash scripts/check/secrets.sh
 code	bun run type-check
 code	bun run check:dead-code
 code	bun run check:constants
+code	bun run check:comments
 code	bun run check:dockerfile
 code	bun run check:mocks
 code	bash scripts/check/double-assertion.sh

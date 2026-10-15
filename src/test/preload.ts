@@ -9,20 +9,20 @@
 
 import { mock } from 'bun:test';
 
-/* ── Postgres ────────────────────────────────────────────────────────────── */
+/** ── Postgres ────────────────────────────────────────────────────────────── */
 
 export const dbControl = {
   /** What `db.execute` does: the health check's `SELECT 1`. */
   execute: async (): Promise<unknown> => undefined,
 };
 
-/* The real module opens a pool from DATABASE_URL on import; the unit tier never dials it. */
+/** The real module opens a pool from DATABASE_URL on import; the unit tier never dials it. */
 void mock.module('../db/client/index.ts', () => ({
   db: { execute: () => dbControl.execute() },
   client: {},
 }));
 
-/* ── Reset ───────────────────────────────────────────────────────────────── */
+/** ── Reset ───────────────────────────────────────────────────────────────── */
 
 /** Call from `beforeEach`, so one test's steering cannot leak into the next. */
 export function resetExternalMocks(): void {

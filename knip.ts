@@ -1,31 +1,31 @@
 import type { KnipConfig } from 'knip';
 
-/* Dead-code gate (`bun run check:dead-code`); the rule is .claude/rules/typescript/dead-code.md.
+/** Dead-code gate (`bun run check:dead-code`); the rule is .claude/rules/typescript/dead-code.md.
    Every entry below is reached by something Knip cannot follow, and says what. Listing `entry`
    replaces Knip's default entry files, so the server entry is named here too. */
 const config: KnipConfig = {
   entry: [
-    /* The server: started by path (`bun run src/index.ts`) and bundled by the `build` script. */
+    /** The server: started by path (`bun run src/index.ts`) and bundled by the `build` script. */
     'src/index.ts',
-    /* Check scripts run by path from the shell (scripts/check/gates.list, the quality gate), which
+    /** Check scripts run by path from the shell (scripts/check/gates.list, the quality gate), which
        no import names. */
     'scripts/check/*.ts',
-    /* The production bundle, run by path from package.json's `build` script. */
+    /** The production bundle, run by path from package.json's `build` script. */
     'scripts/bundle/*.ts',
-    /* The integration tier's gate (AGENTS.md Rule 20). Only this file may read the integration
+    /** The integration tier's gate (AGENTS.md Rule 20). Only this file may read the integration
        switch past the process.env lint rule, so it stays even while no `*.integration.test.ts`
        imports it yet: `bun run test:integration` is that tier. */
     'src/test/config.ts',
   ],
-  /* A copy-me example for src/test/preload.ts, read by people, never imported. */
+  /** A copy-me example for src/test/preload.ts, read by people, never imported. */
   ignore: ['.claude/test-preload.example.ts'],
-  /* Pino loads its development transport by the string `target: 'pino-pretty'`
+  /** Pino loads its development transport by the string `target: 'pino-pretty'`
      (src/lib/server/logger.ts), never by an import. */
   ignoreDependencies: ['pino-pretty'],
-  /* Vendored from agent-config-kit and kept in sync by /agent-be-hono:sync: it serves the payload
+  /** Vendored from agent-config-kit and kept in sync by /agent-be-hono:sync: it serves the payload
      checks too, which this repo did not install, so only their exports go unused here. */
   ignoreIssues: { 'scripts/lib/source-scan.ts': ['exports'] },
-  /* Exports used only inside their own file are reported too: drop `export` from them. */
+  /** Exports used only inside their own file are reported too: drop `export` from them. */
   ignoreExportsUsedInFile: false,
 };
 
