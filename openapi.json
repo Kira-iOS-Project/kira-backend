@@ -1,0 +1,120 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "kira-backend",
+    "version": "0.1.0"
+  },
+  "components": {
+    "schemas": {
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "healthy"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "database"
+        ]
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri",
+            "x-problem-type-base": "https://kira-backend.codesheesh.com/problems/",
+            "example": "https://kira-backend.codesheesh.com/problems/ROUTE_NOT_FOUND"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "VALIDATION_FAILED",
+              "ROUTE_NOT_FOUND",
+              "REQUEST_TOO_LARGE",
+              "REQUEST_TIMEOUT",
+              "HTTP_ERROR",
+              "INTERNAL_ERROR",
+              "META_HEALTH_UNHEALTHY"
+            ]
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance",
+          "code"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "tags": [
+          "Meta"
+        ],
+        "summary": "Health check",
+        "description": "Whether the server is up and its database answers.",
+        "responses": {
+          "200": {
+            "description": "The server and its database answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

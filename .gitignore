@@ -1,0 +1,19 @@
+# >>> agent-config-kit (managed by /agent-core:setup and sync; edit outside this block)
+.claude/state/
+.claude/settings.local.json
+.claude/session-logs/
+.env
+.env.*.local
+.env.development
+.env.local
+.env.production
+.env.staging
+.env.test
+.envrc
+.serena/
+.skillspector/
+/coverage
+build/
+dist/
+node_modules/
+# <<< agent-config-kit

@@ -1,0 +1,29 @@
+# Code owners: GitHub asks them to review every pull request that touches a matching path. Without
+# a branch ruleset that requires code-owner review this is a request, not a gate. The last matching
+# line wins, so the paths below override the catch-all. Setup created this file once; it is yours
+# now.
+
+*                                @adhibuchori
+
+# CI, and what decides what reaches production.
+/.github/                        @adhibuchori
+/.gitleaks.toml                  @adhibuchori
+/Dockerfile                      @adhibuchori
+/.dockerignore                   @adhibuchori
+
+# The agent's guardrails: what it may run and reach, the lock that turns the hooks on, and the
+# checks and scripts that judge and unlock its work. A one-line edit here can switch a guard off.
+/.claude/settings.json           @adhibuchori
+/.claude/agent-config-kit.lock   @adhibuchori
+/.claude/agent-config.json       @adhibuchori
+/.mcp.json                       @adhibuchori
+/scripts/check/                  @adhibuchori
+/scripts/ops/                    @adhibuchori
+/scripts/env/                    @adhibuchori
+/.skillspector-baseline.yaml     @adhibuchori
+/.husky/                         @adhibuchori
+
+# Startup, validated configuration and the database: a mistake here breaks every request.
+/src/app.ts                      @adhibuchori
+/src/env.ts                      @adhibuchori
+/src/db/                         @adhibuchori
