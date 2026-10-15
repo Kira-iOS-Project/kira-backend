@@ -15,15 +15,16 @@ different database names, so a name alone tells you where you are: `kira` is pro
 
 |             | Dokploy name  | App name             | Port     | `postgresId`            |
 | ----------- | ------------- | -------------------- | -------- | ----------------------- |
-| Development | `DB-Kira-Dev` | `$KIRA_DB_DEV_APP` | **5437** | `$KIRA_DB_DEV_ID` |
-| Production  | `DB-Kira`     | `$KIRA_DB_PROD_APP`     | **5436** | `$KIRA_DB_PROD_ID` |
+| Development | `DB-Kira-Dev` | `$KIRA_DB_DEV_APP`   | **5437** | `$KIRA_DB_DEV_ID`       |
+| Production  | `DB-Kira`     | `$KIRA_DB_PROD_APP`  | **5436** | `$KIRA_DB_PROD_ID`      |
 
 | Database   | Owner role | Extensions | Used by                                        |
 | ---------- | ---------- | ---------- | ---------------------------------------------- |
 | `kira`     | `kira`     | none yet   | the production API (Dokploy `DATABASE_URL`)    |
 | `kira_dev` | `kira_dev` | none yet   | local development (`.env.development`)         |
 
-The API reaches `kira` over Dokploy's internal network (`$KIRA_DB_PROD_APP:5432`), never through the
+The `$KIRA_…` values are exported by your shell profile, never committed (`.claude/OPERATIONS.md`
+§ Deploys). The API reaches `kira` over Dokploy's internal network (`$KIRA_DB_PROD_APP:5432`), never through the
 published port. Each instance also has a provisioning superuser (`kira_admin`, `kira_dev_admin`),
 whose password Dokploy holds; no application uses it. `vector` is available in the image; creating
 the extension needs that superuser, once, before the migration that uses it.
@@ -45,8 +46,8 @@ bun run tunnel   # 5437 (dev) and 5436 (prod) on 127.0.0.1; leave it running
 
 | Target        | Address with the tunnel up | Never use            |
 | ------------- | -------------------------- | -------------------- |
-| Postgres dev  | `127.0.0.1:5437`           | `$KIRA_VPS_IP:5437` |
-| Postgres prod | `127.0.0.1:5436`           | `$KIRA_VPS_IP:5436` |
+| Postgres dev  | `127.0.0.1:5437`           | `$KIRA_VPS_IP:5437`  |
+| Postgres prod | `127.0.0.1:5436`           | `$KIRA_VPS_IP:5436`  |
 
 A tunnel does not survive a network change: restart it after switching networks.
 `ECONNREFUSED 127.0.0.1:5437` from the app is that, not a broken database.
