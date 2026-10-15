@@ -43,9 +43,11 @@ Rule 26's 200 lines.
 ## Schema conventions
 
 ```ts
-// Reusable column bundle — spread into every table instead of retyping it.
-// mode:"date" avoids the string<->Date conversion on every read; precision 3
-// is millisecond accuracy without the storage of microseconds.
+/**
+ * Reusable column bundle — spread into every table instead of retyping it.
+ * mode:"date" avoids the string<->Date conversion on every read; precision 3
+ * is millisecond accuracy without the storage of microseconds.
+ */
 export const timestamps = {
   createdAt: timestamp("created_at", { mode: "date", precision: 3, withTimezone: true })
     .defaultNow()
@@ -59,7 +61,7 @@ export const timestamps = {
 export const things = pgTable(
   "things",
   {
-    // Identity columns over `serial` — serial is legacy in modern Postgres.
+    /** Identity columns over `serial` — serial is legacy in modern Postgres. */
     id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     ownerId: integer("owner_id")
       .references(() => users.id, { onDelete: "cascade" })
@@ -69,14 +71,16 @@ export const things = pgTable(
     ...timestamps,
   },
   (table) => [
-    // Rule 32: a REFERENCES column gets NO index automatically. Always add one.
+    /** Rule 32: a REFERENCES column gets NO index automatically. Always add one. */
     index("things_owner_idx").on(table.ownerId),
-    // Keyset pagination index — matches the ORDER BY in the query below exactly.
-    // `.nullsFirst()` is load-bearing: Drizzle's `.desc()` emits `DESC NULLS
-    // LAST` on an index, but `orderBy(desc(col))` in a query emits plain
-    // `DESC`, which Postgres reads as `NULLS FIRST`. Mismatch the two and the
-    // planner cannot take the ordering from the index — it adds a Sort node on
-    // top of the index scan and reads every matching row before the LIMIT.
+    /**
+     * Keyset pagination index — matches the ORDER BY in the query below exactly.
+     * `.nullsFirst()` is load-bearing: Drizzle's `.desc()` emits `DESC NULLS
+     * LAST` on an index, but `orderBy(desc(col))` in a query emits plain
+     * `DESC`, which Postgres reads as `NULLS FIRST`. Mismatch the two and the
+     * planner cannot take the ordering from the index — it adds a Sort node on
+     * top of the index scan and reads every matching row before the LIMIT.
+     */
     index("things_created_idx").on(
       table.createdAt.desc().nullsFirst(),
       table.id.desc().nullsFirst(),
@@ -110,10 +114,10 @@ query needs, not one per column.
 on every request:
 
 ```ts
-// FORBIDDEN on a table with wide columns
+/** FORBIDDEN on a table with wide columns */
 const rows = await db.select().from(things);
 
-// ALLOWED
+/** ALLOWED */
 const rows = await db
   .select({ id: things.id, title: things.title, status: things.status })
   .from(things)
@@ -129,7 +133,7 @@ const rows = await db
   .from(things)
   .where(cursor ? lt(things.createdAt, cursor) : undefined)
   .orderBy(desc(things.createdAt), desc(things.id))
-  .limit(limit + 1); // one extra row = "has next page", no COUNT needed
+  .limit(limit + 1); /** one extra row = "has next page", no COUNT needed */
 ```
 
 `.offset()` only for an admin table known to stay small; write the assumed row ceiling in a
@@ -138,10 +142,10 @@ comment when you use it.
 **Batching instead of N+1 (Rule 31).**
 
 ```ts
-// FORBIDDEN — one round trip per id
+/** FORBIDDEN — one round trip per id */
 for (const id of ids) rows.push(await db.select().from(things).where(eq(things.id, id)));
 
-// ALLOWED
+/** ALLOWED */
 const rows = await db.select().from(things).where(inArray(things.id, ids));
 ```
 
@@ -167,12 +171,12 @@ the whole matching set every time.
 **Writes (Rule 36).**
 
 ```ts
-await db.insert(things).values(rows); // one statement for N rows
+await db.insert(things).values(rows); /** one statement for N rows */
 
 await db
   .insert(things)
   .values(row)
-  .onConflictDoUpdate({ target: things.slug, set: { title: row.title } }); // not select-then-insert
+  .onConflictDoUpdate({ target: things.slug, set: { title: row.title } }); /** not select-then-insert */
 ```
 
 **Prepared statements (Rule 34).** For queries that run on every request:

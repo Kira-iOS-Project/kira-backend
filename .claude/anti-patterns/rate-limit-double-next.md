@@ -20,14 +20,14 @@ Two distinct failure modes, both hard to spot in a code review that only skims t
 ## Root Cause
 
 ```ts
-// WRONG — await next() lives inside the try
+/** WRONG — await next() lives inside the try */
 try {
   const current = await redis.get(key);
-  // ... rate limit bookkeeping ...
-  await next(); // <- if this throws, we jump to catch below
+  /** ... rate limit bookkeeping ... */
+  await next(); /** <- if this throws, we jump to catch below */
 } catch (error) {
   logger.error({ error }, "rate limit error");
-  await next(); // <- runs AGAIN if the first next() partially executed then threw
+  await next(); /** <- runs AGAIN if the first next() partially executed then threw */
 }
 ```
 
@@ -44,9 +44,9 @@ try/catch's outcome, then `next()` runs exactly once, unconditionally, outside i
 ```ts
 let allowed = true;
 try {
-  // ... redis.get / redis.multi() / decide `allowed` ...
+  /** ... redis.get / redis.multi() / decide `allowed` ... */
 } catch (error) {
-  // Redis is down — fail open rather than take the API down over a cache outage.
+  /** Redis is down — fail open rather than take the API down over a cache outage. */
   logger.error({ error }, "rate-limit middleware error; failing open");
 }
 
@@ -54,7 +54,7 @@ if (!allowed) {
   throw new HTTPException(429, { message: "Too many requests." });
 }
 
-await next(); // exactly once, regardless of which path above ran
+await next(); /** exactly once, regardless of which path above ran */
 ```
 
 ## When to revisit
