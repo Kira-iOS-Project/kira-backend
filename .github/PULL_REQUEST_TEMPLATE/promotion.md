@@ -1,4 +1,4 @@
-## Promotion: dev → prod
+## Promotion: `dev` → `prod`
 
 <!-- Filled in from `git log origin/prod..origin/dev` — do not hand-edit the commit
      list without re-checking it against that range. -->
