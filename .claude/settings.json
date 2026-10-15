@@ -18,6 +18,21 @@
       "Bash(bun fl:*)",
       "Bash(bun test:*)"
     ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push origin dev:*)",
+      "Bash(git push origin prod:*)",
+      "Bash(git push origin main:*)",
+      "Bash(git push origin master:*)",
+      "Edit(.env*)",
+      "Edit(!.env*.example)",
+      "Edit(.claude/state/**)",
+      "Read(.env*)",
+      "Read(!.env*.example)",
+      "Read(.claude/state/env-backups/**)",
+      "Edit(SSOT.md)",
+      "Edit(AGENTS.md)"
+    ],
     "ask": [
       "mcp__db-prod__execute_sql",
       "Edit(.claude/agent-config.json)",
@@ -34,34 +49,28 @@
       "Bash(bash ./scripts/deploy/trigger-deploy.sh:*)",
       "Bash(./scripts/deploy/trigger-deploy.sh:*)",
       "Bash(scripts/deploy/trigger-deploy.sh:*)"
-    ],
-    "deny": [
-      "Bash(rm -rf:*)",
-      "Bash(git push origin dev:*)",
-      "Bash(git push origin prod:*)",
-      "Bash(git push origin main:*)",
-      "Bash(git push origin master:*)",
-      "Edit(.env*)",
-      "Edit(!.env*.example)",
-      "Edit(.claude/state/**)",
-      "Read(.env*)",
-      "Read(!.env*.example)",
-      "Read(.claude/state/env-backups/**)",
-      "Edit(SSOT.md)",
-      "Edit(AGENTS.md)"
     ]
+  },
+  "enabledPlugins": {
+    "agent-core@agent-config-kit": true,
+    "agent-be-hono@agent-config-kit": true,
+    "agent-deploy@agent-config-kit": true
+  },
+  "extraKnownMarketplaces": {
+    "agent-config-kit": {
+      "source": {
+        "source": "github",
+        "repo": "adhibuchori/agent-config-kit"
+      }
+    }
   },
   "sandbox": {
     "enabled": true,
-    "excludedCommands": [
-      "bash scripts/env/show.sh*",
-      "bash scripts/env/set.sh*",
-      "./scripts/env/show.sh*",
-      "./scripts/env/set.sh*",
-      "scripts/env/show.sh*",
-      "scripts/env/set.sh*"
-    ],
     "filesystem": {
+      "denyWrite": [
+        ".claude/state/unlock",
+        ".claude/state/unlock/**"
+      ],
       "denyRead": [
         ".env",
         ".env.*",
@@ -85,22 +94,15 @@
         "./**/.env.*.example",
         "./**/.env-*.example",
         "./**/.env_*.example"
-      ],
-      "denyWrite": [
-        ".claude/state/unlock",
-        ".claude/state/unlock/**"
       ]
-    }
-  },
-  "extraKnownMarketplaces": {
-    "agent-config-kit": {
-      "source": {
-        "source": "github",
-        "repo": "adhibuchori/agent-config-kit"
-      }
-    }
-  },
-  "enabledPlugins": {
-    "agent-core@agent-config-kit": true
+    },
+    "excludedCommands": [
+      "bash scripts/env/show.sh*",
+      "bash scripts/env/set.sh*",
+      "./scripts/env/show.sh*",
+      "./scripts/env/set.sh*",
+      "scripts/env/show.sh*",
+      "scripts/env/set.sh*"
+    ]
   }
 }

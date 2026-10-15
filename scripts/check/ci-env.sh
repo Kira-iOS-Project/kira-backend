@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Owned here (agent-sync own): a missing default .env.ci.example means no variables, as in the quality
+# gate; this repo keeps no CI env file.
+#
 # Runs a command with the environment CI's unit tests get, and nothing else: PATH, HOME, TMPDIR, the
 # locale, CI=true and CI's test variables. No variable exported in your shell and no .env file
 # reaches the command, so a test that quietly reaches a real service with your local credentials
@@ -84,6 +87,10 @@ if any(re.match(r"^\s*uses:\s*\S*/[a-z0-9-]+-quality-gate\.ya?ml@", line) for li
     if not env_file.endswith(".example"):
         fail(f"env-file must be a committed *.example file of dummy values, got {env_file} ({where})")
     if not os.path.isfile(env_file):
+        if env_file == ".env.ci.example" and not any(re.match(r"^\s*env-file:", line) for line in lines):
+            # This repo keeps no CI env file: its tests need no variable. The quality gate reads the
+            # missing default the same way, with no variables loaded.
+            sys.exit(0)
         fail(f"{env_file} is missing ({where}). Commit it with the dummy KEY=VALUE variables the tests "
              "need (comments alone when they need none)")
     for raw in open(env_file, encoding="utf-8").read().splitlines():

@@ -7,9 +7,8 @@
   "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "build": "bun build ./src/index.ts --outdir ./dist --target bun",
+    "build": "bun scripts/build/bundle.ts",
     "start": "bun dist/index.js",
-    "test": "bun test src",
     "test:integration": "RUN_INTEGRATION_TESTS=1 bun test src",
     "env:init": "test -f .env.development || cp .env.development.example .env.development",
     "tunnel": "ssh -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -L 5437:127.0.0.1:5437 -L 5436:127.0.0.1:5436 codesheesh-server",
