@@ -94,6 +94,8 @@ that command and never work around a refusal. Details: `docs/unlock.md`.
 | Module files       | `<module>.<layer>.ts`          | `project.service.ts`, `project.routes.ts` |
 | Domain error class | PascalCase + `Error` suffix    | `ProjectNotFoundError`           |
 | Zod schema export  | camelCase + `Schema` suffix    | `projectResponseSchema`          |
+| Repository port    | PascalCase + `Repository`      | `ProjectRepository`              |
+| Repository factory | `create` + port name           | `createProjectRepository`        |
 | Test file          | `__tests__/<unit>.test.ts` beside the source | `__tests__/project.service.test.ts` |
 | Index name         | `<table>_<cols>_idx`           | `tasks_project_position_idx`     |
 

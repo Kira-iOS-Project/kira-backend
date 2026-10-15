@@ -31,7 +31,9 @@ Bun 1.4 · Hono · `@hono/zod-openapi` (OpenAPI-first routing) · Scalar (`/docs
 
 ## Architecture
 
-Modular monolith — feature verticals with internal layering. `src/modules/meta/` is the reference
+Modular monolith — feature verticals with internal layering: `routes → handler → service →
+repository → db`, the repository being the only layer that touches the database (AGENTS.md Rules
+4 and 10). `src/modules/meta/` is the reference
 module; `AGENTS.md` "How to Add a New Module" is the pattern every module follows. Folders hold
 files or folders, never both (`.claude/rules/common/folder-shape.md`).
 
@@ -52,7 +54,8 @@ src/
     schema/            schema.ts (no table yet; the `timestamps` bundle every table spreads)
     migrations/        drizzle-kit output, never hand-edited (only the empty journal so far)
   middlewares/         logger.middleware.ts (request start and finish lines)
-  modules/meta/        GET /health: routes, handler, service, schema, errors, index, __tests__/
+  modules/meta/        GET /health: routes, handler, service, repository, schema, errors, index,
+                       __tests__/
   test/                preload.ts (the shared doubles), config.ts (the integration-tier switch)
 ```
 

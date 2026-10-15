@@ -114,7 +114,7 @@
     },
     {
       "files": [
-        "src/modules/*/*.service.ts"
+        "src/modules/*/**"
       ],
       "rules": {
         "no-restricted-imports": [
@@ -123,11 +123,9 @@
             "patterns": [
               {
                 "group": [
-                  "hono",
-                  "hono/*",
-                  "@hono/*"
+                  "../*/[!index]*"
                 ],
-                "message": "Services must not import Hono \u2014 they never touch Context. HTTP concerns belong in the handler (AGENTS.md \u00a7B Rule 7)."
+                "message": "Cross-module imports must go through the target module's index.ts barrel \u2014 never its internals (*.service.ts, *.repository.ts, etc)."
               }
             ]
           }
@@ -136,13 +134,38 @@
     },
     {
       "files": [
-        "src/modules/*/**"
+        "src/modules/*/*.service.ts"
       ],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "drizzle-orm",
+                "message": "Services must not import drizzle-orm. Queries belong in the module's repository (AGENTS.md \u00a7A Rule 4)."
+              },
+              {
+                "name": "postgres",
+                "message": "Services must not import the postgres client. Queries belong in the module's repository (AGENTS.md \u00a7A Rule 4)."
+              }
+            ],
             "patterns": [
+              {
+                "group": [
+                  "hono",
+                  "hono/*",
+                  "@hono/*"
+                ],
+                "message": "Services must not import Hono \u2014 they never touch Context. HTTP concerns belong in the handler (AGENTS.md \u00a7B Rule 7)."
+              },
+              {
+                "group": [
+                  "**/db/**",
+                  "**/db"
+                ],
+                "message": "Services must not import src/db. Data access belongs in the module's repository (AGENTS.md \u00a7A Rule 4)."
+              },
               {
                 "group": [
                   "../*/[!index]*"
@@ -165,11 +188,11 @@
             "paths": [
               {
                 "name": "drizzle-orm",
-                "message": "Handlers must not import drizzle-orm directly. Call the service \u2014 it owns DB access."
+                "message": "Handlers must not import drizzle-orm directly. Call the service; data access lives in the module's repository."
               },
               {
                 "name": "postgres",
-                "message": "Handlers must not import the postgres client directly. Call the service \u2014 it owns DB access."
+                "message": "Handlers must not import the postgres client directly. Call the service; data access lives in the module's repository."
               }
             ],
             "patterns": [
@@ -178,7 +201,13 @@
                   "**/db/**",
                   "**/db"
                 ],
-                "message": "Handlers must not import src/db directly. Call the service \u2014 it owns DB access."
+                "message": "Handlers must not import src/db directly. Call the service; data access lives in the module's repository."
+              },
+              {
+                "group": [
+                  "../*/[!index]*"
+                ],
+                "message": "Cross-module imports must go through the target module's index.ts barrel \u2014 never its internals (*.service.ts, *.repository.ts, etc)."
               }
             ]
           }

@@ -20,7 +20,7 @@ but not at the cost of a dependency this repo does not need (`AGENTS.md` §A Rul
 | Pattern | Where it is specified |
 |---|---|
 | Modular monolith — feature verticals with internal layering | `SSOT.md` §Architecture |
-| `handler → service → db`, repository only on escalation | `AGENTS.md` §A Rule 4, §B Rule 5 |
+| `routes → handler → service → repository → db`; the repository is the only layer that touches the database | `AGENTS.md` §A Rule 4, §B Rules 5 and 10 |
 | Dependency injection via default parameters (no container, no mocking library) | `AGENTS.md` §B Rule 7 |
 | Module barrel — `index.ts` is a module's only public surface | `AGENTS.md` §B Rule 8 |
 | One-way dependency direction: `modules/* → lib/*, db/*, middlewares/*` | `AGENTS.md` §B Rule 9 |
@@ -33,8 +33,8 @@ but not at the cost of a dependency this repo does not need (`AGENTS.md` §A Rul
 
 ## Patterns deliberately NOT used
 
-- **A generic repository/base-class layer.** Repositories are added per module, only when
-  Rule 4's escalation criteria are met.
+- **A generic repository/base-class layer.** Each module's repository is written for that module,
+  one method per question its service asks (`AGENTS.md` Rule 10).
 - **A DI container.** Default parameters cover every case this repo has.
 - **A shared `test-utils` package.** Mock builders stay module-local until real duplication
   proves otherwise (`backend/testing.md`). External clients are the exception: they are
