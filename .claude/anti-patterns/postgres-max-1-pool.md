@@ -25,12 +25,16 @@ connection by design. It tends to get copy-pasted from there (or from a template
 ## Fix
 
 ```ts
-// src/db/client/index.ts — the app's real pool. No max override; postgres.js
-// defaults to a reasonable pool size (10).
+/**
+ * src/db/client/index.ts — the app's real pool. No max override; postgres.js
+ * defaults to a reasonable pool size (10).
+ */
 export const client = postgres(env.DATABASE_URL);
 
-// src/db/client/migrate.ts — its OWN client, separate from index.ts, only
-// here is { max: 1 } correct.
+/**
+ * src/db/client/migrate.ts — its OWN client, separate from index.ts, only
+ * here is { max: 1 } correct.
+ */
 const migrationClient = postgres(env.DATABASE_URL, { max: 1 });
 ```
 
