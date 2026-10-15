@@ -11,7 +11,7 @@
       "answers": {
         "analytics": "no",
         "ci-gate": "yes",
-        "deepseek-review": "no",
+        "deepseek-review": "yes",
         "payload-encryption": "no",
         "pr-templates": "yes",
         "serena-workspace": "no"
@@ -40,6 +40,7 @@
         ".claude/rules/common/testing.md": "sha256:5a8663f639b426077bdbc47312bc637ddec4ecf62721172856119113b9c23d8d",
         ".claude/rules/typescript/coverage.md": "sha256:84d1962739c1d82e5f5071d046b442e91e91a81afe8cd323c9f92c9daf4a69ab",
         ".claude/test-preload.example.ts": "sha256:e141091feaecefae3cc65a94b1e16e1e07474280fc2e97be9202e7cc233ffef0",
+        ".github/workflows/deepseek-review.yml": "sha256:0920a5ed69f1f2455b6effba1addb909874bf586427a2aee55100814c6eb657a",
         ".github/workflows/quality-gate.yml": "sha256:12b6da22c4a489867503807451b9dc336312cf3b2eb48bf4639e55a7d77ac2be",
         "scripts/check/constants.ts": "sha256:9044e98abd7568969516f2558a586b9dc19064c4a548a35a51fdf637dd067337",
         "scripts/check/coverage-files.mjs": "sha256:b711605103ea52cce72a2f59b321b242cd3bf7e35cd334beaf69bd1f82019312",
