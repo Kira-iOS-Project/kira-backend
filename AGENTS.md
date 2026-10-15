@@ -258,8 +258,8 @@ const testIntegration = shouldRunIntegrationTests() ? test : test.skip;
 testIntegration("persists a row", async () => { /* real db */ });
 ```
 
-Enforcement: the quality gate runs the unit tier only, with placeholder connection strings and
-no database service, so a unit test that dials Postgres or Redis fails there.
+Enforcement: the quality gate runs the unit tier only, with no `DATABASE_URL` and no database
+service, so a unit test that dials Postgres fails there.
 `bun run test:integration` runs the integration tier against a real Postgres (the dev database through
 the tunnel, or a local one), locally or in a
 CI job you add for it.

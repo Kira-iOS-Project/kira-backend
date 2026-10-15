@@ -47,10 +47,9 @@ checkout, `--paths <your files>` limits format and lint to your own files, and
 `bun run lint` passes `--type-aware`, which needs the `oxlint-tsgolint` devDependency — that is
 what catches a Drizzle query with a missing `await` (§H Rule 37).
 
-`src/env.ts` validates on import and exits, so the unit tier needs the env vars set, but it dials
-nothing: `src/test/preload.ts` replaces Postgres (and, as they arrive, every provider SDK) for the
-whole run. Never re-mock those in a test file; steer the controls it exports (AGENTS.md Rule 7).
-`.env.ci.example` holds the fake values the unit tier runs with (CI and `ci-env.sh`).
+The unit tier needs no environment variable and dials nothing: `src/test/preload.ts` replaces
+Postgres (and, as they arrive, every provider SDK) for the whole run. Never re-mock those in a test
+file; steer the controls it exports (AGENTS.md Rule 7). There is no CI env file, by decision.
 
 If you touched `src/db/schema/`:
 

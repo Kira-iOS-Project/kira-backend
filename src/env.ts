@@ -20,7 +20,9 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).optional(),
 
-  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+  /* Required in production (below) and by the server before it starts (src/index.ts). Unset only
+     where nothing connects: the unit tests and the OpenAPI export, which need no variable at all. */
+  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }).optional(),
 
   /* Browser origins allowed to call this API, comma-separated. The iOS app is not a browser and
      needs none, so the default allows no origin at all. Never a wildcard (AGENTS.md Rule 39). */
@@ -53,7 +55,12 @@ const schema = z.object({
   SHUTDOWN_FORCE_EXIT_MS: z.coerce.number().int().positive().default(8_000),
 });
 
-const parsed = schema.safeParse(process.env);
+const parsed = schema
+  .refine((value) => value.NODE_ENV !== 'production' || value.DATABASE_URL !== undefined, {
+    message: 'DATABASE_URL is required in production',
+    path: ['DATABASE_URL'],
+  })
+  .safeParse(process.env);
 
 if (!parsed.success) {
   console.error(`Invalid environment variables:\n${z.prettifyError(parsed.error)}`);

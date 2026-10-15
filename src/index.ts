@@ -12,6 +12,11 @@ import { logger } from './lib/server/logger.ts';
 import { mountApiDocs } from './lib/server/openapi.ts';
 import { createShutdown } from './lib/server/shutdown.ts';
 
+if (env.DATABASE_URL === undefined) {
+  logger.fatal('DATABASE_URL is not set: the server cannot start without its database');
+  process.exit(1);
+}
+
 /* The schema the code expects exists before the first request: a failed migration stops the
    boot, and the platform keeps the previous container serving. */
 logger.info({ migrations: await runMigrations(env.DATABASE_URL) }, 'Migrations checked');

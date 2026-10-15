@@ -11,7 +11,9 @@ import postgres from 'postgres';
 import { env } from '../../env.ts';
 import { SERVICE_NAME } from '../../lib/constants/service.ts';
 
-export const client = postgres(env.DATABASE_URL, {
+/* postgres.js opens no connection before the first query, so the pool is built even where
+   DATABASE_URL is unset: the unit tests replace this module, and the OpenAPI export never queries. */
+export const client = postgres(env.DATABASE_URL ?? '', {
   max: env.DB_POOL_MAX,
   idle_timeout: 30 /* seconds: release idle connections back to Postgres */,
   connect_timeout: 10 /* seconds: fail fast instead of hanging a request */,
