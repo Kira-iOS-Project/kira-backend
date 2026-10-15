@@ -88,8 +88,10 @@ removed.
 
 ## GitHub organization
 
-Both repositories live in `Kira-iOS-Project`, on GitHub's **free** plan. What that plan gives and
-withholds, as set on 2026-10-15:
+Both code repositories live in `Kira-iOS-Project`, on GitHub's **free** plan, beside `.github`
+(public: the organization's profile README and logo; secret scanning and push protection on) and
+`.github-private` (the profile README members see). The avatar is `kira-ikon-1024.png` from the
+Kira design system. What the plan gives and withholds, as set on 2026-10-15:
 
 - **Members**: base permission *read*; only owners create repositories; forks of private
   repositories are off. Turn on *Require two-factor authentication* (Settings → Authentication
