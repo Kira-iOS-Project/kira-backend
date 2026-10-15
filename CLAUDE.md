@@ -14,7 +14,7 @@ The API of Kira, an iOS personal-finance app; `kira-mobile-ios` generates its cl
 owner's decision; no auth yet (AGENTS.md Compliance Status).
 
 Dev port `3000` · docs `/docs` (dev only) · spec `openapi.json` · prod
-`https://kira-backend.codesheesh.com` (Dokploy, from `prod`).
+`https://api-kira.serenitycode.tech` (Dokploy, from `prod`).
 
 ---
 

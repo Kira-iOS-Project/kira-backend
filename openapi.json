@@ -33,8 +33,8 @@
           "type": {
             "type": "string",
             "format": "uri",
-            "x-problem-type-base": "https://kira-backend.codesheesh.com/problems/",
-            "example": "https://kira-backend.codesheesh.com/problems/ROUTE_NOT_FOUND"
+            "x-problem-type-base": "https://api-kira.serenitycode.tech/problems/",
+            "example": "https://api-kira.serenitycode.tech/problems/ROUTE_NOT_FOUND"
           },
           "title": {
             "type": "string"

@@ -16,7 +16,7 @@ response-shape change is a breaking change for every installed build.
 ## Ecosystem
 
 ```
-kira-mobile-ios  →  kira-backend   (HTTPS, https://kira-backend.codesheesh.com)
+kira-mobile-ios  →  kira-backend   (HTTPS, https://api-kira.serenitycode.tech)
 kira-backend     →  Postgres       (Dokploy's internal network, DATABASE_URL)
 ```
 
@@ -71,7 +71,7 @@ there is no Redis), keep the bearer token short-lived, and record each decision 
 Every thrown error becomes `application/problem+json`: `{ type, title, status, detail, instance,
 code, requestId }`, plus `fields` on a 422. `type` is `PROBLEM_TYPE_BASE` plus the code, never
 `about:blank`; `title` is fixed per code. Problem type base:
-`https://kira-backend.codesheesh.com/problems/` (set before the first release; never change it).
+`https://api-kira.serenitycode.tech/problems/` (set before the first release; never change it).
 `app.onError` (`handleAppError`) is the single mapper for `DomainError` subclasses, Hono
 `HTTPException` and unknown errors, and `app.notFound` gives unmatched routes the same shape. Every
 code is listed once in `src/lib/errors/error-codes.ts`; the spec publishes them as the

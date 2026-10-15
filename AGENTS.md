@@ -28,7 +28,7 @@ session, and after that it stops trusting any rule in the file.
 |---|---|---|
 | §A Protocol | Enforced | Applies as written. Commits are `type: description`. |
 | §B Layer boundaries | Enforced | One module, `meta`, built to the full shape; the oxlint import rules bind every new one. |
-| §C Error contract | Enforced | `src/lib/errors/` is the whole contract; base `https://kira-backend.codesheesh.com/problems/`; `check:openapi` holds the spec side. |
+| §C Error contract | Enforced | `src/lib/errors/` is the whole contract; base `https://api-kira.serenitycode.tech/problems/`; `check:openapi` holds the spec side. |
 | §D Database | Enforced | No table yet (`src/db/schema/schema.ts` holds only the `timestamps` bundle). Migrations run at boot. |
 | §E Testing | Enforced | Unit tier at 100% per file. No integration test yet; `src/test/config.ts` is ready for the first. |
 | §F Security | Partial | Rules 22, 23 and 25 bind. Rule 24 is N/A: no Redis and no rate limiter (see below). No auth yet: every route is public, and only `/health` exists. |

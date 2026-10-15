@@ -22,7 +22,7 @@ import { DomainError } from './errors.ts';
  * The base every problem type is minted from. Installed apps resolve failures by it, so it is set
  * once, before the first release, and never changed. It names this API and need not resolve.
  */
-export const PROBLEM_TYPE_BASE = 'https://kira-backend.codesheesh.com/problems/';
+export const PROBLEM_TYPE_BASE = 'https://api-kira.serenitycode.tech/problems/';
 
 const TITLES = {
   VALIDATION_FAILED: 'Validation Failed',

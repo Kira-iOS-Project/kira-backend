@@ -1,7 +1,7 @@
 # kira-backend
 
 The API of **Kira**, an iOS personal-finance companion. Bun + Hono + Drizzle ORM on PostgreSQL,
-deployed by Dokploy to `https://kira-backend.codesheesh.com`.
+deployed by Dokploy to `https://api-kira.serenitycode.tech`.
 
 ## Getting started
 
