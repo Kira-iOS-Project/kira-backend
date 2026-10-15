@@ -11,22 +11,22 @@ talks to, live at `https://api-kira.serenitycode.tech`.
 
 ## Contents
 
-- [Tech stack](#tech-stack)
-- [System design](#system-design)
-- [Request lifecycle](#request-lifecycle)
-- [Code architecture](#code-architecture)
-- [API contract and the iOS client](#api-contract-and-the-ios-client)
-- [Error contract](#error-contract)
+- [Tech Stack](#tech-stack)
+- [System Design](#system-design)
+- [Request Lifecycle](#request-lifecycle)
+- [Code Architecture](#code-architecture)
+- [API Contract and the iOS Client](#api-contract-and-the-ios-client)
+- [Error Contract](#error-contract)
 - [Data](#data)
-- [Delivery pipeline](#delivery-pipeline)
+- [Delivery Pipeline](#delivery-pipeline)
 - [Security](#security)
-- [Architecture decisions](#architecture-decisions)
-- [Getting started](#getting-started)
+- [Architecture Decisions](#architecture-decisions)
+- [Getting Started](#getting-started)
 - [Configuration](#configuration)
-- [Repository layout](#repository-layout)
+- [Repository Layout](#repository-layout)
 - [Roadmap](#roadmap)
 
-## Tech stack
+## Tech Stack
 
 | Area | Choice | Version |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ talks to, live at `https://api-kira.serenitycode.tech`.
 | Backups | Daily `pg_dump` to Cloudflare R2 | |
 | CI/CD | GitHub Actions | |
 
-## System design
+## System Design
 
 One deployable service (a modular monolith) and one PostgreSQL database per environment. The app
 reaches the API only through Cloudflare. The server answers only Cloudflare's address ranges, and
@@ -85,7 +85,7 @@ flowchart LR
 | PostgreSQL `kira_dev` | Development data, reached by developers through an SSH tunnel |
 | Cloudflare R2 | Daily dumps of `kira`, the latest seven kept |
 
-## Request lifecycle
+## Request Lifecycle
 
 Every request passes the same middleware in a fixed order, and every failure, wherever it is
 thrown, leaves through one error mapper as `application/problem+json`.
@@ -99,6 +99,7 @@ sequenceDiagram
   participant MW as Hono middleware
   participant RT as Route
   participant SV as Service
+  participant RP as Repository
   participant DB as PostgreSQL
 
   App->>CF: HTTPS request
@@ -110,8 +111,10 @@ sequenceDiagram
     RT-->>App: 422 problem+json, VALIDATION_FAILED with fields
   else Input is valid
     RT->>SV: Typed input
-    SV->>DB: Drizzle query, statement timeout 10 s
-    DB-->>SV: Rows
+    SV->>RP: A question through the port
+    RP->>DB: Drizzle query, statement timeout 10 s
+    DB-->>RP: Rows
+    RP-->>SV: Rows shaped for the service
     alt A business rule fails
       SV-->>App: problem+json with the rule's code, through app.onError
     else Success
@@ -133,35 +136,107 @@ sequenceDiagram
 
 `/health` sits outside `/api/*`, so it answers whatever the request budget says.
 
-## Code architecture
+## Code Architecture
 
-A modular monolith: each feature is a folder under `src/modules/`, with the same internal layers.
-`src/modules/meta/` (the health check) is the reference module. A folder holds files or folders,
-never both, so a file's path follows from what it does.
+**A modular monolith of vertical slices, each built in Clean Architecture-style layers:
+`routes → handler → service → repository → database`.** Every feature is one folder under
+`src/modules/`, holding all of its layers; modules share only `src/lib/`. It deploys as one service,
+but each module's boundaries are drawn so it could move out later without a rewrite. Dependencies
+point inward: business rules depend on the repository's interface (a port), not on Drizzle, so they
+are tested without a database. `src/modules/meta/` (the health check) is the reference module every
+new one copies.
 
 ```mermaid
 flowchart TB
   index["src/index.ts<br/>env, migrations, docs, Bun.serve, shutdown"] --> app["src/app.ts<br/>middleware, error mapper, route mounts"]
   app --> routes
-  subgraph module["A module, for example src/modules/meta"]
-    routes["meta.routes.ts<br/>OpenAPI route and Zod schemas"] --> handler["meta.handler.ts<br/>HTTP in, HTTP out"]
-    handler --> service["meta.service.ts<br/>business rules"]
+  subgraph module["One vertical slice: src/modules/meta"]
+    routes["meta.routes.ts<br/>contract: OpenAPI route, Zod schemas"] --> handler["meta.handler.ts<br/>controller: HTTP in and out, at most 15 lines"]
+    handler --> service["meta.service.ts<br/>business rules, no HTTP, no SQL"]
+    service -- "MetaRepository port" --> repo["meta.repository.ts<br/>data access: every query and transaction"]
     service --> errors["meta.errors.ts<br/>DomainError subclasses"]
   end
-  service --> client["src/db/client<br/>the connection pool"]
+  repo --> client["src/db/client<br/>the connection pool"]
   client --> pg[("PostgreSQL")]
   lib["src/lib<br/>constants, errors, logger, router factory"] -.-> module
   env["src/env.ts<br/>the only reader of process.env"] -.-> index
 ```
 
-| Layer | Owns | Never does |
-| --- | --- | --- |
-| `*.routes.ts` | Path, method, request and response schemas, the documented error statuses | Business logic |
-| `*.handler.ts` | Reads validated input, calls the service, shapes the HTTP response | Database access |
-| `*.service.ts` | Business rules and data access through Drizzle | Read the request or build a response |
-| `*.errors.ts` | The module's `DomainError` subclasses, each with a registered code | Pick an HTTP body format |
+| Layer | Role | Owns | Never does |
+| --- | --- | --- | --- |
+| `*.routes.ts` | Contract | Path, method, request and response schemas, the documented error statuses | Business logic |
+| `*.handler.ts` | Controller | Reads the validated input, calls the service, shapes the response, in at most 15 lines | Data access, `try`/`catch` for domain errors |
+| `*.service.ts` | Use cases | Business rules over the repository's port, injected as a default parameter so a test passes its own | Import Hono, Drizzle or the database client |
+| `*.repository.ts` | Data access | The port type, its Drizzle implementation and a default instance: every query and transaction of the module | Hold business rules or throw domain errors |
+| `*.schema.ts` | DTOs | The Zod request and response shapes, also the OpenAPI types | Logic |
+| `*.errors.ts` | Domain errors | The module's `DomainError` subclasses, each with a registered code | Choose an HTTP body format |
 
-## API contract and the iOS client
+### The Shape of a Repository
+
+```ts
+// src/modules/meta/meta.repository.ts
+export type MetaRepository = { ping(): Promise<void> };                      // the port
+
+export function createMetaRepository(client: DbLike = db): MetaRepository {  // the Drizzle adapter
+  return { async ping() { await client.execute(sql`SELECT 1`); } };
+}
+
+export const metaRepository = createMetaRepository();                        // the default instance
+```
+
+```ts
+// src/modules/meta/meta.service.ts
+export async function getHealthReport(
+  deps: { repository?: MetaRepository } = {},
+): Promise<HealthResponse> {
+  const repository = deps.repository ?? metaRepository;
+  try {
+    await repository.ping();
+  } catch (err) {
+    logger.error({ err }, 'Database health check failed');
+    throw new HealthCheckFailedError({ database: 'unhealthy' });
+  }
+  return { status: 'ok', database: 'healthy' };
+}
+```
+
+Each repository has one method per question its service asks, named for the domain, never a generic
+`findAll` or a shared base class. Lists are keyset-paginated with explicit columns and limits, and a
+transaction lives inside one repository method.
+
+### Boundaries the Gates Enforce
+
+| Boundary | Enforced by |
+| --- | --- |
+| A service never imports Hono, `drizzle-orm`, `postgres` or `src/db` | oxlint import rules on `src/modules/*/*.service.ts` |
+| A handler never imports `drizzle-orm`, `postgres` or `src/db` | oxlint import rules on `src/modules/*/*.handler.ts` |
+| Another module is reached only through its `index.ts` | oxlint import rules on `src/modules/*/**` |
+| `src/lib` and `src/middlewares` never import a module | oxlint import rules |
+| Only `src/env.ts` reads `process.env` | oxlint `no-restricted-properties` |
+| The committed spec equals what the routes describe | `scripts/check/openapi.ts` |
+| A folder holds files or folders, never both | `scripts/check/folder-shape.mjs` |
+| Every source file is fully covered by tests | `bun run test:coverage` |
+
+### Testing per Layer
+
+| Layer | How it is tested | What a test replaces |
+| --- | --- | --- |
+| Repository | `bun test` with a client double passed to its factory; the SQL through `.toSQL()` where its shape matters | The database client |
+| Service | `bun test`, passing a repository double | The repository |
+| Handler and route | `app.request()` through the real middleware and error mapper | The database client, through the shared doubles in `src/test/preload.ts` |
+| Database | The integration tier against a real PostgreSQL (`bun run test:integration`) | Nothing |
+
+### Why This Architecture
+
+| Option | Decision | Reason |
+| --- | --- | --- |
+| **Modular monolith, Clean Architecture-style layers with a repository** | Chosen | One deployable and one database suit one team and one client app. Each slice keeps a feature together; the layers keep HTTP, business rules and SQL apart; the repository port makes every business rule testable without a database. Lint rules hold the boundaries. |
+| Microservices | Not chosen | Network calls, distributed data and several deploys, with nothing to gain at this scale. |
+| Full hexagonal or DDD (entities, aggregates, a port for every dependency) | Not chosen | The repository port gives the decoupling that matters. Rich domain objects and a port per dependency would add types without adding safety for a product of this size. |
+| A DI framework such as NestJS | Not chosen | Decorators and a container for what default parameters do. Hono on Bun starts fast and stays small. |
+| Serverless functions | Not chosen | Cold starts and per-invocation database connections; one long-running container keeps a warm connection pool. |
+
+## API Contract and the iOS Client
 
 The Zod schemas on each route are the single source of truth for validation, documentation and the
 iOS client. The spec is committed, and the quality gate fails when it no longer equals what the
@@ -181,7 +256,7 @@ flowchart LR
 A response-shape change is a breaking change for every installed build, so it is made additively,
 and the iOS repository refreshes its copy in the same feature.
 
-## Error contract
+## Error Contract
 
 Every error is [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem detail with a stable
 `code`. Clients branch on `code`, never on `title` or `detail`, and the app shows its own localized
@@ -247,7 +322,7 @@ flowchart LR
 - **Backups.** Production is dumped daily at 00:00 WIB to Cloudflare R2, the latest seven kept. A
   manual run was confirmed in R2 at setup; a restore has not been rehearsed yet.
 
-## Delivery pipeline
+## Delivery Pipeline
 
 Two long-lived branches: `dev` collects finished work, `prod` is what runs. Every workflow starts
 from a pull request; nothing runs on a push or a schedule.
@@ -296,22 +371,23 @@ request. The developer machine runs the same gates in a pre-commit hook.
 - **Repository.** Secret scanning with push protection, Dependabot alerts, and approval before a fork's
   pull request may run workflows. `dev` and `prod` cannot be force-pushed or deleted.
 
-## Architecture decisions
+## Architecture Decisions
 
 | # | Decision | Why | Trade-off |
 | --- | --- | --- | --- |
 | 1 | A modular monolith on Bun and Hono | One deployable for a small team; modules keep features apart and could split later | One process scales as a whole |
-| 2 | OpenAPI-first routes with `@hono/zod-openapi` | One schema validates input, documents the API and generates the iOS client | Routes must use the OpenAPI router; a plain `app.get()` is invisible to the spec, which the gate catches |
-| 3 | RFC 9457 errors with registered codes and a fixed `type` base | The app branches on a stable code and localizes the message itself | Every new code is registered in the backend and mapped in the app |
-| 4 | PostgreSQL 18 with Drizzle; migrations applied at boot | Schema and code ship together; a failing migration stops the release before it serves | A long migration delays the container's start |
-| 5 | No Redis or queue | The product is small; rate limits and jobs will use memory or PostgreSQL | Revisit if the API runs on more than one replica |
-| 6 | Cloudflare in front, Cloudflare-only origin, private database | The server's address does not matter to clients, and the database is unreachable from outside | Developers reach the database through an SSH tunnel |
-| 7 | Configuration validated at boot from the environment | A bad value fails at start, not at the first request that needs it | Every variable is listed in `src/env.ts` and the example files |
-| 8 | Unit tests need no database; 100% per-file coverage | Fast, deterministic tests on every pull request | Database behaviour is covered by a separate integration tier |
-| 9 | `dev` and `prod` branches; deploy on merge into `prod` through a webhook | Releases are explicit pull requests; the server pulls from the repository with a read-only key | A release waits for a promotion pull request |
-| 10 | Pinned versions everywhere (dependencies, images, actions) | Reproducible builds and no silent upstream change | Updates are deliberate pull requests |
+| 2 | A repository behind a port in every module that touches the database | Business rules are tested without a database, and every query lives in one place per module | One more file per module, even for a single query |
+| 3 | OpenAPI-first routes with `@hono/zod-openapi` | One schema validates input, documents the API and generates the iOS client | Routes must use the OpenAPI router; a plain `app.get()` is invisible to the spec, which the gate catches |
+| 4 | RFC 9457 errors with registered codes and a fixed `type` base | The app branches on a stable code and localizes the message itself | Every new code is registered in the backend and mapped in the app |
+| 5 | PostgreSQL 18 with Drizzle; migrations applied at boot | Schema and code ship together; a failing migration stops the release before it serves | A long migration delays the container's start |
+| 6 | No Redis or queue | The product is small; rate limits and jobs will use memory or PostgreSQL | Revisit if the API runs on more than one replica |
+| 7 | Cloudflare in front, Cloudflare-only origin, private database | The server's address does not matter to clients, and the database is unreachable from outside | Developers reach the database through an SSH tunnel |
+| 8 | Configuration validated at boot from the environment | A bad value fails at start, not at the first request that needs it | Every variable is listed in `src/env.ts` and the example files |
+| 9 | Unit tests need no database; 100% per-file coverage | Fast, deterministic tests on every pull request | Database behaviour is covered by a separate integration tier |
+| 10 | `dev` and `prod` branches; deploy on merge into `prod` through a webhook | Releases are explicit pull requests; the server pulls from the repository with a read-only key | A release waits for a promotion pull request |
+| 11 | Pinned versions everywhere (dependencies, images, actions) | Reproducible builds and no silent upstream change | Updates are deliberate pull requests |
 
-## Getting started
+## Getting Started
 
 Requirements: Bun 1.3.12 or newer, and PostgreSQL 18 for running the server (not for the tests).
 
@@ -365,7 +441,7 @@ Every variable is validated in `src/env.ts`. The unit tests and the spec export 
 | `LOG_LEVEL` | `debug` in development, `info` in production, `silent` in tests | Pino level |
 | `SHUTDOWN_FORCE_EXIT_MS` | `8000` | Grace period before a forced exit on shutdown |
 
-## Repository layout
+## Repository Layout
 
 ```text
 src/
