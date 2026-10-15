@@ -5,8 +5,10 @@ deployed by Dokploy to `https://api-kira.serenitycode.tech`.
 
 ## Getting started
 
-Prerequisites: [Bun](https://bun.sh) 1.4.2 (the version CI and the image use), `cloudflared`, and
-the SSH alias `kira-server` in `~/.ssh/config` (the development database lives on the VPS).
+Prerequisites: [Bun](https://bun.sh) 1.3.12 or newer (CI and the image run 1.4.2), `cloudflared`,
+and the SSH alias `kira-server` in `~/.ssh/config` (the development database lives on the
+VPS). `bun.lock` stays at lockfile version 1, which Bun 1.3 writes and Bun 1.4 reads unchanged;
+move it to version 2 in a pull request of its own once every machine runs Bun 1.4.
 
 ```bash
 bun install
