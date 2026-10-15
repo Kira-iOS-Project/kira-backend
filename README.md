@@ -73,7 +73,8 @@ flowchart LR
   app -- "HTTPS, JSON" --> cf --> traefik --> api
   api -- "internal network" --> db
   db -. "daily dump, latest 7 kept" .-> r2
-  laptop -. "SSH tunnel" .-> devdb
+  laptop -. "SSH tunnel: read and write" .-> devdb
+  laptop -. "SSH tunnel: read, and write as the owner" .-> db
 ```
 
 | Piece | Responsibility |
@@ -81,8 +82,8 @@ flowchart LR
 | Cloudflare | Terminates TLS for `api-kira.serenitycode.tech` and proxies to the server; hides its address |
 | Traefik | Routes the hostname to the container and refuses any client that is not a Cloudflare address (403) |
 | kira-backend | Validates, runs business rules, reads and writes PostgreSQL, and answers JSON or problem+json |
-| PostgreSQL `kira` | Production data, reached only over Dokploy's internal network |
-| PostgreSQL `kira_dev` | Development data, reached by developers through an SSH tunnel |
+| PostgreSQL `kira` | Production data. The API reaches it over Dokploy's internal network; developers reach it through the SSH tunnel, never through a public port |
+| PostgreSQL `kira_dev` | Development data, read and written by developers through the SSH tunnel |
 | Cloudflare R2 | Daily dumps of `kira`, the latest seven kept |
 
 ## Request Lifecycle
@@ -305,7 +306,8 @@ apps compare it, so changing it would turn every error into the generic message.
 flowchart LR
   api["kira-backend<br/>owner role, pooled"] --> kira[("kira")]
   migrator["Migrator at boot<br/>one connection"] --> kira
-  debug["Debugging tools<br/>read-only role"] -. "SSH tunnel" .-> kira
+  person["Developer<br/>owner role"] -. "SSH tunnel: reads and writes,<br/>after checking the latest backup" .-> kira
+  debug["AI and debugging tools<br/>read-only role"] -. "SSH tunnel: reads only" .-> kira
   kira -- "daily 00:00 WIB" --> r2[("Cloudflare R2<br/>latest 7 dumps")]
 ```
 
@@ -317,8 +319,13 @@ flowchart LR
 - **Connection pool.** Every setting is explicit: `DB_POOL_MAX` (default 10), a 10 s statement
   timeout (below the 15 s request timeout), connect, idle and lifetime limits, and a 30 s cap on idle
   transactions. The connection carries the service name, so PostgreSQL's activity view shows it.
-- **Roles.** The API connects as the database owner. Debugging tools use a separate read-only role
-  with a 30 s statement timeout. The provisioning superuser is used by no application.
+- **Access.** `bun run tunnel` opens an SSH tunnel to both databases, `kira_dev` and production `kira`,
+  on local ports; neither database is open to the internet.
+- **Roles.** The API connects as the database owner. A developer reads and writes either database as
+  its owner role through the tunnel, and confirms the latest backup before a production write. The
+  AI and debugging tools (the `db-dev` and `db-prod` MCP servers) use a separate read-only role with a
+  30 s statement timeout, so an agent can inspect production but never change it. The provisioning
+  superuser is used by no application.
 - **Backups.** Production is dumped daily at 00:00 WIB to Cloudflare R2, the latest seven kept. A
   manual run was confirmed in R2 at setup; a restore has not been rehearsed yet.
 
