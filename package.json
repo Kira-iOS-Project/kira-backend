@@ -7,7 +7,7 @@
   "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "build": "bun scripts/build/bundle.ts",
+    "build": "bun scripts/bundle/server.ts",
     "start": "bun dist/index.js",
     "test:integration": "RUN_INTEGRATION_TESTS=1 bun test src",
     "env:init": "test -f .env.development || cp .env.development.example .env.development",
