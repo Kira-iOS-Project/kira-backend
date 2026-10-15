@@ -1,0 +1,5 @@
+# GitHub's language bar: the agent-config-kit tooling (bash, Node, Python) outweighs the API, so it
+# is left out of the count.
+scripts/** linguist-detectable=false
+.husky/** linguist-detectable=false
+.claude/** linguist-detectable=false
