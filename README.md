@@ -23,7 +23,7 @@ The server applies pending migrations before it starts, in development and in pr
 | --- | --- |
 | `bun run dev` | Server with restart on change |
 | `bun run build` | Bundles `src/index.ts` into `dist/` (what the image runs) |
-| `bun run test` | Unit tests (no database) |
+| `bun test src` | Unit tests (no database) |
 | `bun run test:coverage` | Unit tests with the 100% per-file coverage gate |
 | `bun run db:generate` | A migration from the schema in `src/db/schema/`; commit it with the change |
 | `bun run spec:export` | Writes `openapi.json`, which the iOS app generates its client from |
