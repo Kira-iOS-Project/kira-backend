@@ -35,7 +35,7 @@ export class DomainError extends Error {
   }
 }
 
-/*
+/**
  * Each subclass repeats the constructor on purpose: without it Bun attributes the field override to
  * DomainError and reports that file's functions as half covered.
  */

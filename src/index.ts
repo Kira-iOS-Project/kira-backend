@@ -3,7 +3,7 @@
  * down in order on SIGINT or SIGTERM.
  */
 
-/* First, so a bad environment stops the process before anything reads it. */
+/** First, so a bad environment stops the process before anything reads it. */
 import { env } from './env.ts';
 import { app } from './app.ts';
 import { client } from './db/client/index.ts';
@@ -17,7 +17,7 @@ if (env.DATABASE_URL === undefined) {
   process.exit(1);
 }
 
-/* The schema the code expects exists before the first request: a failed migration stops the
+/** The schema the code expects exists before the first request: a failed migration stops the
    boot, and the platform keeps the previous container serving. */
 logger.info({ migrations: await runMigrations(env.DATABASE_URL) }, 'Migrations checked');
 

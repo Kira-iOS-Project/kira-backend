@@ -9,7 +9,7 @@
  * copy. `error-codes.test.ts` fails on a listed code nothing raises.
  */
 export const ERROR_CODES = [
-  /* Raised by the platform rather than a module: request shape, routing, limits, and the
+  /** Raised by the platform rather than a module: request shape, routing, limits, and the
      catch-all for a bug. `problem.ts` assigns these. */
   'VALIDATION_FAILED',
   'ROUTE_NOT_FOUND',

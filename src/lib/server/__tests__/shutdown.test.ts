@@ -94,7 +94,7 @@ describe('createShutdown', () => {
   });
 
   test('exits through process.exit and a real timer when neither is injected', async () => {
-    /* The defaults are what production runs. `process.exit` is intercepted and thrown out of; the
+    /** The defaults are what production runs. `process.exit` is intercepted and thrown out of; the
        real timer is unref'd and far off, so it never fires here. */
     const codes: unknown[] = [];
     const exit = spyOn(process, 'exit').mockImplementation((code) => {

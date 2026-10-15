@@ -60,7 +60,7 @@ function collectTestFiles(dir: string, isRoot = false): string[] {
   try {
     entries = readdirSync(dir);
   } catch (error) {
-    /* Swallowing this at the root turns "src/ is unreadable" into "no test files found", and the
+    /** Swallowing this at the root turns "src/ is unreadable" into "no test files found", and the
        check then passes on a tree it never read. A nested directory may legitimately vanish. */
     if (isRoot) throw error;
     return out;
@@ -78,7 +78,7 @@ const testFiles = collectTestFiles(SRC, true);
 
 console.log(`Module mocks: scanning ${testFiles.length} test file(s)...`);
 
-/*
+/**
  * Zero files is not "nothing to check" — it is the check unable to run. A filter that stops
  * matching, or a checkout that left src/ empty, looks exactly like a clean result otherwise.
  */
@@ -87,7 +87,7 @@ if (testFiles.length === 0) {
   process.exit(1);
 }
 
-/* Every call site, then the ones whose specifier is a literal. The factory is read by balancing
+/** Every call site, then the ones whose specifier is a literal. The factory is read by balancing
    parens from the call rather than by a second pattern: a factory ends in `}))`, `})` or `});`
    depending on how it was written, and a pattern guessing which silently matches nothing. */
 const ANY_CALL = /\bmock\.module\s*\(/g;
@@ -111,7 +111,7 @@ function factoryAfter(content: string, index: number): string {
       if (depth === 0) return content.slice(open + 1, i);
     }
   }
-  /* Unbalanced means the file does not parse, which tsc and oxlint both catch first. Returning the
+  /** Unbalanced means the file does not parse, which tsc and oxlint both catch first. Returning the
      tail keeps T2 conservative rather than letting an unreadable factory pass as spread. */
   return content.slice(open + 1);
 }
@@ -126,7 +126,7 @@ for (const file of testFiles) {
   const total = [...content.matchAll(ANY_CALL)].length;
   calls += total;
 
-  /* ── T0 — every call is one this check can read ─────────────────────────────── */
+  /** ── T0 — every call is one this check can read ─────────────────────────────── */
   if (total !== literal.length) {
     failures.push(
       `${rel} has ${total - literal.length} mock.module call(s) whose module is not a string literal\n` +
@@ -161,7 +161,7 @@ for (const file of testFiles) {
   }
 }
 
-/* ── T3 — the allowlist describes calls that are really there ───────────────── */
+/** ── T3 — the allowlist describes calls that are really there ───────────────── */
 for (const [key, reason] of ALLOWED) {
   if (seen.has(key)) continue;
   failures.push(
@@ -178,7 +178,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-/* What was scanned, not what was configured: the allowlist size alone says nothing about the run. */
+/** What was scanned, not what was configured: the allowlist size alone says nothing about the run. */
 console.log(
   `Module mocks: ${testFiles.length} test file(s), ${calls} mock.module call(s), ` +
     `${ALLOWED.size} allowlisted; all checks passed`,

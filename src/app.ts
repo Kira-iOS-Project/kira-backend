@@ -17,7 +17,7 @@ import { metaApp } from './modules/meta/index.ts';
 
 export const app = createRouter();
 
-/* ── Middleware ───────────────────────────────────────────────────────────
+/** ── Middleware ───────────────────────────────────────────────────────────
    The order is part of the contract (AGENTS.md Rules 39 to 41, .claude/rules/backend/hono.md):
 
      requestId      first, so every log line below can be correlated
@@ -34,7 +34,7 @@ app.use('*', secureHeaders());
 app.use('*', cors({ origin: env.CORS_ORIGINS, exposeHeaders: ['X-Request-Id'], maxAge: 600 }));
 app.use('*', requestLogger);
 
-/* bodyLimit's own error is a plain-text 413; a message-only HTTPException keeps it problem+json. */
+/** bodyLimit's own error is a plain-text 413; a message-only HTTPException keeps it problem+json. */
 app.use(
   '/api/*',
   bodyLimit({
@@ -46,12 +46,12 @@ app.use(
 );
 app.use('/api/*', timeout(env.REQUEST_TIMEOUT_MS));
 
-/* ── Errors ───────────────────────────────────────────────────────────────
+/** ── Errors ───────────────────────────────────────────────────────────────
    Every thrown error, the 413 and the 504 above included, becomes problem+json here. */
 app.onError(handleAppError);
 app.notFound(handleNotFound);
 
-/* ── Routes ───────────────────────────────────────────────────────────────
+/** ── Routes ───────────────────────────────────────────────────────────────
    The health check sits at /, outside the /api budget, so it answers whatever that budget says.
    Feature modules mount under /api. */
 app.route('/', metaApp);

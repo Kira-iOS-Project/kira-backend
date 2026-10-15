@@ -28,7 +28,7 @@ interface Advisory {
 
 type Report = Record<string, Advisory[]>;
 
-/* Structural check only: every value must be an array, which is what the consumers iterate.
+/** Structural check only: every value must be an array, which is what the consumers iterate.
    The fields inside an Advisory are not re-validated — a missing `title` prints as undefined,
    which is cosmetic, whereas a non-array value would throw mid-loop. */
 function isReport(value: unknown): value is Report {
@@ -39,13 +39,13 @@ function isReport(value: unknown): value is Report {
   );
 }
 
-/* ── Run bun audit and decode whatever it hands back ── */
+/** ── Run bun audit and decode whatever it hands back ── */
 
 function readReport(): Report {
   const proc = Bun.spawnSync(['bun', 'audit', '--json'], { stdout: 'pipe', stderr: 'pipe' });
   const raw = new Uint8Array(proc.stdout);
 
-  /* No advisories at all — bun writes nothing and exits 0. Nothing on stdout with any other exit
+  /** No advisories at all — bun writes nothing and exits 0. Nothing on stdout with any other exit
      code is a run that never got a report: an unreachable registry exits 1 that way. */
   if (raw.length === 0) {
     if (proc.exitCode === 0) return {};
@@ -61,12 +61,12 @@ function readReport(): Report {
     throw new Error(`could not decode audit output: ${getMessage(error)}`, { cause: error });
   }
 
-  /* Bun prefixes a version banner when stdout is a TTY; drop anything before the JSON. */
+  /** Bun prefixes a version banner when stdout is a TTY; drop anything before the JSON. */
   const start = text.indexOf('{');
   if (start === -1) throw new Error('audit output contained no JSON object');
 
   try {
-    /* Annotated as `unknown` and then narrowed, rather than asserted straight from the `any`
+    /** Annotated as `unknown` and then narrowed, rather than asserted straight from the `any`
        JSON.parse returns. `bun audit --json` is another tool's output, so its shape is a claim
        we are making about it, not a fact — and an assertion would let a changed format reach
        the loops below as undefined rather than failing here with a readable message. */
@@ -84,7 +84,7 @@ function getMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'unexpected error';
 }
 
-/* ── Map every installed copy of every package to its version(s) ── */
+/** ── Map every installed copy of every package to its version(s) ── */
 
 function collectInstalled(nodeModules: string, found: Map<string, Set<string>>): void {
   let entries;
@@ -97,7 +97,7 @@ function collectInstalled(nodeModules: string, found: Map<string, Set<string>>):
   for (const entry of entries) {
     if (!entry.isDirectory() || entry.name === '.bin') continue;
 
-    /* Scope directories hold packages one level deeper. */
+    /** Scope directories hold packages one level deeper. */
     if (entry.name.startsWith('@')) {
       collectInstalled(join(nodeModules, entry.name), found);
       continue;
@@ -112,14 +112,14 @@ function collectInstalled(nodeModules: string, found: Map<string, Set<string>>):
         found.set(pkg.name, versions);
       }
     } catch {
-      /* Not a package directory — skip it. */
+      /** Not a package directory — skip it. */
     }
 
     collectInstalled(join(pkgDir, 'node_modules'), found);
   }
 }
 
-/* ── Match advisories against what is actually installed ── */
+/** ── Match advisories against what is actually installed ── */
 
 interface Finding {
   name: string;
@@ -142,9 +142,9 @@ function findBlocking(report: Report, installed: Map<string, Set<string>>): Find
   return findings;
 }
 
-/* ── Accepted advisories ── */
+/** ── Accepted advisories ── */
 
-/* An advisory listed here is reported but does not fail the gate, until its `reviewBy` date. Each
+/** An advisory listed here is reported but does not fail the gate, until its `reviewBy` date. Each
    entry names the exact advisory and package and says why it cannot reach a user. After `reviewBy`
    the gate fails on it again, so an acceptance is re-decided rather than forgotten. Only for an
    advisory with no patched release: a fixable one is fixed with a bump or "overrides". Empty: nothing is
@@ -164,7 +164,7 @@ function acceptanceFor(finding: Finding): Accepted | undefined {
   );
 }
 
-/* ── Output ── */
+/** ── Output ── */
 
 function out(line: string): void {
   process.stdout.write(`${line}\n`);
@@ -174,7 +174,7 @@ function fail(line: string): void {
   process.stderr.write(`${line}\n`);
 }
 
-/* ── Report ── */
+/** ── Report ── */
 
 let report: Report;
 try {
