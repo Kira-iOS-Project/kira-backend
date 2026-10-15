@@ -92,9 +92,9 @@ code is listed once in `src/lib/errors/error-codes.ts`; the spec publishes them 
 
 ## Testing
 
-- **Unit** — `bun test src`. No database or network: `src/test/preload.ts` replaces the Postgres
-  client for the whole run. The quality gate runs this tier, with coverage, using the dummy values
-  in `.env.ci.example`.
+- **Unit** — `bun test src`. No database, network or environment variable: `src/test/preload.ts`
+  replaces the Postgres client for the whole run. The quality gate runs this tier, with coverage.
+  There is no CI env file, by the owner's decision.
 - **Integration** — `bun run test:integration`: `*.integration.test.ts` files gated by
   `shouldRunIntegrationTests()`, against a real Postgres. None exists yet.
 
@@ -122,7 +122,8 @@ Every workflow starts from a pull-request event; nothing runs on a push or a sch
 ```
 NODE_ENV                 development | production | test
 PORT                     default 3000
-DATABASE_URL             postgresql://user:pass@host:5432/db (required)
+DATABASE_URL             postgresql://user:pass@host:5432/db. Required in production and to
+                         start the server; the unit tests and the OpenAPI export run without it
 CORS_ORIGINS             comma-separated browser origins; empty (the default) allows none.
                          The iOS app is not a browser and needs none.
 DB_POOL_MAX              default 10, at least 3

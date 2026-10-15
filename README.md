@@ -39,5 +39,4 @@ configuration from `prod`. Never push to `dev` or `prod` directly.
 
 Every variable is validated in `src/env.ts`; the list with defaults is in `SSOT.md` § Env
 Variables (on `dev`). Production values live in Dokploy (project Kira, application Back-End),
-never in a file. `.env.ci.example` holds the fake values the unit tests run with in CI; it is a
-template, not a secret.
+never in a file. The unit tests and the OpenAPI export need no environment variable at all.
