@@ -175,18 +175,18 @@ flowchart TB
 ### The Shape of a Repository
 
 ```ts
-// src/modules/meta/meta.repository.ts
-export type MetaRepository = { ping(): Promise<void> };                      // the port
+/** src/modules/meta/meta.repository.ts */
+export type MetaRepository = { ping(): Promise<void> };                      /** the port */
 
-export function createMetaRepository(client: DbLike = db): MetaRepository {  // the Drizzle adapter
+export function createMetaRepository(client: DbLike = db): MetaRepository {  /** the Drizzle adapter */
   return { async ping() { await client.execute(sql`SELECT 1`); } };
 }
 
-export const metaRepository = createMetaRepository();                        // the default instance
+export const metaRepository = createMetaRepository();                        /** the default instance */
 ```
 
 ```ts
-// src/modules/meta/meta.service.ts
+/** src/modules/meta/meta.service.ts */
 export async function getHealthReport(
   deps: { repository?: MetaRepository } = {},
 ): Promise<HealthResponse> {

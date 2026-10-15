@@ -44,14 +44,14 @@ Prefer Arrange-Act-Assert structure for tests:
 
 ```typescript
 test('calculates similarity correctly', () => {
-  // Arrange
+  /** Arrange */
   const vector1 = [1, 0, 0];
   const vector2 = [0, 1, 0];
 
-  // Act
+  /** Act */
   const similarity = calculateCosineSimilarity(vector1, vector2);
 
-  // Assert
+  /** Assert */
   expect(similarity).toBe(0);
 });
 ```

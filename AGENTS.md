@@ -8,7 +8,7 @@ by a machine). A rule that only lives in prose is a wish — see `.claude/anti-p
 happens when one gets skipped.
 
 > **Numbers are append-only.** A new rule takes the next free number, whatever section it sits
-> in: Rules 42, 43 and 49 live in §G. If several repos share this numbering, say so here and never
+> in: Rules 42, 43, 49 and 50 live in §G. If several repos share this numbering, say so here and never
 > renumber locally. A review citing "Rule 12" otherwise means two different things depending on
 > who is reading, and the rule-citation check (`scripts/check/ai-config.sh`) disagrees with both.
 
@@ -32,7 +32,7 @@ session, and after that it stops trusting any rule in the file.
 | §D Database | Enforced | No table yet (`src/db/schema/schema.ts` holds only the `timestamps` bundle). Migrations run at boot. |
 | §E Testing | Enforced | Unit tier at 100% per file. No integration test yet; `src/test/config.ts` is ready for the first. |
 | §F Security | Partial | Rules 22, 23 and 25 bind. Rule 24 is N/A: no Redis and no rate limiter (see below). No auth yet: every route is public, and only `/health` exists. |
-| §G Code quality | Enforced | Applies as written, Rules 43 (`src/lib/constants/`) and 49 (`check:comments`) included. |
+| §G Code quality | Enforced | Applies as written, Rules 43 (`src/lib/constants/`), 49 (`check:comments`) and 50 (English identifiers) included. |
 | §H Query & performance | Enforced | Binds from the first query; no query exists yet beyond the health check's `SELECT 1`. |
 | §I Runtime hardening | Enforced | Pool, CORS allowlist (empty by default: the iOS app needs none), request id, body limit, timeout and secure headers are in place. |
 
@@ -97,14 +97,14 @@ Enforcement: `.oxlintrc.json` overrides for `src/modules/*/**`.
 **Rule 6 — Handlers: ALLOWED / FORBIDDEN**
 
 ```ts
-// FORBIDDEN — handler reaching into the DB directly
+/** FORBIDDEN — handler reaching into the DB directly */
 import { db } from "../../db/client/index.ts";
 export const getThing: RouteHandler<typeof getThingRoute, AppEnv> = async (c) => {
-  const row = await db.select()... // no — this belongs in the repository, called by the service
+  const row = await db.select()... /** no — this belongs in the repository, called by the service */
   return c.json(row, 200);
 };
 
-// ALLOWED — thin glue, service owns the logic
+/** ALLOWED — thin glue, service owns the logic */
 import { getThingReport } from "./thing.service.ts";
 export const getThing: RouteHandler<typeof getThingRoute, AppEnv> = async (c) => {
   const report = await getThingReport();
@@ -121,12 +121,12 @@ No `Context` import, ever. Dependencies come in as default parameters so a test 
 them with a plain object — no container, no mocking library:
 
 ```ts
-// src/modules/meta/meta.service.ts
+/** src/modules/meta/meta.service.ts */
 export async function getHealthReport(
   deps: { repository?: MetaRepository } = {},
 ): Promise<HealthResponse> {
   const repository = deps.repository ?? metaRepository;
-  // ...
+  /** ... */
 }
 ```
 
@@ -143,10 +143,10 @@ pass a client to its factory, or steer it through those controls.
 **Rule 8 — Cross-module imports go through `index.ts` only**
 
 ```ts
-// FORBIDDEN — reaching into another module's internals
+/** FORBIDDEN — reaching into another module's internals */
 import { getHealthReport } from "../health/health.service.ts";
 
-// ALLOWED — the module's public barrel
+/** ALLOWED — the module's public barrel */
 import { healthRouter } from "../health/index.ts";
 ```
 
@@ -162,14 +162,14 @@ Enforcement: `.oxlintrc.json` — `src/lib/**` and `src/middlewares/**` forbid `
 **Rule 10 — The repository's shape**
 
 ```ts
-// src/modules/meta/meta.repository.ts
-export type MetaRepository = { ping(): Promise<void> };           // the port the service uses
+/** src/modules/meta/meta.repository.ts */
+export type MetaRepository = { ping(): Promise<void> };           /** the port the service uses */
 
-export function createMetaRepository(client: DbLike = db): MetaRepository {  // the Drizzle adapter
+export function createMetaRepository(client: DbLike = db): MetaRepository {  /** the Drizzle adapter */
   return { async ping() { await client.execute(sql`SELECT 1`); } };
 }
 
-export const metaRepository = createMetaRepository();             // the default instance
+export const metaRepository = createMetaRepository();             /** the default instance */
 ```
 
 - One method per question the service asks, named for the domain (`findActiveByOwner`, never a
@@ -204,13 +204,13 @@ is logs-only and must never contain IDs, stack traces, or internals that could h
 attacker.**
 
 ```ts
-// src/modules/health/health.errors.ts — an example
+/** src/modules/health/health.errors.ts — an example */
 export class HealthCheckFailedError extends ServiceUnavailableError {
   constructor(report: { database: string; redis: string }) {
     super(
-      "One or more dependencies are unhealthy.",       // userMessage -> client
-      `database=${report.database} redis=${report.redis}`, // internalDetail -> logs only
-      "META_HEALTH_UNHEALTHY",                          // stable machine code
+      "One or more dependencies are unhealthy.",       /** userMessage -> client */
+      `database=${report.database} redis=${report.redis}`, /** internalDetail -> logs only */
+      "META_HEALTH_UNHEALTHY",                          /** stable machine code */
     );
   }
 }
@@ -274,7 +274,7 @@ needs a live dependency is a `*.integration.test.ts` file gated by
 
 ```ts
 const testIntegration = shouldRunIntegrationTests() ? test : test.skip;
-testIntegration("persists a row", async () => { /* real db */ });
+testIntegration("persists a row", async () => { /** real db */ });
 ```
 
 Enforcement: the quality gate runs the unit tier only, with no `DATABASE_URL` and no database
@@ -345,11 +345,19 @@ literal independent, with the reason in `scripts/check/constants.config.json`. E
 of it.
 
 **Rule 49 — Comments are `/** … */`, never `//`.** A note above code, a file header, a trailing
-remark: all of them open with `/**`. The only `//` left is a directive a tool reads
+remark: all of them open with `/**`, in code and in the TypeScript, JavaScript and Swift examples
+of the Markdown this repo owns. The only `//` left is a directive a tool reads
 (`@ts-expect-error`, `oxlint-disable`, `v8 ignore`, a triple-slash reference). Files the kit manages
 keep its `/* … */` notes, so a sync never reports them as drift. Enforced by
 `bun run check:comments` (`scripts/check/comment-style.mjs`, which `--fix` rewrites). The owner's
 decision, 2026-10-16.
+
+**Rule 50 — Identifiers are English; Indonesian is only text a person reads.** Types, functions,
+variables, parameters, enum values, error codes, constants, route paths, table and column names,
+test names and file names are English. Kira speaks Indonesian only through the iOS app's String
+Catalog translations; the API returns codes and English `title`s, never Indonesian copy. A design
+name quoted from the canvas (`CAT-05 · Scan Struk`) may appear in docs and tickets, never as an
+identifier. Enforced by `agent-be-hono:reviewer`. The owner's decision, 2026-10-16.
 
 ---
 
@@ -364,7 +372,7 @@ list endpoint is paginated. **Keyset is the default** — it stays O(1) at any d
 `OFFSET`, cannot skip or duplicate rows when the underlying data changes mid-traversal:
 
 ```ts
-// keyset — needs a composite index on (created_at DESC, id DESC), see Rule 32
+/** keyset — needs a composite index on (created_at DESC, id DESC), see Rule 32 */
 const page = await db
   .select({ id: things.id, name: things.name, createdAt: things.createdAt })
   .from(things)
@@ -388,10 +396,10 @@ query builder's `with:` — Drizzle emits that as a single statement using `LEFT
 `json_agg`, not one query per parent row. Independent queries go in `Promise.all`:
 
 ```ts
-// FORBIDDEN — one round trip per id
+/** FORBIDDEN — one round trip per id */
 for (const id of ids) rows.push(await db.select().from(things).where(eq(things.id, id)));
 
-// ALLOWED — one round trip
+/** ALLOWED — one round trip */
 const rows = await db.select().from(things).where(inArray(things.id, ids));
 ```
 
@@ -513,8 +521,10 @@ export const thingResponseSchema = z
   .object({ id: z.string(), name: z.string() })
   .openapi("Thing");
 
-// Rule 29: list endpoints are keyset-paginated. Pair a cursor query schema
-// (ListThingsQuerySchema) with a { data, nextCursor } response schema.
+/**
+ * Rule 29: list endpoints are keyset-paginated. Pair a cursor query schema
+ * (ListThingsQuerySchema) with a { data, nextCursor } response schema.
+ */
 ```
 
 **Step 4 — Service** (`<name>.service.ts`) — business rules over the repository's port, taken as a
@@ -538,7 +548,7 @@ export const handleGetThing: RouteHandler<typeof getThingRoute, AppEnv> = async 
   const { id } = c.req.valid("param");
   const thing = await getThing(id);
   return c.json(thing, 200);
-  // No try/catch — ThingNotFoundError propagates to app.onError.
+  /** No try/catch — ThingNotFoundError propagates to app.onError. */
 };
 ```
 
@@ -557,7 +567,7 @@ export const getThingRoute = createRoute({
   request: { params: z.object({ id: z.string() }) },
   responses: {
     200: { content: { "application/json": { schema: thingResponseSchema } }, description: "OK" },
-    ...errorResponses(404, 422), // Rule 13: every status the service can throw
+    ...errorResponses(404, 422), /** Rule 13: every status the service can throw */
   },
 });
 

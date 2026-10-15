@@ -37,7 +37,7 @@ export const getThingRoute = createRoute({
   request: { params: z.object({ id: z.string() }) },
   responses: {
     200: { content: { "application/json": { schema: thingResponseSchema } }, description: "OK" },
-    ...errorResponses(404, 422), // src/lib/errors/problem.ts
+    ...errorResponses(404, 422), /** src/lib/errors/problem.ts */
   },
 });
 ```
@@ -56,7 +56,7 @@ different library's typing gap that doesn't apply here.
 ```ts
 export const getThing: RouteHandler<typeof getThingRoute, AppEnv> = async (c) => {
   const { id } = c.req.valid("param");
-  const thing = await getThingById(id); // service call
+  const thing = await getThingById(id); /** service call */
   return c.json(thing, 200);
 };
 ```
