@@ -18,7 +18,7 @@ In `getHooks`, the user slot is pushed before every plugin's after-hook:
 ```js
 const afterHookHandler = authContext.options.hooks?.after;
 if (afterHookHandler) afterHooks.push({ matcher: () => true, handler: afterHookHandler });
-/* … */
+/** … */
 if (pluginAfterHooks.length) afterHooks.push(...pluginAfterHooks);
 ```
 
@@ -48,9 +48,9 @@ override:
 
 ```ts
 plugins: [
-  /* … */
+  /** … */
   twoFactor({ issuer: '<app-name>' }),
-  signInGuardPlugin(), // LAST — its APIError is the last thing written to `context.returned`
+  signInGuardPlugin(), /** LAST — its APIError is the last thing written to `context.returned` */
 ],
 ```
 
