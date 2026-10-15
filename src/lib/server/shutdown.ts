@@ -42,7 +42,7 @@ export function createShutdown(
 ) {
   let started = false;
 
-  /* One after another, not concurrently: the server stops taking requests before the pool its
+  /** One after another, not concurrently: the server stops taking requests before the pool its
      handlers use is closed. */
   async function runInOrder([step, ...rest]: readonly ShutdownStep[]): Promise<void> {
     if (!step) return;
@@ -59,7 +59,7 @@ export function createShutdown(
     started = true;
     logger.info({ reason, code }, 'Shutting down');
 
-    /* Unref'd, so the timer alone never keeps a finished process alive. */
+    /** Unref'd, so the timer alone never keeps a finished process alive. */
     setTimer(() => {
       logger.error({ reason, forceExitMs }, 'Shutdown did not finish in time, forcing exit');
       exit(FORCED_EXIT_CODE);
