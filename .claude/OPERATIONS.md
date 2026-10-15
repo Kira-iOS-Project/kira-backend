@@ -216,12 +216,15 @@ restricted access mode.
 
 ## Deploys
 
-Deploy target: Dokploy at `${KIRA_DOKPLOY_URL}`, project **Kira**, environment
+`KIRA_DOKPLOY_URL` (the Dokploy panel's base URL) and `KIRA_DOKPLOY_API_TOKEN` are exported by your
+shell profile, never committed; `kira-server` is the SSH alias in `~/.ssh/config`.
+
+Deploy target: Dokploy at `$KIRA_DOKPLOY_URL`, project **Kira**, environment
 `production`, application `Back-End` (`$KIRA_DOKPLOY_APP_NAME`, id `$KIRA_DOKPLOY_APP_ID`),
 `https://api-kira.serenitycode.tech`. Dokploy builds the `Dockerfile` from the `prod` branch of
 `git@github.com:Kira-iOS-Project/kira-backend.git` with the read-only deploy key
 `Back-End-Kira-Deploy-Key` (a read-only deploy key on the repository; the organization allows deploy keys). The `/agent-core:promote` and `/agent-deploy:promote-deploy` commands
-read the adapter from here (`$DOKPLOY` is `${KIRA_DOKPLOY_URL}/api`, and every call sends
+read the adapter from here (`$DOKPLOY` is `$KIRA_DOKPLOY_URL/api`, and every call sends
 `-H "x-api-key: $KIRA_DOKPLOY_API_TOKEN"`):
 
 - `read-env <file>`: `curl -fsS -H "x-api-key: $KIRA_DOKPLOY_API_TOKEN"
