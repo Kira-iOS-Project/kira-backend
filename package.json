@@ -11,7 +11,7 @@
     "start": "bun dist/index.js",
     "test:integration": "RUN_INTEGRATION_TESTS=1 bun test src",
     "env:init": "test -f .env.development || cp .env.development.example .env.development",
-    "tunnel": "ssh -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -L 5437:127.0.0.1:5437 -L 5436:127.0.0.1:5436 codesheesh-server",
+    "tunnel": "ssh -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -L 5437:127.0.0.1:5437 -L 5436:127.0.0.1:5436 kira-server",
     "check:audit": "bun scripts/check/audit.ts",
     "prepare": "husky",
     "unlock": "bash scripts/ops/unlock.sh",

@@ -5,8 +5,8 @@
       "command": "npx",
       "args": ["-y", "@dokploy/mcp@0.30.6"],
       "env": {
-        "DOKPLOY_URL": "https://dokploy.codesheesh.com",
-        "DOKPLOY_API_KEY": "${CODESHEESH_DOKPLOY_API_TOKEN}",
+        "DOKPLOY_URL": "${KIRA_DOKPLOY_URL}",
+        "DOKPLOY_API_KEY": "${KIRA_DOKPLOY_API_TOKEN}",
         "DOKPLOY_REDACT_ENV": "true",
         "DOKPLOY_DISABLED_TAGS": "stripe,sso,scim,auditLog"
       }

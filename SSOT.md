@@ -91,7 +91,7 @@ code is listed once in `src/lib/errors/error-codes.ts`; the spec publishes them 
 - `src/db/client/migrate.ts` applies pending migrations at every boot, over a single connection of
   its own with no statement timeout; a failure stops the container before it serves anything.
 - Daily backup of `kira` to R2 at 17:00 UTC (00:00 WIB), the latest 7 kept
-  (`kira-db-ugfcxh/kira/` in the `R2-Backups` destination).
+  (`$KIRA_DB_PROD_APP/kira/` in the R2 backup destination).
 
 ## Testing
 
