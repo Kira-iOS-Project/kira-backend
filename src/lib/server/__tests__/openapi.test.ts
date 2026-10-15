@@ -3,7 +3,7 @@ import packageJson from '../../../../package.json' with { type: 'json' };
 import { createRouter } from '../factory.ts';
 import { mountApiDocs } from '../openapi.ts';
 
-/* A fresh router per test rather than the shared `app`: mounting is a one-way mutation, and the
+/** A fresh router per test rather than the shared `app`: mounting is a one-way mutation, and the
    switch is what is under test. */
 describe('mountApiDocs', () => {
   test('mounts nothing when docs are off', async () => {

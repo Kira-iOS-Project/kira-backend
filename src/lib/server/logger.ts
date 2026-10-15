@@ -12,7 +12,7 @@ import { SERVICE_NAME } from '../constants/service.ts';
 
 const DEFAULT_LEVEL = { development: 'debug', production: 'info', test: 'silent' } as const;
 
-/* Spread rather than `transport: cond ? {...} : undefined`: under `exactOptionalPropertyTypes` an
+/** Spread rather than `transport: cond ? {...} : undefined`: under `exactOptionalPropertyTypes` an
    explicit `undefined` is not an absent key, and Pino's options do not accept it. */
 const pretty =
   env.NODE_ENV === 'development'
