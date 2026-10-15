@@ -47,18 +47,22 @@ Caching belongs in the service, never in middleware — middleware cannot know w
 safe to serve stale.
 
 ```ts
-// Key: <app>:<entity>:<version>:<id>. The version segment lets a shape change
-// invalidate every old entry at once instead of hunting them down. The prefix is
-// a shared identifier, so it lives in src/lib/constants/ (AGENTS.md Rule 43).
-const cacheKey = `${CACHE_KEYS.thing}:${id}`; // "app:thing:v1"
+/**
+ * Key: <app>:<entity>:<version>:<id>. The version segment lets a shape change
+ * invalidate every old entry at once instead of hunting them down. The prefix is
+ * a shared identifier, so it lives in src/lib/constants/ (AGENTS.md Rule 43).
+ */
+const cacheKey = `${CACHE_KEYS.thing}:${id}`; /** "app:thing:v1" */
 
 const cached = await redis.get(cacheKey);
-// A cached value is data from outside this process: parse it, never cast it (Rule 42).
+/** A cached value is data from outside this process: parse it, never cast it (Rule 42). */
 if (cached) return thingSchema.parse(JSON.parse(cached));
 
 const thing = await findThingById(id);
-// Always set a TTL. A cache entry with no expiry is a memory leak with extra
-// steps, and it turns a schema change into a permanent wrong answer.
+/**
+ * Always set a TTL. A cache entry with no expiry is a memory leak with extra
+ * steps, and it turns a schema change into a permanent wrong answer.
+ */
 await redis.set(cacheKey, JSON.stringify(thing), "EX", 300);
 return thing;
 ```

@@ -32,7 +32,7 @@ Two tiers, both on Bun's built-in runner (`bunfig.toml` scopes discovery to `src
   producer that cannot enqueue (`.claude/anti-patterns/queue-job-id-cannot-contain-colon.md`).
 
 ```ts
-// src/modules/health/__tests__/helpers.ts — an example
+/** src/modules/health/__tests__/helpers.ts — an example */
 export function createDbMock(overrides: Partial<DbLike> = {}): DbLike {
   return { execute: async () => undefined, ...overrides };
 }
@@ -49,7 +49,7 @@ import { test } from "bun:test";
 import { shouldRunIntegrationTests } from "../../test/config.ts";
 
 const testIntegration = shouldRunIntegrationTests() ? test : test.skip;
-testIntegration("does the real thing against Postgres", async () => { /* ... */ });
+testIntegration("does the real thing against Postgres", async () => { /** ... */ });
 ```
 
 - Requires `docker compose up -d` locally (Postgres 17 + Redis 7), with ports published on
