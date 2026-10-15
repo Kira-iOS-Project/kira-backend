@@ -152,7 +152,7 @@ session, and confirm the handshake with `claude mcp list`.
 | `linear`            | hosted HTTP, `https://mcp.linear.app/mcp`                               | OAuth: run `/mcp` once in a session to sign in    |
 
 The GitHub server reads `GITHUB_PERSONAL_ACCESS_TOKEN_KIRA`: a fine-grained token limited to the
-`Kira-Project` organization's repositories. The database servers read `KIRA_DB_DEV_URI` and
+`Kira-iOS-Project` organization's repositories. The database servers read `KIRA_DB_DEV_URI` and
 `KIRA_DB_PROD_URI` from `~/.config/kira/secrets.zsh`, which `~/.zshrc` sources.
 
 **Rarely used servers load on demand.** Every configured server adds its tool list to each
@@ -188,7 +188,7 @@ restricted access mode.
 Deploy target: Dokploy at `${KIRA_DOKPLOY_URL}`, project **Kira**, environment
 `production`, application `Back-End` (`$KIRA_DOKPLOY_APP_NAME`, id `$KIRA_DOKPLOY_APP_ID`),
 `https://api-kira.serenitycode.tech`. Dokploy builds the `Dockerfile` from the `prod` branch of
-`git@github.com:Kira-Project/kira-backend.git` with the read-only deploy key
+`git@github.com:Kira-iOS-Project/kira-backend.git` with the read-only deploy key
 `Back-End-Kira-Deploy-Key`. The `/agent-core:promote` and `/agent-deploy:promote-deploy` commands
 read the adapter from here (`$DOKPLOY` is `${KIRA_DOKPLOY_URL}/api`, and every call sends
 `-H "x-api-key: $KIRA_DOKPLOY_API_TOKEN"`):
@@ -343,8 +343,16 @@ is down:
 
 ## Edge: client IP
 
-`api-kira.serenitycode.tech` is not behind a CDN: its DNS (the hosting provider) points straight at the VPS,
-and Traefik sets `X-Forwarded-For` and `X-Real-Ip` from the real peer. A rate limiter keys on what
-Traefik sets, never on a client-supplied header, and the `cloudflare-only` middleware the
-`serenitycode.tech` hosts carry must never be added to a host Cloudflare does not proxy: it would refuse
-every visitor.
+`api-kira.serenitycode.tech` is proxied by Cloudflare (zone `serenitycode.tech`, SSL mode Full), and
+its Dokploy domain carries the `cloudflare-only` middleware (the ipAllowList of Cloudflare's ranges in
+`/etc/dokploy/traefik/dynamic/middlewares.yml`), so the origin answers nothing that skipped
+Cloudflare. Prove it after any domain change:
+`curl -sk -o /dev/null -w '%{http_code}' --resolve api-kira.serenitycode.tech:443:$KIRA_VPS_IP https://api-kira.serenitycode.tech/health`
+must print `403`.
+
+- Traefik sees a Cloudflare address as the peer. A rate limiter keys on `CF-Connecting-IP`, which
+  only Cloudflare can set while the origin stays locked to it; never on a header a client can send.
+- `/docs` and `/openapi.json` are off in production (`DOCS_ENABLED=false`). Before turning them on,
+  add the host to the `API Docs` Access application, as the other `api*.` hosts are.
+- A new whole-host Access application on this host needs its ACME bypass in the same change, or the
+  origin certificate stops renewing (see the shared VPS's own operations notes).
