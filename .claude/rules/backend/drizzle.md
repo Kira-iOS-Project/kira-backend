@@ -193,8 +193,8 @@ do not prepare admin or migration-style queries.
 
 ## Transactions (Rule 35)
 
-Transaction boundaries live in the repository — a service needing one is itself a Rule 4
-escalation trigger for adding `<module>.repository.ts`:
+Transaction boundaries live in the repository, inside one of its methods; a service never opens
+one (AGENTS.md Rules 4 and 10):
 
 ```ts
 await db.transaction(async (tx) => {
