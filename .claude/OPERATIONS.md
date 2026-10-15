@@ -190,7 +190,7 @@ The GitHub server reads `GITHUB_PERSONAL_ACCESS_TOKEN_KIRA`: a fine-grained toke
 session. A server you reach for once a month lives in `.claude/mcp/<name>.json` instead, loaded for
 one session with `claude --mcp-config .claude/mcp/<name>.json`. `.claude/mcp/dokploy.json` is the
 filled one here (`@dokploy/mcp@0.30.6`, env values redacted in its output, the Cloud-only tool
-groups off); it reads `CODESHEESH_DOKPLOY_API_TOKEN`. Three examples ship:
+groups off); it reads `KIRA_DOKPLOY_API_TOKEN`. Three examples ship:
 `deploy-platform.example.json`, `vps-provider.example.json` and `cloudflare.example.json` (a hosted
 server; it reads `CLOUDFLARE_API_TOKEN` from your shell). Copy one to `<name>.json`, fill the
 placeholders, and pin the package to the exact version you verified. The pin check skips the
@@ -216,22 +216,25 @@ restricted access mode.
 
 ## Deploys
 
-Deploy target: Dokploy at `https://dokploy.codesheesh.com`, project **Kira**, environment
+`KIRA_DOKPLOY_URL` (the Dokploy panel's base URL) and `KIRA_DOKPLOY_API_TOKEN` are exported by your
+shell profile, never committed; `kira-server` is the SSH alias in `~/.ssh/config`.
+
+Deploy target: Dokploy at `$KIRA_DOKPLOY_URL`, project **Kira**, environment
 `production`, application `Back-End` (`kira-backend-fsnuxe`, id `Ze9r73epBM6X0J-3mLWcF`),
 `https://api-kira.serenitycode.tech`. Dokploy builds the `Dockerfile` from the `prod` branch of
 `git@github.com:Kira-iOS-Project/kira-backend.git` with the read-only deploy key
 `Back-End-Kira-Deploy-Key` (a read-only deploy key on the repository; the organization allows deploy keys). The `/agent-core:promote` and `/agent-deploy:promote-deploy` commands
-read the adapter from here (`$DOKPLOY` is `https://dokploy.codesheesh.com/api`, and every call sends
-`-H "x-api-key: $CODESHEESH_DOKPLOY_API_TOKEN"`):
+read the adapter from here (`$DOKPLOY` is `$KIRA_DOKPLOY_URL/api`, and every call sends
+`-H "x-api-key: $KIRA_DOKPLOY_API_TOKEN"`):
 
-- `read-env <file>`: `curl -fsS -H "x-api-key: $CODESHEESH_DOKPLOY_API_TOKEN"
+- `read-env <file>`: `curl -fsS -H "x-api-key: $KIRA_DOKPLOY_API_TOKEN"
   "$DOKPLOY/application.one?applicationId=Ze9r73epBM6X0J-3mLWcF" | jq -r .env > <file>`. Prints nothing.
-- `latest`: `curl -fsS -H "x-api-key: $CODESHEESH_DOKPLOY_API_TOKEN"
+- `latest`: `curl -fsS -H "x-api-key: $KIRA_DOKPLOY_API_TOKEN"
   "$DOKPLOY/deployment.all?applicationId=Ze9r73epBM6X0J-3mLWcF" | jq -r 'sort_by(.createdAt) | last |
   "\(.deploymentId) \(.status) \(.createdAt)"'`.
 - `trigger`: `bash scripts/deploy/trigger-deploy.sh refs/heads/prod`, with `DEPLOY_WEBHOOK_URL`
   exported in the user's own terminal (the same secret the deploy workflow uses).
-- `backup`: `curl -fsS -X POST -H "x-api-key: $CODESHEESH_DOKPLOY_API_TOKEN" -H "content-type:
+- `backup`: `curl -fsS -X POST -H "x-api-key: $KIRA_DOKPLOY_API_TOKEN" -H "content-type:
   application/json" -d '{"backupId":"HL78fMR8Nus2kp4PCxL8c"}' "$DOKPLOY/backup.manualBackupPostgres"`;
   the dump lands in the `R2-Backups` destination under `kira-db-ugfcxh/kira/`.
 - Migrations: folder `src/db/migrations`, applied by the container itself at every boot
@@ -352,7 +355,7 @@ release other than the one CI pins still scans, with a warning. CI scans the pus
 ## Server access
 
 The VPS is Hostinger `srv1232846` (Ubuntu 24.04, `72.62.122.190`), shared with the owner's other
-projects. The SSH alias `codesheesh-server` reaches it through Cloudflare Tunnel and Access
+projects. The SSH alias `kira-server` reaches it through Cloudflare Tunnel and Access
 (`ssh.serenitycode.tech`); public port 22 is closed. The first connection of a day opens a browser
 for the Access login. `bun run tunnel` forwards Kira's two database ports over that alias.
 
