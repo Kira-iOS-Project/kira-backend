@@ -1,0 +1,7 @@
+[
+  {
+    "name": "service identity",
+    "home": "src/lib/constants/service.ts",
+    "allow": []
+  }
+]
