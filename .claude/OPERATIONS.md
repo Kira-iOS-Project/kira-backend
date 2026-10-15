@@ -216,8 +216,10 @@ restricted access mode.
 
 ## Deploys
 
-`KIRA_DOKPLOY_URL` (the Dokploy panel's base URL) and `KIRA_DOKPLOY_API_TOKEN` are exported by your
-shell profile, never committed; `kira-server` is the SSH alias in `~/.ssh/config`.
+`KIRA_DOKPLOY_URL` (the Dokploy panel's base URL), `KIRA_DOKPLOY_API_TOKEN`, the ids below
+(`KIRA_DOKPLOY_APP_ID`, `KIRA_DOKPLOY_APP_NAME`, `KIRA_DOKPLOY_BACKUP_ID`, `KIRA_DB_{DEV,PROD}_{APP,ID}`)
+and `KIRA_VPS_IP` are exported by your shell profile, never committed; `kira-server` is the SSH
+alias in `~/.ssh/config`.
 
 Deploy target: Dokploy at `$KIRA_DOKPLOY_URL`, project **Kira**, environment
 `production`, application `Back-End` (`$KIRA_DOKPLOY_APP_NAME`, id `$KIRA_DOKPLOY_APP_ID`),
@@ -235,7 +237,7 @@ read the adapter from here (`$DOKPLOY` is `$KIRA_DOKPLOY_URL/api`, and every cal
 - `trigger`: `bash scripts/deploy/trigger-deploy.sh refs/heads/prod`, with `DEPLOY_WEBHOOK_URL`
   exported in the user's own terminal (the same secret the deploy workflow uses).
 - `backup`: `curl -fsS -X POST -H "x-api-key: $KIRA_DOKPLOY_API_TOKEN" -H "content-type:
-  application/json" -d '{"backupId":"$KIRA_DOKPLOY_BACKUP_ID"}' "$DOKPLOY/backup.manualBackupPostgres"`;
+  application/json" -d "{\"backupId\":\"$KIRA_DOKPLOY_BACKUP_ID\"}" "$DOKPLOY/backup.manualBackupPostgres"`;
   the dump lands in the R2 backup destination under `$KIRA_DB_PROD_APP/kira/`.
 - Migrations: folder `src/db/migrations`, applied by the container itself at every boot
   (`src/index.ts`); checked with `SELECT id, hash, created_at FROM drizzle.__drizzle_migrations
@@ -354,9 +356,9 @@ release other than the one CI pins still scans, with a warning. CI scans the pus
 
 ## Server access
 
-The VPS is the VPS (Ubuntu 24.04, `$KIRA_VPS_IP`), shared with the owner's other
-projects. The SSH alias `kira-server` reaches it through Cloudflare Tunnel and Access
-(`<access-ssh-host>`); public port 22 is closed. The first connection of a day opens a browser
+The VPS (Ubuntu 24.04, `$KIRA_VPS_IP`) is shared with the owner's other projects. The SSH alias
+`kira-server` reaches it through Cloudflare Tunnel and Access (its hostname lives in
+`~/.ssh/config`); public port 22 is closed. The first connection of a day opens a browser
 for the Access login. `bun run tunnel` forwards Kira's two database ports over that alias.
 
 Reach a server through one path you can prove is guarded, and keep a break-glass path for when it
@@ -381,7 +383,7 @@ is down:
 its Dokploy domain carries the `cloudflare-only` middleware (the ipAllowList of Cloudflare's ranges in
 `/etc/dokploy/traefik/dynamic/middlewares.yml`), so the origin answers nothing that skipped
 Cloudflare. Prove it after any domain change:
-`curl -sk -o /dev/null -w '%{http_code}' --resolve api-kira.serenitycode.tech:443:$KIRA_VPS_IP https://api-kira.serenitycode.tech/health`
+`curl -sk -o /dev/null -w '%{http_code}' --resolve "api-kira.serenitycode.tech:443:$KIRA_VPS_IP" https://api-kira.serenitycode.tech/health`
 must print `403`.
 
 - Traefik sees a Cloudflare address as the peer. A rate limiter keys on `CF-Connecting-IP`, which
