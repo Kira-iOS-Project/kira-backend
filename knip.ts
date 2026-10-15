@@ -11,7 +11,7 @@ const config: KnipConfig = {
        no import names. */
     'scripts/check/*.ts',
     /* The production bundle, run by path from package.json's `build` script. */
-    'scripts/build/*.ts',
+    'scripts/bundle/*.ts',
     /* The integration tier's gate (AGENTS.md Rule 20). Only this file may read the integration
        switch past the process.env lint rule, so it stays even while no `*.integration.test.ts`
        imports it yet: `bun run test:integration` is that tier. */
