@@ -88,27 +88,34 @@ removed.
 
 ## GitHub organization
 
-Both code repositories live in `Kira-iOS-Project`, on GitHub's **free** plan, beside `.github`
-(public: the organization's profile README and logo; secret scanning and push protection on) and
-`.github-private` (the profile README members see). The avatar is `kira-ikon-1024.png` from the
-Kira design system. What the plan gives and withholds, as set on 2026-10-15:
+The code repositories live in `Kira-iOS-Project`, on GitHub's **free** plan, beside `.github`
+(public: the organization's profile README and logo) and `.github-private` (the profile README
+members see). The avatar is `kira-ikon-1024.png` from the Kira design system. As set on 2026-10-16:
 
-- **Members**: base permission *read*; only owners create repositories; forks of private
-  repositories are off. Turn on *Require two-factor authentication* (Settings → Authentication
-  security); the API cannot.
+- **Visibility**: `kira-backend` and `kira-mobile-ios` are **public**, because the code is a
+  submission. The default branch is `prod`, which strip-ai keeps free of the agent configuration;
+  `dev` and its history stay visible, by the owner's decision. No license file: all rights reserved.
+- **Pull requests still target `dev`**: `/agent-core:create-pr` passes `--base dev`; by hand, pass
+  it too. `scripts/ops/pr-ready.sh` judges heads against the default branch unless told the flow:
+  run it with `PR_READY_FLOW="prod=dev"`.
+- **Members**: base permission *read*; only owners create repositories. Turn on *Require two-factor
+  authentication* (Settings → Authentication security); the API cannot.
 - **Actions**, at the organization and on each repository: only GitHub's own actions and
   `adhibuchori/*`, `oven-sh/setup-bun`, `astral-sh/setup-uv`, `zizmorcore/zizmor-action` and
   `google-github-actions/auth` run; the `GITHUB_TOKEN` is read-only unless a job asks for more;
-  Actions never approves a pull request; workflows from forks do not run; logs and artifacts are kept
-  30 days. A new third-party action is refused until its pattern is added in both places.
-- **Repositories**: private, default branch `dev`, merge commits only (no squash, no rebase), no
-  wiki, projects or issues (tickets live in Linear).
-- **Not on the free plan for private repositories**: branch protection and rulesets, environments,
-  secret scanning and push protection, code scanning. So `dev` and `prod` are held by the kit's
-  hooks (Claude never pushes to them) and by working through pull requests; secrets are repository
-  secrets; gitleaks in the gates is the secret scan.
-- **Minutes**: 2,000 included per month for private repositories, macOS billed at 10×. With no
-  payment method the organization is never charged: jobs stop when the minutes run out.
+  Actions never approves a pull request; a fork's pull request runs workflows only after an owner
+  approves it (every external contributor); logs and artifacts are kept 30 days. A new third-party
+  action is refused until its pattern is added in both places.
+- **Repositories**: merge commits only (no squash, no rebase), no wiki, projects or issues (tickets
+  live in Linear).
+- **Protection**: secret scanning with push protection; Dependabot alerts, with security updates off
+  (they would open pull requests against the default branch, `prod`); CodeQL and dependency review
+  on every pull request. The ruleset *dev and prod* forbids deleting or force-pushing either branch.
+  It has no PR-only or required-check rule: a repository ruleset cannot exempt GitHub Actions, and
+  strip-ai pushes to `prod` and back-merges into `dev`. So the kit's hooks (Claude never pushes to
+  them) and working through pull requests still hold both branches.
+- **Minutes**: GitHub's standard runners, macOS included, are free for public repositories. Larger
+  runners (`-xlarge`) are paid on every plan: never use one.
 
 ## GitHub and CI
 
