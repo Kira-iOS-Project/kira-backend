@@ -19,3 +19,10 @@ export const APPLICATION_STATUS = {
   accepted: 'accepted',
   withdrawn: 'withdrawn',
 } as const;
+
+/** Why Ajukan Beasiswa is closed (Syarat on BeasiswaKira). */
+export const INELIGIBLE_REASON = {
+  hasPaidPlan: 'has_paid_plan',
+  hasScholarship: 'has_scholarship',
+  hasOpenApplication: 'has_open_application',
+} as const;

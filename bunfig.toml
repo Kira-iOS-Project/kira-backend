@@ -50,6 +50,7 @@ coveragePathIgnorePatterns = [
   # in measured files. List each client file by path as it is added.
   "src/lib/auth/auth.ts",
   "src/lib/redis/redis.ts",
+  "src/lib/email/resend.ts",
 
   # Type-only declarations: erased at runtime, so no test can load them.
   "src/types/**",

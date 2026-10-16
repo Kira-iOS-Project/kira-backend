@@ -10,7 +10,9 @@ import { client } from './db/client/index.ts';
 import { runMigrations } from './db/client/migrate.ts';
 import { logger } from './lib/server/logger.ts';
 import { mountApiDocs } from './lib/server/openapi.ts';
+import { createScheduler } from './lib/server/scheduler.ts';
 import { createShutdown } from './lib/server/shutdown.ts';
+import { scheduledJobs } from './modules/jobs/index.ts';
 
 if (env.DATABASE_URL === undefined) {
   logger.fatal('DATABASE_URL is not set: the server cannot start without its database');
@@ -26,8 +28,14 @@ mountApiDocs(app, env.DOCS_ENABLED);
 const server = Bun.serve({ port: env.PORT, fetch: app.fetch });
 logger.info({ port: server.port, docs: env.DOCS_ENABLED }, 'Kira API listening');
 
+/** Renewal reminders, subscription periods, Beasiswa Kira reviews and code cleanup, hourly. */
+const scheduler = createScheduler(scheduledJobs, { logger });
+if (env.JOBS_ENABLED) scheduler.start();
+logger.info({ jobs: env.JOBS_ENABLED }, 'Scheduler checked');
+
 const requestShutdown = createShutdown(
   [
+    { name: 'scheduler', run: () => scheduler.stop() },
     { name: 'http', run: () => server.stop(true) },
     { name: 'postgres', run: () => client.end({ timeout: 5 }) },
   ],

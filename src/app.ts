@@ -16,8 +16,10 @@ import { createRouter } from './lib/server/factory.ts';
 import { requestLogger } from './middlewares/logger.middleware.ts';
 import { accountRouter } from './modules/account/index.ts';
 import { authRouter } from './modules/auth/index.ts';
+import { billingRouter } from './modules/billing/index.ts';
 import { homeRouter } from './modules/home/index.ts';
 import { metaApp } from './modules/meta/index.ts';
+import { scholarshipRouter } from './modules/scholarship/index.ts';
 import { healthCheckRouter, scoreRouter } from './modules/score/index.ts';
 
 export const app = createRouter();
@@ -67,6 +69,8 @@ app.route('/api/me', accountRouter);
 app.route('/api/health-check', healthCheckRouter);
 app.route('/api/score', scoreRouter);
 app.route('/api/home', homeRouter);
+app.route('/api', billingRouter);
+app.route('/api', scholarshipRouter);
 
 /** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
