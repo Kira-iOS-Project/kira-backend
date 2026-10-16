@@ -6,7 +6,7 @@ import {
   TRANSACTION_TYPE,
 } from '../../../lib/constants/money.ts';
 import type { MessageRow } from '../../../lib/chat/chat-message.ts';
-import type { CommitInput } from '../draft-batch.repository.ts';
+import type { CommitPlan } from '../draft-batch.repository.ts';
 import { commitDrafts, remainingMoney, UNDO_WINDOW_MS, undoBatch } from '../draft-batch.service.ts';
 import {
   BATCH_ID,
@@ -51,7 +51,7 @@ describe('remainingMoney', () => {
 
 describe('commitDrafts', () => {
   test('saves the drafts as one batch and answers with the remaining money', async () => {
-    const commits: CommitInput[] = [];
+    const commits: CommitPlan[] = [];
     const message = createDraftsMessageMock({
       payload: {
         drafts: [
@@ -73,7 +73,9 @@ describe('commitDrafts', () => {
         netMonthlyIncome: 6_000_000,
       }),
       periodTotals: async () => ({ income: 1_000_000, spent: 100_000 }),
-      commit: async (input) => {
+      commit: async (_input, plan) => {
+        const input = await plan(message.payload);
+        if (!input) return null;
         commits.push(input);
         return {
           message: { ...message, payload: input.payload },
@@ -106,8 +108,9 @@ describe('commitDrafts', () => {
         message: createDraftsMessageMock(),
         sourceKind: MESSAGE_KIND.personReceipt,
       }),
-      commit: async (input) => {
-        sources.push(String(input.transactions[0]?.source));
+      commit: async (_input, plan) => {
+        const input = await plan(createDraftsMessageMock().payload);
+        sources.push(String(input?.transactions[0]?.source));
         return { message: createDraftsMessageMock(), remaining: createDraftsMessageMock() };
       },
     });
@@ -144,6 +147,14 @@ describe('commitDrafts', () => {
       statusCode: 409,
     });
     await expect(run(found())).rejects.toMatchObject({ code: 'CHAT_DRAFTS_NOT_PENDING' });
+    const settledMeanwhile = createDraftBatchRepositoryMock({
+      findDraftsMessage: async () => ({ message: createDraftsMessageMock(), sourceKind: null }),
+      commit: async (_input, plan) =>
+        (await plan({ drafts: [createDraftMock()], draftStatus: DRAFT_STATUS.discarded }))
+          ? { message: createDraftsMessageMock(), remaining: createDraftsMessageMock() }
+          : null,
+    });
+    await expect(run(settledMeanwhile)).rejects.toMatchObject({ code: 'CHAT_DRAFTS_NOT_PENDING' });
   });
 });
 

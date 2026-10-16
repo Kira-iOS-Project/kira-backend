@@ -25,14 +25,17 @@ type BudgetProfile = { payday: Payday; netMonthlyIncome: number | null };
 
 export type NewTransaction = typeof transactions.$inferInsert & { id: string };
 
-export type CommitInput = {
-  userId: string;
-  messageId: string;
+/** What a save writes: the settled reply, its transactions and the remaining-money message. */
+export type CommitPlan = {
   payload: MessagePayload;
   transactions: NewTransaction[];
   remainingPayload: MessagePayload;
-  now: Date;
 };
+
+export type CommitInput = { userId: string; messageId: string; now: Date };
+
+/** Builds the save from the reply's payload as locked, or null when there is nothing to save. */
+export type PlanCommit = (locked: MessagePayload) => Promise<CommitPlan | null>;
 
 export type DraftBatchRepository = {
   findDraftsMessage(
@@ -42,8 +45,15 @@ export type DraftBatchRepository = {
   findBudgetProfile(userId: string): Promise<BudgetProfile>;
   /** Income and spending recorded in [from, to). */
   periodTotals(userId: string, from: Date, to: Date): Promise<{ income: number; spent: number }>;
-  /** Null when the drafts stopped being pending before the save landed. */
-  commit(input: CommitInput): Promise<{ message: MessageRow; remaining: MessageRow } | null>;
+  /**
+   * Locks the reply (FOR UPDATE), hands its current payload to `plan`, and writes what the plan
+   * returns, all in one transaction, so an edit of the drafts can never land in between. Null when
+   * the reply is gone or the plan has nothing to save.
+   */
+  commit(
+    input: CommitInput,
+    plan: PlanCommit,
+  ): Promise<{ message: MessageRow; remaining: MessageRow } | null>;
   findBatch(userId: string, batchId: string): Promise<MessageRow | null>;
   /** Puts the drafts back, deleting the batch's transactions and its remaining message. */
   undo(input: {
@@ -121,11 +131,19 @@ export function createDraftBatchRepository(client: PostgresJsDatabase = db): Dra
       return { income: row?.income ?? 0, spent: row?.spent ?? 0 };
     },
 
-    commit(input) {
+    commit(input, plan) {
       return client.transaction(async (tx) => {
+        const [locked] = await tx
+          .select({ payload: chatMessages.payload })
+          .from(chatMessages)
+          .where(and(eq(chatMessages.id, input.messageId), eq(chatMessages.userId, input.userId)))
+          .limit(1)
+          .for('update');
+        const planned = locked ? await plan(locked.payload) : null;
+        if (!planned) return null;
         const [message] = await tx
           .update(chatMessages)
-          .set({ payload: input.payload })
+          .set({ payload: planned.payload })
           .where(
             and(
               eq(chatMessages.id, input.messageId),
@@ -135,14 +153,14 @@ export function createDraftBatchRepository(client: PostgresJsDatabase = db): Dra
           )
           .returning(messageColumns);
         if (!message) return null;
-        await tx.insert(transactions).values(input.transactions);
+        await tx.insert(transactions).values(planned.transactions);
         const [remaining] = await tx
           .insert(chatMessages)
           .values({
             userId: input.userId,
             sender: MESSAGE_SENDER.kira,
             kind: MESSAGE_KIND.remaining,
-            payload: input.remainingPayload,
+            payload: planned.remainingPayload,
             replyToId: input.messageId,
             createdAt: input.now,
           })

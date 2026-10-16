@@ -65,44 +65,50 @@ describe('createDraftBatchRepository', () => {
     source: TRANSACTION_SOURCE.chat,
   };
 
-  const commitInput = {
-    userId: 'user-1',
-    messageId: MESSAGE_ID,
+  const commitInput = { userId: 'user-1', messageId: MESSAGE_ID, now: NOW };
+  const plan = {
     payload: { draftStatus: DRAFT_STATUS.committed },
-    transactions: [],
+    transactions: [TRANSACTION],
     remainingPayload: { batchId: BATCH_ID },
-    now: NOW,
   };
+  const locked = [{ payload: message.payload }];
 
-  test('commits the drafts, the transactions and the remaining message together', async () => {
+  test('locks the reply, plans from its payload, and saves everything together', async () => {
     const remaining = { ...row, kind: MESSAGE_KIND.remaining, sender: MESSAGE_SENDER.kira };
-    const fake = createFakeDb(inOrder([row], [], [remaining]));
+    const fake = createFakeDb(inOrder(locked, [row], [], [remaining]));
+    const seen: unknown[] = [];
 
-    const result = await createDraftBatchRepository(fake.db).commit({
-      ...commitInput,
-      transactions: [TRANSACTION],
+    const result = await createDraftBatchRepository(fake.db).commit(commitInput, async (payload) => {
+      seen.push(payload);
+      return plan;
     });
 
+    expect(seen).toEqual([message.payload]);
     expect(result?.message).toEqual(message);
     expect(result?.remaining.kind).toBe(MESSAGE_KIND.remaining);
     expect(fake.queries.map((query) => query.sql.split(' ')[0])).toEqual([
+      'select',
       'update',
       'insert',
       'insert',
     ]);
-    expect(fake.queries[0]?.sql).toContain(`"payload"->>$`);
+    expect(fake.queries[0]?.sql).toEndWith('for update');
+    expect(fake.queries[1]?.sql).toContain(`"payload"->>$`);
   });
 
-  test('commits nothing when the drafts stopped being pending', async () => {
-    const fake = createFakeDb();
-    expect(await createDraftBatchRepository(fake.db).commit(commitInput)).toBeNull();
-    expect(fake.queries).toHaveLength(1);
+  test('saves nothing when the reply is gone, the plan declines, or it is no longer pending', async () => {
+    const repository = (rows: Parameters<typeof inOrder>) =>
+      createDraftBatchRepository(createFakeDb(inOrder(...rows)).db);
+
+    expect(await repository([[]]).commit(commitInput, async () => plan)).toBeNull();
+    expect(await repository([locked]).commit(commitInput, async () => null)).toBeNull();
+    expect(await repository([locked, []]).commit(commitInput, async () => plan)).toBeNull();
   });
 
   test('fails loudly when the remaining message is not stored', async () => {
-    const fake = createFakeDb(inOrder([row]));
+    const fake = createFakeDb(inOrder(locked, [row]));
     await expect(
-      createDraftBatchRepository(fake.db).commit({ ...commitInput, transactions: [TRANSACTION] }),
+      createDraftBatchRepository(fake.db).commit(commitInput, async () => plan),
     ).rejects.toThrow('The remaining message was not stored');
   });
 
