@@ -21,7 +21,7 @@ import type { Payday } from '../../lib/time/wib.ts';
 
 type MessageKind = MessageRow['kind'];
 
-export type BudgetProfile = { payday: Payday; netMonthlyIncome: number | null };
+type BudgetProfile = { payday: Payday; netMonthlyIncome: number | null };
 
 export type NewTransaction = typeof transactions.$inferInsert & { id: string };
 

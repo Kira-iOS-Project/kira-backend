@@ -44,7 +44,7 @@ export const createImportBodySchema = z
   })
   .openapi('BankImportInput');
 
-export const importRowSchema = z
+const importRowSchema = z
   .object({
     id: z.uuid(),
     date: z.iso.date(),

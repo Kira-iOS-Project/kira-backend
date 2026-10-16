@@ -22,7 +22,7 @@ export type SubscriptionRow = {
   cancelAtPeriodEnd: boolean;
 };
 
-export type InvoiceRow = {
+type InvoiceRow = {
   id: string;
   plan: PlanId;
   period: BillingPeriod;
@@ -32,7 +32,7 @@ export type InvoiceRow = {
   createdAt: Date;
 };
 
-export type CheckoutInput = {
+type CheckoutInput = {
   userId: string;
   plan: PaidPlan;
   period: BillingPeriod;

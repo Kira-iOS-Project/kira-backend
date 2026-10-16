@@ -64,8 +64,6 @@ export function createFakeDb(responder: FakeResponder = () => []) {
   };
 }
 
-export type FakeDb = ReturnType<typeof createFakeDb>['db'];
-
 /**
  * A responder that answers the statements in turn with the given row sets, then with no rows. It
  * matches nothing by text: a test that cares which statement got which rows asserts on `queries`.

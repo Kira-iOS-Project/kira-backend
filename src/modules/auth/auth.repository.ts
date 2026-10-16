@@ -8,7 +8,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
 import { authCodes, sessions, users } from '../../db/schema/schema.ts';
 
-export type ActiveCode = { id: string; codeHash: string; attempts: number; expiresAt: Date };
+type ActiveCode = { id: string; codeHash: string; attempts: number; expiresAt: Date };
 
 /** What a session row stores of its two tokens: their hashes and when each stops working. */
 export type SessionSecrets = {
@@ -18,7 +18,7 @@ export type SessionSecrets = {
   refreshExpiresAt: Date;
 };
 
-export type RefreshableSession = {
+type RefreshableSession = {
   sessionId: string;
   userId: string;
   refreshExpiresAt: Date;

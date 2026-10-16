@@ -31,9 +31,9 @@ const DISPLAY_FONT = "'Plus Jakarta Sans', -apple-system, 'Segoe UI', Roboto, Ar
 const TEXT_FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif";
 
 /** The icon PNGs in public/email/, drawn from the design system's icons at 2×. */
-export type EmailIcon = 'lock' | 'calendar' | 'gift' | 'shield' | 'file';
+type EmailIcon = 'lock' | 'calendar' | 'gift' | 'shield' | 'file';
 
-export type EmailBlock =
+type EmailBlock =
   | { kind: 'code'; code: string; validity: string }
   | { kind: 'notice'; icon: EmailIcon; title: string; text: string }
   | { kind: 'facts'; rows: { label: string; value: string }[] }

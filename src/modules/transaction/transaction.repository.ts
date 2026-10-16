@@ -25,7 +25,7 @@ export type TransactionRow = {
   sourceMessageId: string | null;
 };
 
-export type DetailRow = TransactionRow & {
+type DetailRow = TransactionRow & {
   spanStart: number | null;
   spanEnd: number | null;
   sourceBody: string | null;
@@ -43,8 +43,8 @@ export type TransactionFilters = {
 export type TransactionPatch = Partial<
   Pick<TransactionRow, 'name' | 'amount' | 'category' | 'type' | 'occurredAt' | 'note'>
 >;
-export type ManualSaved = { transaction: TransactionRow; message: MessageRow };
-export type DayTotals = { date: string; expense: number; income: number };
+type ManualSaved = { transaction: TransactionRow; message: MessageRow };
+type DayTotals = { date: string; expense: number; income: number };
 
 export type TransactionRepository = {
   findManualByClientId(userId: string, clientId: string): Promise<ManualSaved | null>;

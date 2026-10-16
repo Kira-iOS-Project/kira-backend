@@ -7,7 +7,7 @@ import { FOCUS } from '../../lib/constants/profile.ts';
 import { usageSchema } from '../../lib/usage/usage.schema.ts';
 
 /** What a person types to confirm Hapus Akun dan Data (AKN-05), compared trimmed and upper-cased. */
-export const DELETION_CONFIRMATION = 'HAPUS';
+const DELETION_CONFIRMATION = 'HAPUS';
 
 const date = z
   .string()

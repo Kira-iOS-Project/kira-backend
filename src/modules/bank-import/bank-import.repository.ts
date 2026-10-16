@@ -9,9 +9,9 @@ import { db } from '../../db/client/index.ts';
 import { bankImportRows, bankImports, transactions } from '../../db/schema/schema.ts';
 import type { TransactionCategory, TransactionType } from '../../lib/money/money.schema.ts';
 
-export type NewImport = typeof bankImports.$inferInsert & { id: string };
-export type NewImportRow = typeof bankImportRows.$inferInsert & { id: string };
-export type NewTransaction = typeof transactions.$inferInsert;
+type NewImport = typeof bankImports.$inferInsert & { id: string };
+type NewImportRow = typeof bankImportRows.$inferInsert & { id: string };
+type NewTransaction = typeof transactions.$inferInsert;
 
 export type ImportRow = {
   id: string;

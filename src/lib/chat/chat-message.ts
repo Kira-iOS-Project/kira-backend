@@ -47,7 +47,7 @@ export const draftEditSchema = draftFields
   .refine(fitsType, CATEGORY_MISMATCH)
   .openapi('DraftEdit');
 
-export const draftItemSchema = draftFields.extend({ id: z.uuid() }).openapi('DraftItem');
+const draftItemSchema = draftFields.extend({ id: z.uuid() }).openapi('DraftItem');
 
 export const chatMessageSchema = z
   .object({
@@ -72,7 +72,6 @@ export const chatMessageSchema = z
   .openapi('ChatMessage');
 
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
-export type DraftInput = z.infer<typeof draftInputSchema>;
 export type DraftItem = z.infer<typeof draftItemSchema>;
 
 /** The columns of a `chat_messages` row a message is built from. */

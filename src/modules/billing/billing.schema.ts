@@ -14,7 +14,7 @@ const periodSchema = z.enum(enumValues(BILLING_PERIOD));
 const paymentMethodSchema = z.enum(enumValues(PAYMENT_METHOD));
 
 /** Traktir Kira sells one, three or six months of Kira Plus. */
-export const GIFT_MONTHS = [1, 3, 6] as const;
+const GIFT_MONTHS = [1, 3, 6] as const;
 
 export const plansResponseSchema = z
   .object({

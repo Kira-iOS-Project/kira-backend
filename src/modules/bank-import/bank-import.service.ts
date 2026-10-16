@@ -26,7 +26,7 @@ import type {
 } from './bank-import.schema.ts';
 
 /** "Batas 3 bulan per file". */
-export const MAX_IMPORT_DAYS = 92;
+const MAX_IMPORT_DAYS = 92;
 
 type ImportDeps = {
   repository?: BankImportRepository;

@@ -10,7 +10,7 @@ import type { EmailMessage } from '../../lib/email/resend.ts';
 import type { PlanId } from '../../lib/usage/plan-usage.ts';
 import type { BillingPeriod, PaymentMethod } from './billing.schema.ts';
 
-export const PLAN_NAME: Record<PlanId, string> = {
+const PLAN_NAME: Record<PlanId, string> = {
   [PLAN.free]: 'Kira Gratis',
   [PLAN.young]: 'Kira Muda',
   [PLAN.plus]: 'Kira Plus',

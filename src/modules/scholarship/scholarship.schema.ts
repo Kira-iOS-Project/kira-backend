@@ -7,7 +7,7 @@ import {
 } from '../../lib/constants/scholarship.ts';
 
 const situationSchema = z.enum(enumValues(SCHOLARSHIP_SITUATION));
-export const STORY_MAX_LENGTH = 1000;
+const STORY_MAX_LENGTH = 1000;
 
 export const applicationSchema = z
   .object({
