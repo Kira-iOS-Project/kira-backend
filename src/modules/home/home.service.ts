@@ -24,7 +24,7 @@ export type HomeDeps = {
 };
 
 /** A week of essential spending is seven thirtieths of a month's. */
-export const WEEK_SHARE = 7 / 30;
+const WEEK_SHARE = 7 / 30;
 
 /** Sisa uang: this period's income (or the answered income) less what was spent, spread per day. */
 async function moneyOf(

@@ -18,13 +18,13 @@ import {
   type Rung,
 } from './score.engine.ts';
 
-export type LadderRung = Rung & {
+type LadderRung = Rung & {
   amountLower: number | null;
   amountUpper: number | null;
   isCurrent: boolean;
 };
 
-export type NextRung = {
+type NextRung = {
   points: number;
   amountNeeded: number | null;
   scoreFrom: number;

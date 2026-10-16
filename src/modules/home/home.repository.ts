@@ -30,7 +30,7 @@ export type HomeAccount = {
   emergencyFund: number | null;
 };
 
-export type Totals = { income: number; expense: number; count: number };
+type Totals = { income: number; expense: number; count: number };
 
 export type HomeRepository = {
   findAccount(userId: string): Promise<HomeAccount | null>;

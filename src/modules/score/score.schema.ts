@@ -7,7 +7,7 @@ const rupiah = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 const optionalRupiah = rupiah.nullable();
 const date = z.iso.date().openapi({ example: '2026-10-25' });
 
-export const paydaySchema = z
+const paydaySchema = z
   .object({ day: z.number().int().min(1).max(31).nullable(), endOfMonth: z.boolean() })
   .openapi('Payday');
 
@@ -39,7 +39,7 @@ export const healthCheckBodySchema = z
   })
   .openapi('HealthCheck');
 
-export const indicatorKeySchema = z.enum(enumValues(INDICATOR));
+const indicatorKeySchema = z.enum(enumValues(INDICATOR));
 const bandSchema = z.enum(enumValues(SCORE_BAND));
 
 const measureSchema = z
@@ -59,7 +59,7 @@ const measureSchema = z
   ])
   .openapi('IndicatorMeasure');
 
-export const indicatorSchema = z
+const indicatorSchema = z
   .object({
     key: indicatorKeySchema,
     group: z.enum(enumValues(INDICATOR_GROUP)),

@@ -22,13 +22,13 @@ import type { HealthCheckBody } from './score.schema.ts';
 type Values<T> = T[keyof T];
 
 /** A person's answers and the account settings the score reads; `input` is null before the quiz. */
-export type ScoreState = {
+type ScoreState = {
   focus: Values<typeof FOCUS>;
   payday: Payday;
   input: Omit<ScoreInput, 'debts'> | null;
 };
 
-export type SnapshotHistory = {
+type SnapshotHistory = {
   count: number;
   /** The latest snapshot inside the current payday period, if any. */
   latestInPeriodAt: Date | null;

@@ -37,7 +37,7 @@ function percentOf(part: number, whole: number, round: (value: number) => number
   return whole > 0 ? round((part * 100) / whole) : 0;
 }
 
-export function measureOf(key: IndicatorKey, facts: Facts): IndicatorMeasure {
+function measureOf(key: IndicatorKey, facts: Facts): IndicatorMeasure {
   switch (key) {
     case INDICATOR.emergencyFund:
       return {

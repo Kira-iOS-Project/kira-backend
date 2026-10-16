@@ -31,7 +31,7 @@ export type Step = {
 
 type Candidate = { step: Omit<Step, 'estimatedGain'>; after: Facts };
 
-export const MAX_STEPS = 3;
+const MAX_STEPS = 3;
 
 /** "Utang terkecil dulu": the open consumer debt with the least left to pay. */
 function payOffDebt(input: ScoreInput): Candidate | null {
