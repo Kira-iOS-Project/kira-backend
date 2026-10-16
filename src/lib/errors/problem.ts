@@ -56,6 +56,7 @@ const TITLES = {
   SCHOLARSHIP_NOT_ELIGIBLE: 'Not Eligible',
   SCHOLARSHIP_APPLICATION_NOT_FOUND: 'Application Not Found',
   COMMUNITY_GROUP_NOT_FOUND: 'Group Not Found',
+  COMMUNITY_LINK_UNAVAILABLE: 'Group Link Unavailable',
   COMMUNITY_PRODUCT_NOT_FOUND: 'Product Not Found',
   COMMUNITY_REPORT_DUPLICATE: 'Group Already Reported',
   COMMUNITY_RULES_NOT_ACCEPTED: 'Community Rules Not Accepted',

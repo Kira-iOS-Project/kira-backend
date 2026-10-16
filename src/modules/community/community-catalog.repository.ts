@@ -30,8 +30,8 @@ export type CommunityCatalogRepository = {
   /** Upserts every row by its id: content only, never a status the reports or the team set. */
   syncCatalog(catalog: {
     categories: readonly CatalogCategory[];
-    groups: readonly CatalogGroup[];
-    products: readonly CatalogProduct[];
+    groups: readonly (CatalogGroup & { inviteUrl: string | null })[];
+    products: readonly (CatalogProduct & { sellerUrl: string | null })[];
   }): Promise<void>;
   listExportRows(userId: string): Promise<CommunityExportRows>;
 };

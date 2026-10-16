@@ -12,6 +12,7 @@ import {
 import { logger } from '../../lib/server/logger.ts';
 import {
   CommunityGroupNotFoundError,
+  CommunityLinkUnavailableError,
   CommunityProductNotFoundError,
   CommunityReportDuplicateError,
   CommunityRulesNotAcceptedError,
@@ -103,7 +104,10 @@ export async function acceptRules(
   await resolve(deps).repository.acceptRules(userId, version);
 }
 
-/** POST /community/groups/{id}/join: the invite, once the current rules are accepted. */
+/**
+ * POST /community/groups/{id}/join: the invite, once the current rules are accepted and the team
+ * has a verified link for the group.
+ */
 export async function joinGroup(
   userId: string,
   id: string,
@@ -115,6 +119,7 @@ export async function joinGroup(
     repository.hasAcceptedRules(userId, COMMUNITY_RULES_VERSION),
   ]);
   if (!rulesAccepted) throw new CommunityRulesNotAcceptedError();
+  if (row.inviteUrl === null) throw new CommunityLinkUnavailableError();
   await repository.recordJoin(userId, row.id);
   return { inviteUrl: row.inviteUrl, platform: row.platform, linkCheckedOn: row.linkCheckedOn };
 }

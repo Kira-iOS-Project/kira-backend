@@ -82,7 +82,8 @@ export const communityGroups = pgTable(
     adminVerifiedSince: date('admin_verified_since', { mode: 'string' }).notNull(),
     /** Aturan Utama: the group's three rules. */
     rules: text('rules').array().notNull(),
-    inviteUrl: text('invite_url').notNull(),
+    /** The verified invite (COMMUNITY_LINKS_JSON); null while the team checks it. */
+    inviteUrl: text('invite_url'),
     linkCheckedOn: date('link_checked_on', { mode: 'string' }).notNull(),
     adminUnchanged: boolean('admin_unchanged').notNull(),
     curationRank: smallint('curation_rank').notNull(),
@@ -183,7 +184,8 @@ export const communityProducts = pgTable(
     contents: text('contents').array().notNull(),
     affiliate: boolean('affiliate').notNull(),
     investmentRisk: boolean('investment_risk').notNull(),
-    sellerUrl: text('seller_url').notNull(),
+    /** The seller's page (COMMUNITY_LINKS_JSON); null while the team checks it. */
+    sellerUrl: text('seller_url'),
     curationRank: smallint('curation_rank').notNull(),
     status: communityListingStatusEnum('status').default(COMMUNITY_LISTING_STATUS.active).notNull(),
     ...timestamps,

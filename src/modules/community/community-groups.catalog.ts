@@ -2,7 +2,8 @@
  * The community categories and groups the Kira team curates (Komunitas, Detail Grup), synced into
  * the database at boot by `syncCommunityCatalog`. Their words are content a person reads, copied
  * from the boards; Lunas Bareng Jakarta is DetailGrup's, the others written to match it. A change
- * here reaches the database on the next deploy; a group the reports took down stays down.
+ * here reaches the database on the next deploy; a group the reports took down stays down. The
+ * invite links are not here: the curation team sets them in COMMUNITY_LINKS_JSON.
  */
 
 import { COMMUNITY_CATEGORY, COMMUNITY_PLATFORM } from '../../lib/constants/community.ts';
@@ -25,7 +26,6 @@ export type CatalogGroup = {
   /** The first day of the month the admin was verified. */
   adminVerifiedSince: string;
   rules: [string, string, string];
-  inviteUrl: string;
   linkCheckedOn: string;
   adminUnchanged: boolean;
   curationRank: number;
@@ -57,7 +57,6 @@ export const CATALOG_GROUPS: readonly CatalogGroup[] = [
     adminInitials: 'RA',
     adminVerifiedSince: '2026-03-01',
     rules: ['Tanpa Ajakan Gagal Bayar', 'Tanpa Jual-Beli Data atau Joki', PRIVACY_RULE],
-    inviteUrl: 'https://chat.whatsapp.com/J6w5MMRXueBRbTmGiDOI4Z',
     linkCheckedOn: CHECKED_ON,
     adminUnchanged: true,
     curationRank: 1,
@@ -77,7 +76,6 @@ export const CATALOG_GROUPS: readonly CatalogGroup[] = [
     adminInitials: 'BP',
     adminVerifiedSince: '2026-01-01',
     rules: ['Tanpa Sinyal Beli atau Pom-Pom Saham', 'Afiliasi Wajib Diungkap', PRIVACY_RULE],
-    inviteUrl: 'https://t.me/+FTVPdDn7kTgp182n',
     linkCheckedOn: CHECKED_ON,
     adminUnchanged: true,
     curationRank: 2,
@@ -97,7 +95,6 @@ export const CATALOG_GROUPS: readonly CatalogGroup[] = [
     adminInitials: 'LW',
     adminVerifiedSince: '2026-05-01',
     rules: ['Tanpa Janji Untung Pasti', 'Tanpa Ajakan Beli Koin atau Token', PRIVACY_RULE],
-    inviteUrl: 'https://discord.gg/L7OikJMP',
     linkCheckedOn: CHECKED_ON,
     adminUnchanged: true,
     curationRank: 3,
@@ -117,7 +114,6 @@ export const CATALOG_GROUPS: readonly CatalogGroup[] = [
     adminInitials: 'DR',
     adminVerifiedSince: '2026-06-01',
     rules: ['Saling Menghargai Cerita Sesama', 'Tanpa Jual-Beli Data atau Joki', PRIVACY_RULE],
-    inviteUrl: 'https://chat.whatsapp.com/IGP8zoQ7vKlPN8jnjXwzKf',
     linkCheckedOn: CHECKED_ON,
     adminUnchanged: true,
     curationRank: 4,

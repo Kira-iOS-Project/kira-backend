@@ -14,6 +14,13 @@ export class CommunityRulesNotAcceptedError extends ConflictError {
   }
 }
 
+/** The group's invite link is being checked again by the team (none is set yet). */
+export class CommunityLinkUnavailableError extends ConflictError {
+  constructor() {
+    super('This group link is being checked again.', undefined, 'COMMUNITY_LINK_UNAVAILABLE');
+  }
+}
+
 /** The person's earlier report on this group is still open. */
 export class CommunityReportDuplicateError extends ConflictError {
   constructor() {

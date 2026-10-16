@@ -71,7 +71,9 @@ export const joinGroupRoute = createRoute({
   path: '/community/groups/{id}/join',
   operationId: 'joinCommunityGroup',
   summary: 'The verified invite link (Membuka Tautan Keluar)',
-  description: 'Needs the current community rules accepted; records that the invite was opened.',
+  description:
+    'Needs the current community rules accepted and a verified link (409 ' +
+    'COMMUNITY_LINK_UNAVAILABLE while the team checks it); records that the invite was opened.',
   request: { params: groupIdParamsSchema },
   responses: {
     200: { ...json(joinResponseSchema), description: 'The invite' },

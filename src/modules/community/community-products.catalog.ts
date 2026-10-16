@@ -1,7 +1,8 @@
 /**
  * The Etalase products the Kira team curates (Etalase, DetailProduk and its Konsultasi, E-Book and
  * Event boards), synced into the database at boot by `syncCommunityCatalog`. Their words are the
- * boards'; a free product has no price (Gratis), never Rp0,00.
+ * boards'; a free product has no price (Gratis), never Rp0,00. The
+ * seller pages are not here: the curation team sets them in COMMUNITY_LINKS_JSON.
  */
 
 import { COMMUNITY_PRODUCT_KIND } from '../../lib/constants/community.ts';
@@ -23,7 +24,6 @@ export type CatalogProduct = {
   contents: string[];
   affiliate: boolean;
   investmentRisk: boolean;
-  sellerUrl: string;
   curationRank: number;
 };
 
@@ -52,7 +52,6 @@ export const CATALOG_PRODUCTS: readonly CatalogProduct[] = [
     ],
     affiliate: true,
     investmentRisk: false,
-    sellerUrl: 'https://lynk.id/rakaaditya/kelas-budgeting-gaji-pertama',
     curationRank: 1,
   },
   {
@@ -76,7 +75,6 @@ export const CATALOG_PRODUCTS: readonly CatalogProduct[] = [
     ],
     affiliate: true,
     investmentRisk: false,
-    sellerUrl: 'https://lynk.id/dewianggraini/pendampingan-negosiasi-utang',
     curationRank: 2,
   },
   {
@@ -100,7 +98,6 @@ export const CATALOG_PRODUCTS: readonly CatalogProduct[] = [
     ],
     affiliate: true,
     investmentRisk: false,
-    sellerUrl: 'https://lynk.id/sariwulandari/ebook-dana-darurat-keluarga-muda',
     curationRank: 3,
   },
   {
@@ -124,7 +121,6 @@ export const CATALOG_PRODUCTS: readonly CatalogProduct[] = [
     ],
     affiliate: true,
     investmentRisk: false,
-    sellerUrl: 'https://lynk.id/sariwulandari/webinar-keuangan-keluarga-muda',
     curationRank: 4,
   },
 ];
