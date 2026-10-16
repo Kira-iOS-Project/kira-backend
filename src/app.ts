@@ -14,7 +14,9 @@ import { handleAppError, handleNotFound } from './lib/errors/problem.ts';
 import { createRouter } from './lib/server/factory.ts';
 import { requestLogger } from './middlewares/logger.middleware.ts';
 import { authRouter } from './modules/auth/index.ts';
+import { homeRouter } from './modules/home/index.ts';
 import { metaApp } from './modules/meta/index.ts';
+import { healthCheckRouter, scoreRouter } from './modules/score/index.ts';
 
 export const app = createRouter();
 
@@ -57,6 +59,9 @@ app.notFound(handleNotFound);
    Feature modules mount under /api. */
 app.route('/', metaApp);
 app.route('/api/auth', authRouter);
+app.route('/api/health-check', healthCheckRouter);
+app.route('/api/score', scoreRouter);
+app.route('/api/home', homeRouter);
 
 /** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
