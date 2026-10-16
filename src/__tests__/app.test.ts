@@ -33,6 +33,22 @@ describe('GET /health', () => {
   });
 });
 
+describe('GET /email/*', () => {
+  test('serves the email images from public/email/', async () => {
+    const res = await app.request('/email/mark.png');
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+  });
+
+  test('answers a missing image with the 404 problem', async () => {
+    const res = await app.request('/email/nothing-here.png');
+
+    expect(res.status).toBe(404);
+    expect((await res.json()).code).toBe('ROUTE_NOT_FOUND');
+  });
+});
+
 describe('the middleware chain', () => {
   test('sends a request id and the security headers on every response', async () => {
     const res = await app.request('/health');

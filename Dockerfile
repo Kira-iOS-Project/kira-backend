@@ -1,6 +1,6 @@
-# The production image: the bundle the quality gate built, the generated migrations, and nothing
-# else. Base images are pinned by digest with their version in the tag (scripts/check/dockerfile.ts
-# D2), at the Bun release the gate runs (D3).
+# The production image: the bundle the quality gate built, the generated migrations, the email
+# images under public/, and nothing else. Base images are pinned by digest with their version in
+# the tag (scripts/check/dockerfile.ts D2), at the Bun release the gate runs (D3).
 
 FROM oven/bun:1.4.2@sha256:9114c058aeae42162ee16dd5084b95fe9473970bb6bcb5b232ab1630f0546895 AS build
 WORKDIR /app
@@ -12,6 +12,7 @@ RUN bun install --frozen-lockfile --ignore-scripts
 COPY tsconfig.json ./
 COPY scripts/bundle ./scripts/bundle
 COPY src ./src
+COPY public ./public
 RUN bun run build
 
 # The runtime holds no package manager cache, no sources and no dev tooling: the bundle carries its
@@ -24,6 +25,8 @@ ENV NODE_ENV=production PORT=3000
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/src/db/migrations ./src/db/migrations
+# The images the emails link to, served at /email/*.
+COPY --from=build /app/public ./public
 
 USER bun
 EXPOSE 3000
