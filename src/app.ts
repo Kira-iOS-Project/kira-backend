@@ -13,6 +13,7 @@ import { env } from './env.ts';
 import { handleAppError, handleNotFound } from './lib/errors/problem.ts';
 import { createRouter } from './lib/server/factory.ts';
 import { requestLogger } from './middlewares/logger.middleware.ts';
+import { accountRouter } from './modules/account/index.ts';
 import { authRouter } from './modules/auth/index.ts';
 import { metaApp } from './modules/meta/index.ts';
 
@@ -57,6 +58,7 @@ app.notFound(handleNotFound);
    Feature modules mount under /api. */
 app.route('/', metaApp);
 app.route('/api/auth', authRouter);
+app.route('/api/me', accountRouter);
 
 /** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
