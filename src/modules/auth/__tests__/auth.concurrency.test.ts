@@ -13,7 +13,8 @@ import { MAX_ATTEMPTS, refreshSession, requestCode, verifyCode } from '../auth.s
 import { codeHash, tokenHash } from '../auth.tokens.ts';
 import { NOW } from './helpers.ts';
 
-const SECRET = 'concurrency-secret-that-is-long-enough-00';
+/** A test-only HMAC key: any 32+ characters do; low entropy keeps secret scanners quiet. */
+const SECRET = 'k'.repeat(40);
 const EMAIL = 'victim@email.com';
 const clock = () => NOW;
 

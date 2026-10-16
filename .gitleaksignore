@@ -1,0 +1,2 @@
+# A test-only HMAC key in an early commit of auth.concurrency.test.ts (now low-entropy). Exact fingerprint only.
+795d07e8282c2aa73075c75e6aba49a19c4b20c2:src/modules/auth/__tests__/auth.concurrency.test.ts:generic-api-key:16
