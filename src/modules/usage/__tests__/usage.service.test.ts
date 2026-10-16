@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { INPUT_METHOD } from '../../../lib/constants/chat.ts';
 import { PLAN } from '../../../lib/constants/plans.ts';
 import { activePlanOf } from '../../../lib/usage/plan-usage.ts';
 import { currentPlanUsage, getUsage, requireVoiceAndImport } from '../usage.service.ts';
@@ -43,7 +44,7 @@ describe('currentPlanUsage', () => {
 describe('requireVoiceAndImport', () => {
   test('lets Kira Plus through and refuses the other plans', () => {
     expect(() =>
-      requireVoiceAndImport(activePlanOf([createSubscriptionMock()]), 'voice'),
+      requireVoiceAndImport(activePlanOf([createSubscriptionMock()]), INPUT_METHOD.voice),
     ).not.toThrow();
     expect(() => requireVoiceAndImport(activePlanOf([]), 'import')).toThrow(
       expect.objectContaining({ statusCode: 403, code: 'PLAN_FEATURE_UNAVAILABLE' }),
