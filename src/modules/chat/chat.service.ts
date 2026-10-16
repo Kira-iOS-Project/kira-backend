@@ -17,7 +17,7 @@ import {
   type ChatRepository,
   chatRepository,
   type Exchange,
-  type IncomingInput,
+  type NewMessage,
 } from './chat.repository.ts';
 import type { SendMessageBody, SendReceiptBody, SentResponse } from './chat.schema.ts';
 
@@ -40,8 +40,8 @@ function resolve(deps: ChatDeps) {
 }
 
 type Incoming = {
-  person: Omit<IncomingInput['person'], 'createdAt'>;
-  reply: Omit<IncomingInput['reply'], 'createdAt'>;
+  person: Omit<NewMessage, 'createdAt'>;
+  reply: Omit<NewMessage, 'createdAt' | 'body'>;
   use: UsageCounters;
   /** A Kira Plus feature the message needs. */
   feature?: string;

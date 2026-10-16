@@ -18,7 +18,7 @@ import { CONSENT_PURPOSE } from '../../lib/constants/consents.ts';
 import type { Cursor } from '../../lib/pagination/cursor.ts';
 import type { UsageCounters } from '../../lib/usage/plan-usage.ts';
 
-type NewMessage = {
+export type NewMessage = {
   kind: MessageRow['kind'];
   body: string | null;
   payload: MessagePayload;
