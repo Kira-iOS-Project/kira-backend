@@ -32,6 +32,7 @@ export type Profile = Pick<
   | 'paydayEndOfMonth'
   | 'hideBalances'
   | 'consentedAt'
+  | 'debtEmergencyModeUsedAt'
 >;
 export type ProfileChanges = Partial<
   Pick<User, 'focus' | 'paydayDay' | 'paydayEndOfMonth' | 'hideBalances'>
@@ -82,6 +83,7 @@ export function createAccountRepository(client: PostgresJsDatabase = db): Accoun
           paydayEndOfMonth: users.paydayEndOfMonth,
           hideBalances: users.hideBalances,
           consentedAt: users.consentedAt,
+          debtEmergencyModeUsedAt: users.debtEmergencyModeUsedAt,
         })
         .from(users)
         .where(eq(users.id, userId))

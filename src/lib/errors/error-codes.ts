@@ -58,6 +58,10 @@ export const ERROR_CODES = [
   'COMMUNITY_PRODUCT_NOT_FOUND',
   'COMMUNITY_REPORT_DUPLICATE',
   'COMMUNITY_RULES_NOT_ACCEPTED',
+
+  /** Kira Peduli: check-ins and the safety plan (PED-05, PED-06, PED-10). */
+  'CARE_CHECK_IN_NOT_FOUND',
+  'CARE_SAFETY_PLAN_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
