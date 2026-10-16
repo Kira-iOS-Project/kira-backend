@@ -89,7 +89,15 @@ async function stateOf(repository: ScholarshipRepository, userId: string, now: D
     repository.findCurrentApplication(userId),
     quotaOf(repository, now),
   ]);
-  return { reason: ineligibleReason(source, application), application, quota };
+  /** An accepted application whose grant has ended is history: the person may apply again. */
+  const ended =
+    application?.status === APPLICATION_STATUS.accepted &&
+    source !== SUBSCRIPTION_SOURCE.scholarship;
+  return {
+    reason: ineligibleReason(source, application),
+    application: ended ? null : application,
+    quota,
+  };
 }
 
 /** Beasiswa Kira: whether the person can apply, the quota, and their application. */

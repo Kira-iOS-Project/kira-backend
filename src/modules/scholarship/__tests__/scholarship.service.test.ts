@@ -51,6 +51,25 @@ describe('toApplication', () => {
 });
 
 describe('getScholarship', () => {
+  test('shows an accepted application while its grant runs, and forgets it once the grant ended', async () => {
+    const accepted = applicationRow({ status: APPLICATION_STATUS.accepted });
+    const during = createScholarshipRepositoryMock({
+      findActiveSubscriptionSource: async () => SUBSCRIPTION_SOURCE.scholarship,
+      findCurrentApplication: async () => accepted,
+    });
+    const after = createScholarshipRepositoryMock({ findCurrentApplication: async () => accepted });
+
+    const running = await getScholarship(USER_ID, { repository: during, now });
+    const ended = await getScholarship(USER_ID, { repository: after, now });
+
+    expect(running).toMatchObject({
+      eligible: false,
+      ineligibleReason: INELIGIBLE_REASON.hasScholarship,
+    });
+    expect(running.application?.status).toBe(APPLICATION_STATUS.accepted);
+    expect(ended).toMatchObject({ eligible: true, ineligibleReason: null, application: null });
+  });
+
   test('is open with a quota of one place per three gifted months', async () => {
     const sinces: Date[] = [];
     const repository = createScholarshipRepositoryMock({
@@ -95,7 +114,7 @@ describe('getScholarship', () => {
     expect(open.ineligibleReason).toBe(INELIGIBLE_REASON.hasOpenApplication);
     expect(open.quota).toEqual({ remaining: 0, total: 1 });
     expect(done.eligible).toBe(true);
-    expect(done.application?.status).toBe(APPLICATION_STATUS.accepted);
+    expect(done.application).toBeNull();
   });
 });
 
