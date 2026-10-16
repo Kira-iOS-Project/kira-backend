@@ -8,6 +8,7 @@ import { APPLICATION_STATUS, INELIGIBLE_REASON } from '../../lib/constants/schol
 import { addDays, monthStart, wibDate, wibStartOfDay } from '../../lib/time/wib.ts';
 import {
   ScholarshipApplicationNotFoundError,
+  ScholarshipDebtEmergencyRequiredError,
   ScholarshipNotEligibleError,
 } from './scholarship.errors.ts';
 import {
@@ -126,6 +127,8 @@ export async function apply(
 ): Promise<ApplicationResponse> {
   const { repository, now } = resolve(deps);
   const { reason, quota, usedDebtEmergency } = await stateOf(repository, userId, now);
+  if (reason === INELIGIBLE_REASON.debtEmergencyNotUsed)
+    throw new ScholarshipDebtEmergencyRequiredError();
   if (reason !== null) throw new ScholarshipNotEligibleError(reason);
   const story = body.story?.trim() ?? '';
   const row = await repository.createApplication({

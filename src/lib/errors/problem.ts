@@ -55,6 +55,7 @@ const TITLES = {
   SUBSCRIPTION_NOT_CANCELLABLE: 'Subscription Not Cancellable',
   SCHOLARSHIP_NOT_ELIGIBLE: 'Not Eligible',
   SCHOLARSHIP_APPLICATION_NOT_FOUND: 'Application Not Found',
+  SCHOLARSHIP_DEBT_EMERGENCY_REQUIRED: 'Mode Darurat Utang Required',
   COMMUNITY_GROUP_NOT_FOUND: 'Group Not Found',
   COMMUNITY_LINK_UNAVAILABLE: 'Group Link Unavailable',
   COMMUNITY_PRODUCT_NOT_FOUND: 'Product Not Found',

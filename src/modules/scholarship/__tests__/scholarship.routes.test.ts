@@ -81,7 +81,7 @@ describe('scholarship routes', () => {
     });
 
     expect(res.status).toBe(409);
-    expect((await res.json()).code).toBe('SCHOLARSHIP_NOT_ELIGIBLE');
+    expect((await res.json()).code).toBe('SCHOLARSHIP_DEBT_EMERGENCY_REQUIRED');
   });
 
   test('POST /api/scholarship/applications refuses no situation, and a paid plan', async () => {
@@ -102,10 +102,12 @@ describe('scholarship routes', () => {
       code: '23505',
       constraint_name: OPEN_APPLICATION_INDEX,
     });
-    dbControl.respond = signedIn((query) => {
-      if (query.sql.startsWith('insert into "scholarship_applications"')) throw duplicate;
-      return [];
-    });
+    dbControl.respond = signedIn(
+      usedDebtEmergency((query) => {
+        if (query.sql.startsWith('insert into "scholarship_applications"')) throw duplicate;
+        return [];
+      }),
+    );
 
     const res = await call('POST', '/api/scholarship/applications', {
       situations: [SCHOLARSHIP_SITUATION.chasedByLender],

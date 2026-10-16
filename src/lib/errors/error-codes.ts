@@ -52,6 +52,7 @@ export const ERROR_CODES = [
   'SUBSCRIPTION_NOT_CANCELLABLE',
   'SCHOLARSHIP_NOT_ELIGIBLE',
   'SCHOLARSHIP_APPLICATION_NOT_FOUND',
+  'SCHOLARSHIP_DEBT_EMERGENCY_REQUIRED',
 
   /** Terhubung: community groups, their rules and reports, and Etalase. */
   'COMMUNITY_GROUP_NOT_FOUND',
