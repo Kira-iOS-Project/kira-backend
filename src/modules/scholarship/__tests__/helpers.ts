@@ -43,8 +43,9 @@ export function createScholarshipJobsRepositoryMock(
 ): ScholarshipJobsRepository {
   return {
     findReviewable: async () => [],
-    accept: async () => undefined,
+    accept: async () => true,
     setStatus: async () => undefined,
+    findUnsentResults: async () => [],
     markResultEmailsSent: async () => undefined,
     ...overrides,
   };

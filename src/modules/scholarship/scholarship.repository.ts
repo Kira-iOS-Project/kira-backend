@@ -8,7 +8,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
 import { gifts, scholarshipApplications, subscriptions, users } from '../../db/schema/schema.ts';
 import { SUBSCRIPTION_STATUS } from '../../lib/constants/plans.ts';
-import { APPLICATION_STATUS } from '../../lib/constants/scholarship.ts';
+import { APPLICATION_STATUS, OPEN_APPLICATION_INDEX } from '../../lib/constants/scholarship.ts';
 import type { SubscriptionSource } from '../../lib/usage/plan-usage.ts';
 import type { ApplicationStatus, Situation } from './scholarship.schema.ts';
 
@@ -33,16 +33,32 @@ export type ScholarshipRepository = {
   /** Months gifted, and applications accepted, since the start of this month. */
   countQuota(since: Date): Promise<{ giftedMonths: number; accepted: number }>;
   hasUsedDebtEmergencyMode(userId: string): Promise<boolean>;
+  /** Stores the application; null when the person already has an open one (a concurrent apply). */
   createApplication(input: {
     userId: string;
     situations: Situation[];
     story: string | null;
     usedDebtEmergencyMode: boolean;
     status: ApplicationStatus;
-  }): Promise<ApplicationRow>;
+  }): Promise<ApplicationRow | null>;
   /** Withdraws the open application; false when there is none. */
   withdrawOpenApplication(userId: string): Promise<boolean>;
 };
+
+/** Postgres's unique_violation (SQLSTATE class 23). */
+const UNIQUE_VIOLATION = '23505';
+
+/** Whether `error`, or an error it wraps (Drizzle wraps the driver's), broke `constraint`. */
+function violates(error: unknown, constraint: string): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  if (
+    Reflect.get(error, 'code') === UNIQUE_VIOLATION &&
+    Reflect.get(error, 'constraint_name') === constraint
+  ) {
+    return true;
+  }
+  return violates(Reflect.get(error, 'cause'), constraint);
+}
 
 const applicationColumns = {
   id: scholarshipApplications.id,
@@ -120,12 +136,17 @@ export function createScholarshipRepository(
     },
 
     async createApplication(input) {
-      const [row] = await client
-        .insert(scholarshipApplications)
-        .values(input)
-        .returning(applicationColumns);
-      if (!row) throw new Error('The application was not stored');
-      return { ...row, grantStart: null, grantEnd: null };
+      try {
+        const [row] = await client
+          .insert(scholarshipApplications)
+          .values(input)
+          .returning(applicationColumns);
+        if (!row) throw new Error('The application was not stored');
+        return { ...row, grantStart: null, grantEnd: null };
+      } catch (err) {
+        if (violates(err, OPEN_APPLICATION_INDEX)) return null;
+        throw err;
+      }
     },
 
     async withdrawOpenApplication(userId) {

@@ -1,7 +1,9 @@
 /**
  * The Beasiswa Kira review, simulated (AKN-10b to AKN-10d): every hour, applications open for more
  * than a day are accepted, oldest first, while this month's places last; the rest wait. An
- * accepted application gets three months of Kira Plus and the result by email.
+ * accepted application gets three months of Kira Plus and the result by email. Each acceptance
+ * stands alone, so one that fails holds up no other; a result email that fails goes again on the
+ * next run.
  */
 
 import { APPLICATION_STATUS } from '../../lib/constants/scholarship.ts';
@@ -26,6 +28,57 @@ type ReviewDeps = {
   send?: (message: EmailMessage) => Promise<void>;
 };
 
+/** Accepts each application in turn, one transaction each; the ids that were accepted. */
+async function acceptEach(
+  jobs: ScholarshipJobsRepository,
+  applications: readonly { id: string; userId: string }[],
+  start: Date,
+  end: Date,
+): Promise<string[]> {
+  const accepted: string[] = [];
+  await applications.reduce(async (previous, application) => {
+    await previous;
+    try {
+      if (await jobs.accept(application, start, end)) accepted.push(application.id);
+    } catch (err) {
+      logger.error({ err, applicationId: application.id }, 'Beasiswa Kira acceptance failed');
+    }
+  }, Promise.resolve());
+  return accepted;
+}
+
+/** Emails every accepted application still without its result, this run's and earlier ones. */
+async function sendResults(
+  jobs: ScholarshipJobsRepository,
+  send: (message: EmailMessage) => Promise<void>,
+  now: Date,
+): Promise<void> {
+  const unsent = await jobs.findUnsentResults(BATCH_SIZE);
+  const results = await Promise.allSettled(
+    unsent.map((row) => {
+      const grantEnd = wibDate(row.grantEnd);
+      return send(
+        scholarshipAcceptedEmail({
+          to: row.email,
+          name: row.displayName,
+          grantStart: wibDate(row.grantStart),
+          grantEnd,
+          extensionFrom: addDays(grantEnd, -EXTENSION_WINDOW_DAYS),
+        }),
+      );
+    }),
+  );
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      logger.error({ err: result.reason }, 'Beasiswa Kira result email failed');
+    }
+  }
+  await jobs.markResultEmailsSent(
+    unsent.filter((_, index) => results[index]?.status === 'fulfilled').map((row) => row.id),
+    now,
+  );
+}
+
 export async function reviewScholarshipApplications(
   now: Date,
   deps: ReviewDeps = {},
@@ -40,44 +93,20 @@ export async function reviewScholarshipApplications(
   );
   const withdrawn = candidates.filter((row) => row.hasActivePlan);
   const open = candidates.filter((row) => !row.hasActivePlan);
-  const accepted = open.slice(0, remaining);
+  const chosen = open.slice(0, remaining);
   const waitlisted = open
-    .slice(accepted.length)
+    .slice(chosen.length)
     .filter((row) => row.status === APPLICATION_STATUS.inReview);
 
-  const end = addMonthsToInstant(now, GRANT_MONTHS);
   await jobs.setStatus(
     withdrawn.map((row) => row.id),
     APPLICATION_STATUS.withdrawn,
   );
-  await jobs.accept(accepted, now, end);
+  const accepted = await acceptEach(jobs, chosen, now, addMonthsToInstant(now, GRANT_MONTHS));
   await jobs.setStatus(
     waitlisted.map((row) => row.id),
     APPLICATION_STATUS.waitlisted,
   );
-
-  const grantEnd = wibDate(end);
-  const results = await Promise.allSettled(
-    accepted.map((row) =>
-      send(
-        scholarshipAcceptedEmail({
-          to: row.email,
-          name: row.displayName,
-          grantStart: wibDate(now),
-          grantEnd,
-          extensionFrom: addDays(grantEnd, -EXTENSION_WINDOW_DAYS),
-        }),
-      ),
-    ),
-  );
-  for (const result of results) {
-    if (result.status === 'rejected') {
-      logger.error({ err: result.reason }, 'Beasiswa Kira result email failed');
-    }
-  }
-  await jobs.markResultEmailsSent(
-    accepted.filter((_, index) => results[index]?.status === 'fulfilled').map((row) => row.id),
-    now,
-  );
+  await sendResults(jobs, send, now);
   return { accepted: accepted.length, waitlisted: waitlisted.length, withdrawn: withdrawn.length };
 }
