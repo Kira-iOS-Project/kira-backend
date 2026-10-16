@@ -6,6 +6,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   COMMUNITY_CATALOG_LOCK,
+  COMMUNITY_CATEGORY,
   COMMUNITY_REPORT_REASON,
   COMMUNITY_RULES_VERSION,
 } from '../../../lib/constants/community.ts';
@@ -83,9 +84,9 @@ describe('the catalog repository', () => {
     const fake = createFakeDb();
 
     await createCommunityCatalogRepository(fake.db).syncCatalog({
-      categories: [{ key: 'debt_free', label: 'Bebas Hutang', rank: 1 }],
-      groups: CATALOG_GROUPS.map((group) => ({ ...group, inviteUrl: null })),
-      products: CATALOG_PRODUCTS.map((product) => ({ ...product, sellerUrl: null })),
+      categories: [{ key: COMMUNITY_CATEGORY.debtFree, label: 'Bebas Hutang', rank: 1 }],
+      groups: CATALOG_GROUPS.map((group) => Object.assign({}, group, { inviteUrl: null })),
+      products: CATALOG_PRODUCTS.map((product) => Object.assign({}, product, { sellerUrl: null })),
     });
 
     const [lock, categories, groups, products] = fake.queries;
@@ -122,11 +123,11 @@ describe('the catalog repository', () => {
 });
 
 describe('communityExportSections', () => {
-  test('words each block for people and leaves out the empty ones', async () => {
+  test('words each block for people', async () => {
     const repository = createCatalogRepositoryMock({
       listExportRows: async () => ({
         consents: [{ version: COMMUNITY_RULES_VERSION, acceptedAt: NOW }],
-        joins: [],
+        joins: [{ groupName: 'Lunas Bareng Jakarta', openedAt: NOW }],
         reports: [
           {
             groupName: 'Kripto Aman 101',
@@ -151,6 +152,11 @@ describe('communityExportSections', () => {
         title: 'Komunitas · Aturan yang Disetujui',
         header: ['Tanggal', 'Versi Aturan'],
         rows: [['2026-10-17', COMMUNITY_RULES_VERSION]],
+      },
+      {
+        title: 'Komunitas · Grup yang Dibuka',
+        header: ['Tanggal', 'Grup'],
+        rows: [['2026-10-17', 'Lunas Bareng Jakarta']],
       },
       {
         title: 'Komunitas · Laporan Grup',

@@ -180,7 +180,7 @@ describe('fileReport', () => {
     const respond = ({ sql, params }: FakeQuery): FakeRow[] => {
       if (sql.includes('for update')) return [{ status: state.status }];
       if (sql.startsWith('select "id" from "community_reports"')) {
-        return state.reports.includes(String(params[1])) ? [{ id: 'open' }] : [];
+        return state.reports.includes(String(params[1])) ? [{ id: 'report-open' }] : [];
       }
       if (sql.startsWith('insert into "community_reports"')) {
         state.reports.push(String(params[1]));

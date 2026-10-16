@@ -65,10 +65,10 @@ const productColumns = {
 export type GroupRow = Pick<typeof communityGroups.$inferSelect, keyof typeof groupColumns>;
 /** A product's row, everything Detail Produk shows. */
 export type ProductRow = Pick<typeof communityProducts.$inferSelect, keyof typeof productColumns>;
-export type CategoryRow = { key: Category; label: string };
+type CategoryRow = { key: Category; label: string };
 
 /** What filing a report came to. */
-export type ReportOutcome =
+type ReportOutcome =
   | { kind: 'filed'; id: string; suspended: boolean }
   | { kind: 'duplicate' }
   | { kind: 'missing' };

@@ -8,72 +8,27 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
 import {
   COMMUNITY_CATEGORY,
+  COMMUNITY_PLATFORM,
   COMMUNITY_LISTING_STATUS,
   COMMUNITY_PRODUCT_KIND,
   COMMUNITY_REPORT_REASON,
   COMMUNITY_REPORT_STORY_MAX,
   COMMUNITY_RULES_VERSION,
 } from '../../../lib/constants/community.ts';
-import type { FakeQuery, FakeRow } from '../../../test/fake-postgres.ts';
+import type { FakeQuery } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
-import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
-import { GROUP_ID, groupRow, PRODUCT_ID, productRow } from './helpers.ts';
+import {
+  call,
+  GROUP_ID,
+  groupRow,
+  problemOf,
+  PRODUCT_ID,
+  productRow,
+  REPORT_ID,
+  world,
+} from './helpers.ts';
 
 beforeEach(() => resetExternalMocks());
-
-const REPORT_ID = '5b0f8c3e-2a7d-4e61-9f4b-8c1d2e3f4a5b';
-
-type World = {
-  group?: FakeRow | null;
-  status?: string;
-  consented?: boolean;
-  openReport?: boolean;
-  reporters?: number;
-  product?: FakeRow | null;
-};
-
-/** The database as the routes read it: each statement answered by what it asks. */
-function world(state: World, seen: FakeQuery[] = []) {
-  return signedIn((query) => {
-    seen.push(query);
-    const { sql } = query;
-    if (sql.includes('from "community_categories"')) {
-      return [{ key: COMMUNITY_CATEGORY.debtFree, label: 'Bebas Hutang' }];
-    }
-    if (sql.includes('for update')) {
-      return state.group === null
-        ? []
-        : [{ status: state.status ?? COMMUNITY_LISTING_STATUS.active }];
-    }
-    if (sql.startsWith('select') && sql.includes('from "community_groups"')) {
-      return state.group === null ? [] : [state.group ?? groupRow()];
-    }
-    if (sql.startsWith('select') && sql.includes('from "community_rules_consents"')) {
-      return state.consented ? [{ version: COMMUNITY_RULES_VERSION }] : [];
-    }
-    if (sql.includes('count(distinct')) return [{ reporters: state.reporters ?? 1 }];
-    if (sql.startsWith('select') && sql.includes('from "community_reports"')) {
-      return state.openReport ? [{ id: REPORT_ID }] : [];
-    }
-    if (sql.startsWith('insert into "community_reports"')) return [{ id: REPORT_ID }];
-    if (sql.includes('from "community_products"')) {
-      return state.product === null ? [] : [state.product ?? productRow()];
-    }
-    return [];
-  });
-}
-
-function call(method: string, path: string, body?: unknown) {
-  return app.request(path, {
-    method,
-    headers: { 'Content-Type': 'application/json', ...AUTH_HEADER },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  });
-}
-
-async function problemOf(res: Response) {
-  return { status: res.status, code: ((await res.json()) as { code: string }).code };
-}
 
 const GROUP = `/api/community/groups/${GROUP_ID}`;
 
@@ -149,7 +104,7 @@ describe('community routes', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       inviteUrl: 'https://chat.whatsapp.com/J6w5MMRXueBRbTmGiDOI4Z',
-      platform: 'whatsapp',
+      platform: COMMUNITY_PLATFORM.whatsapp,
       linkCheckedOn: '2026-10-12',
     });
   });

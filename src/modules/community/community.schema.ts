@@ -20,7 +20,7 @@ export const productIdParamsSchema = z.object({ id: z.uuid() });
 export const groupsQuerySchema = z.object({ category: categorySchema.optional() });
 export const productsQuerySchema = z.object({ kind: kindSchema.optional() });
 
-export const groupSummarySchema = z
+const groupSummarySchema = z
   .object({
     id: z.uuid(),
     name: z.string(),
@@ -85,7 +85,7 @@ export const reportBodySchema = z
 
 export const reportResponseSchema = z.object({ id: z.uuid() }).openapi('CommunityReport');
 
-export const productSummarySchema = z
+const productSummarySchema = z
   .object({
     id: z.uuid(),
     kind: kindSchema,

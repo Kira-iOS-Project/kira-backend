@@ -6,7 +6,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   COMMUNITY_CATEGORY,
-  COMMUNITY_PRODUCT_KIND,
+  COMMUNITY_PLATFORM,
   COMMUNITY_REPORT_REASON,
   COMMUNITY_RULES_VERSION,
   COMMUNITY_SUSPENSION_REPORTERS,
@@ -15,29 +15,12 @@ import {
 import {
   CommunityGroupNotFoundError,
   CommunityLinkUnavailableError,
-  CommunityProductNotFoundError,
   CommunityReportDuplicateError,
   CommunityRulesNotAcceptedError,
 } from '../community.errors.ts';
 import type { CommunityRepository } from '../community.repository.ts';
-import {
-  acceptRules,
-  getGroup,
-  getProduct,
-  joinGroup,
-  listGroups,
-  listProducts,
-  reportGroup,
-} from '../community.service.ts';
-import {
-  createCommunityRepositoryMock,
-  GROUP_ID,
-  groupRow,
-  NOW,
-  PRODUCT_ID,
-  productRow,
-  USER_ID,
-} from './helpers.ts';
+import { acceptRules, getGroup, joinGroup, listGroups, reportGroup } from '../community.service.ts';
+import { createCommunityRepositoryMock, GROUP_ID, groupRow, NOW, USER_ID } from './helpers.ts';
 
 const now = () => NOW;
 
@@ -116,7 +99,7 @@ describe('joinGroup', () => {
 
     expect(join).toEqual({
       inviteUrl: 'https://chat.whatsapp.com/J6w5MMRXueBRbTmGiDOI4Z',
-      platform: 'whatsapp',
+      platform: COMMUNITY_PLATFORM.whatsapp,
       linkCheckedOn: '2026-10-12',
     });
     expect(joins).toEqual([[USER_ID, GROUP_ID]]);
@@ -217,42 +200,5 @@ describe('reportGroup', () => {
     await expect(reportGroup(USER_ID, GROUP_ID, body, { repository: missing })).rejects.toThrow(
       CommunityGroupNotFoundError,
     );
-  });
-});
-
-describe('products', () => {
-  test('lists the summaries for a kind, without the detail', async () => {
-    const kinds: unknown[] = [];
-    const repository = createCommunityRepositoryMock({
-      listActiveProducts: async (kind) => {
-        kinds.push(kind);
-        return [productRow({ price: null })];
-      },
-    });
-
-    const { products } = await listProducts(
-      { kind: COMMUNITY_PRODUCT_KIND.course },
-      { repository },
-    );
-
-    expect(kinds).toEqual([COMMUNITY_PRODUCT_KIND.course]);
-    expect(products[0]).toMatchObject({ id: PRODUCT_ID, price: null, icon: 'buku' });
-    expect(Object.keys(products[0] ?? {})).not.toContain('sellerUrl');
-  });
-
-  test('answers a product with its detail, and refuses a missing one', async () => {
-    const found = createCommunityRepositoryMock({ findActiveProduct: async () => productRow() });
-
-    const product = await getProduct(PRODUCT_ID, { repository: found });
-
-    expect(product).toMatchObject({
-      meta: '6 modul video',
-      affiliate: true,
-      investmentRisk: false,
-    });
-    expect(product.sellerUrl).toBe('https://lynk.id/rakaaditya/kelas-budgeting-gaji-pertama');
-    await expect(
-      getProduct(PRODUCT_ID, { repository: createCommunityRepositoryMock() }),
-    ).rejects.toThrow(CommunityProductNotFoundError);
   });
 });

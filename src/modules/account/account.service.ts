@@ -31,8 +31,7 @@ type AccountDeps = {
 
 /** Every other module's blocks of Unduh Datamu, after the transactions in this order. */
 async function moduleExportSections(userId: string): Promise<ExportSection[]> {
-  const parts = await Promise.all([communityExportSections(userId)]);
-  return parts.flat();
+  return communityExportSections(userId);
 }
 
 function resolve(deps: AccountDeps) {
