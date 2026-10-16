@@ -46,7 +46,7 @@ describe('createBillingRepository', () => {
   });
 
   test('ends the active plan, starts the new one and writes its invoice together', async () => {
-    const fake = createFakeDb(inOrder([], [], [storedRow], []));
+    const fake = createFakeDb(inOrder([], [], [], [storedRow], []));
     const row = await createBillingRepository(fake.db).startSubscription({
       userId: USER_ID,
       plan: PLAN.plus,
@@ -60,15 +60,16 @@ describe('createBillingRepository', () => {
     expect(row).toEqual(mappedRow);
     expect(fake.queries.map((query) => query.sql.split(' ').slice(0, 3).join(' '))).toEqual([
       'select "id" from',
+      'select "id", "plan",',
       'update "subscriptions" set',
       'insert into "subscriptions"',
       'insert into "invoices"',
     ]);
-    expect(fake.queries[3]?.params).toContain(29_000);
+    expect(fake.queries[4]?.params).toContain(29_000);
   });
 
   test('locks the person’s row first, so a second checkout waits and then replaces the first', async () => {
-    const fake = createFakeDb(inOrder([{ id: USER_ID }], [], [storedRow], []));
+    const fake = createFakeDb(inOrder([{ id: USER_ID }], [], [], [storedRow], []));
 
     await createBillingRepository(fake.db).startSubscription({
       userId: USER_ID,
@@ -85,6 +86,49 @@ describe('createBillingRepository', () => {
     );
     expect(fake.queries[0]?.params).toEqual([USER_ID]);
     expect(fake.queries[1]?.sql).toContain('"subscriptions"."status" = $');
+  });
+
+  test('a second checkout of the plan already active returns it, with no new invoice', async () => {
+    const checkout = {
+      userId: USER_ID,
+      plan: PLAN.plus,
+      period: BILLING_PERIOD.monthly,
+      paymentMethod: PAYMENT_METHOD.qris,
+      amount: 29_000,
+      start: NOW,
+      end: END,
+    };
+    const cancelled = { ...storedRow, cancelAtPeriodEnd: true };
+    const fake = createFakeDb(
+      inOrder(
+        [],
+        [storedRow],
+        [],
+        [cancelled],
+        [],
+        [storedRow],
+        [],
+        [],
+        [storedRow],
+        [],
+        [storedRow],
+        [],
+      ),
+    );
+    const repository = createBillingRepository(fake.db);
+
+    expect(await repository.startSubscription(checkout)).toEqual(mappedRow);
+    expect(fake.queries).toHaveLength(2);
+    await repository.startSubscription(checkout);
+    expect(fake.queries.slice(2).map((query) => query.sql.split(' ')[0])).toEqual([
+      'select',
+      'select',
+      'update',
+      'insert',
+      'insert',
+    ]);
+    await repository.startSubscription({ ...checkout, period: BILLING_PERIOD.yearly });
+    expect(fake.queries).toHaveLength(12);
   });
 
   test('throws when the new subscription comes back empty', async () => {

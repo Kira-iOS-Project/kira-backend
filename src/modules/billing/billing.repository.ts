@@ -45,7 +45,7 @@ type CheckoutInput = {
 export type BillingRepository = {
   findActiveSubscription(userId: string): Promise<SubscriptionRow | null>;
   findUsageCounters(userId: string, periodStart: string): Promise<UsageCounters | null>;
-  /** Ends any active plan, starts the new one and writes its invoice; one checkout per person at once. */
+  /** Ends the active plan, starts the new one, writes its invoice; the same plan comes back as it is. */
   startSubscription(input: CheckoutInput): Promise<SubscriptionRow>;
   cancelAtPeriodEnd(subscriptionId: string): Promise<SubscriptionRow | null>;
   changePaymentMethod(
@@ -111,6 +111,14 @@ export function createBillingRepository(client: PostgresJsDatabase = db): Billin
           .from(users)
           .where(eq(users.id, userId))
           .for('no key update');
+        const [current] = await tx
+          .select(subscriptionColumns)
+          .from(subscriptions)
+          .where(activeOf(userId));
+        /** A repeated Bayar (double tap, retry) keeps the plan it bought: no second invoice. */
+        const bought =
+          current?.source === SUBSCRIPTION_SOURCE.purchase && !current.cancelAtPeriodEnd;
+        if (bought && current.plan === plan && current.period === period) return current;
         await tx
           .update(subscriptions)
           .set({ status: SUBSCRIPTION_STATUS.ended, currentPeriodEnd: start })

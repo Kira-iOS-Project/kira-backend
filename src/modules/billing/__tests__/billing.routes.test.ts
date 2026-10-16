@@ -55,7 +55,7 @@ describe('billing routes', () => {
   });
 
   test('POST /api/billing/checkout answers the new subscription', async () => {
-    dbControl.respond = signedIn(inOrder([{ id: TEST_USER_ID }], [], [SUBSCRIPTION], [], []));
+    dbControl.respond = signedIn(inOrder([{ id: TEST_USER_ID }], [], [], [SUBSCRIPTION], [], []));
 
     const res = await call('POST', '/api/billing/checkout', {
       plan: PLAN.plus,
