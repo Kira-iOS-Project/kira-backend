@@ -7,3 +7,9 @@ export const HOME_VARIANT = {
   overview: 'overview',
   debtPlan: 'debt_plan',
 } as const;
+
+/** Target mikro (BRD-03): a week of essential spending first, then a month. */
+export const MICRO_TARGET = {
+  oneWeek: 'one_week',
+  oneMonth: 'one_month',
+} as const;
