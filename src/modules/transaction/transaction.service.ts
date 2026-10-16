@@ -31,7 +31,17 @@ export function toTransaction(row: TransactionRow): Transaction {
   return { ...row, occurredAt: row.occurredAt.toISOString() };
 }
 
-/** Saves a manual entry; a retry with the same client id answers the first save. */
+/** The first save of a client id: the entry and its note, or a 404 once the entry was deleted. */
+async function earlierSave(repository: TransactionRepository, userId: string, clientId: string) {
+  const { transaction, message } = await repository.findManualByClientId(userId, clientId);
+  if (message && !transaction) throw new TransactionNotFoundError();
+  return transaction && message ? { transaction, message } : null;
+}
+
+/**
+ * Saves a manual entry; a retry with the same client id answers the first save, and a retry after
+ * that entry was deleted answers 404 instead of saving it again.
+ */
 export async function createManual(
   userId: string,
   body: CreateTransactionBody,
@@ -41,7 +51,7 @@ export async function createManual(
   const now = deps.now?.() ?? new Date();
   const id = deps.newId?.() ?? crypto.randomUUID();
   const saved =
-    (await repository.findManualByClientId(userId, body.clientId)) ??
+    (await earlierSave(repository, userId, body.clientId)) ??
     (await repository.createManual({
       transaction: {
         id,
@@ -58,7 +68,7 @@ export async function createManual(
       message: { transactionIds: [id], itemCount: 1 },
       now,
     })) ??
-    (await repository.findManualByClientId(userId, body.clientId));
+    (await earlierSave(repository, userId, body.clientId));
   if (!saved) throw new Error('The manual entry was neither saved nor found');
   return { transaction: toTransaction(saved.transaction), message: toChatMessage(saved.message) };
 }

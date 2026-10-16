@@ -125,7 +125,13 @@ export function createChatRepository(client: PostgresJsDatabase = db): ChatRepos
 
     async findByClientId(userId, clientId) {
       const [person] = await select()
-        .where(and(mine(userId), eq(chatMessages.clientId, clientId)))
+        .where(
+          and(
+            mine(userId),
+            eq(chatMessages.clientId, clientId),
+            eq(chatMessages.sender, MESSAGE_SENDER.person),
+          ),
+        )
         .limit(1);
       return person ? { person, reply: await replyTo(person.id, userId) } : null;
     },
@@ -145,7 +151,10 @@ export function createChatRepository(client: PostgresJsDatabase = db): ChatRepos
         const [stored] = await tx
           .insert(chatMessages)
           .values({ userId, clientId, sender: MESSAGE_SENDER.person, ...person })
-          .onConflictDoNothing({ target: [chatMessages.userId, chatMessages.clientId] })
+          .onConflictDoNothing({
+            target: [chatMessages.userId, chatMessages.clientId],
+            where: sql`${chatMessages.sender} = ${sql.raw(`'${MESSAGE_SENDER.person}'`)}`,
+          })
           .returning(messageColumns);
         if (!stored) return null;
         const { use, limits } = quota;

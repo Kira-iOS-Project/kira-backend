@@ -5,7 +5,6 @@
 
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
-import { inOrder } from '../../../test/fake-postgres.ts';
 import { dbControl, emailControl, resetExternalMocks } from '../../../test/preload.ts';
 import { AUTH_HEADER, signedIn, TEST_SESSION_ID } from '../../../test/session.ts';
 
@@ -60,19 +59,22 @@ describe('POST /api/auth/verify', () => {
       query.sql.startsWith('insert into "auth_codes"'),
     );
     const codeHash = stored?.params[1];
-    dbControl.respond = inOrder(
-      [
-        {
-          id: 'code-1',
-          codeHash,
-          attempts: 0,
-          expiresAt: new Date(Date.now() + 60_000).toISOString(),
-        },
-      ],
-      [],
-      [{ id: 'user-1', consentedAt: null }],
-      [],
-    );
+    dbControl.respond = (query) => {
+      if (query.sql.startsWith('select "id", "code_hash"')) {
+        return [
+          {
+            id: 'code-1',
+            codeHash,
+            attempts: 0,
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          },
+        ];
+      }
+      if (query.sql.startsWith('update "auth_codes" set "attempts"'))
+        return [{ codeHash, attempts: 1 }];
+      if (query.sql.startsWith('insert into "users"')) return [{ id: 'user-1', consentedAt: null }];
+      return [];
+    };
 
     const res = await post('/api/auth/verify', { email: 'dinda@email.com', code });
     const body = await res.json();
@@ -93,14 +95,19 @@ describe('POST /api/auth/refresh', () => {
   });
 
   test('answers a new pair for a live session', async () => {
-    dbControl.respond = inOrder([
-      {
-        sessionId: 's1',
-        userId: 'u1',
-        refreshExpiresAt: new Date(Date.now() + 60_000).toISOString(),
-        revokedAt: null,
-      },
-    ]);
+    dbControl.respond = (query) => {
+      if (query.sql.includes('where "sessions"."refresh_token_hash" = $1 limit')) {
+        return [
+          {
+            sessionId: 's1',
+            userId: 'u1',
+            refreshExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+            revokedAt: null,
+          },
+        ];
+      }
+      return query.sql.startsWith('update "sessions"') ? [{ id: 's1' }] : [];
+    };
 
     const res = await post('/api/auth/refresh', { refreshToken: 'live' });
 

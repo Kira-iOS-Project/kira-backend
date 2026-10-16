@@ -12,6 +12,7 @@ const SNAPSHOT = {
   band: SCORE_BAND.coping,
   indicators: pointsOf(factsOf(DINDA)),
   reason: SNAPSHOT_REASON.healthCheck,
+  periodStart: '2026-09-25',
 };
 
 const stateRow = (completedAt: string | null) => ({
@@ -81,6 +82,9 @@ describe('createScoreRepository', () => {
     const fake = createFakeDb();
     await createScoreRepository(fake.db).insertSnapshot('user-1', SNAPSHOT);
     expect(fake.queries[0]?.sql).toStartWith('insert into "score_snapshots"');
+    expect(fake.queries[0]?.sql).toContain(
+      `on conflict ("user_id","period_start") where "score_snapshots"."reason" = '${SNAPSHOT_REASON.recompute}' do nothing`,
+    );
   });
 
   test('saves the health check in one transaction, replacing the debts', async () => {

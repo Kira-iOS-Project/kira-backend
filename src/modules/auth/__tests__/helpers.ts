@@ -1,22 +1,21 @@
 /**
- * Mock builders for the auth module's injected dependencies (AGENTS.md Rule 19).
+ * Mock builders for the auth module's injected dependencies (AGENTS.md Rule 19). The default
+ * repository allows every request and check, as an empty database would.
  */
 
 import type { AuthRepository } from '../auth.repository.ts';
 
 export function createAuthRepositoryMock(overrides: Partial<AuthRepository> = {}): AuthRepository {
   return {
-    countCodesForEmailSince: async () => 0,
-    countCodesFromIpSince: async () => 0,
-    latestCodeAt: async () => null,
-    replaceCode: async () => undefined,
+    issueCode: async (_input, decide) => decide({ latestAt: null, emailCount: 0, ipCount: 0 }),
+    recordCheck: async (_input, decide) => decide({ emailCount: 0, ipCount: 0 }),
     findActiveCode: async () => null,
-    recordFailedAttempt: async () => 1,
+    claimAttempt: async () => null,
     completeSignIn: async () => ({ userId: 'user-1', needsOnboarding: true }),
     findSessionByAccessToken: async () => null,
     findSessionByRefreshToken: async () => null,
     findSessionByPreviousRefreshToken: async () => null,
-    rotateSession: async () => undefined,
+    rotateSession: async () => true,
     revokeSession: async () => undefined,
     ...overrides,
   };

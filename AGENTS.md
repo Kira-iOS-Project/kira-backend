@@ -29,7 +29,7 @@ session, and after that it stops trusting any rule in the file.
 | §A Protocol | Enforced | Applies as written. Commits are `type: description`. |
 | §B Layer boundaries | Enforced | Eight modules (`meta`, `auth`, `account`, `score`, `home`, `billing`, `scholarship`, `jobs`), each routes → handler → service → repository; `jobs` has no routes, only the scheduled-job list. `home` reads `score` through its `index.ts`. The oxlint import rules bind every one; the service and handler overrides sit after the cross-module one, which used to replace them. |
 | §C Error contract | Enforced | `src/lib/errors/` is the whole contract; base `https://api-kira.serenitycode.tech/problems/`; `check:openapi` holds the spec side. |
-| §D Database | Enforced | Sixteen tables in four domain files under `src/db/schema/` (SSOT.md § Database), with their indexes, in one generated migration. Migrations run at boot. |
+| §D Database | Enforced | Seventeen tables in four domain files under `src/db/schema/` (SSOT.md § Database), with their indexes and CHECK constraints mirroring the zod rules, in one generated migration. Migrations run at boot. |
 | §E Testing | Enforced | Unit tier at 100% per file, against the fake Postgres client (`src/test/fake-postgres.ts`) and the shared doubles in `src/test/preload.ts`. No integration test yet; `src/test/config.ts` is ready for the first. |
 | §F Security | Enforced | Rules 22 to 25 bind. Auth is email + one-time code with opaque bearer tokens (SSOT.md § Authentication); every route but `/health`, `/email/*` and `/api/auth/{code,verify,refresh}` sits behind `requireSession`. Rule 24 is satisfied by the auth module's Postgres-counted code limits. |
 | §G Code quality | Enforced | Applies as written, Rules 43 (`src/lib/constants/`), 49 (`check:comments`) and 50 (English identifiers) included. |
@@ -77,6 +77,12 @@ Known behaviour, deliberate:
   "renews" a paid plan by writing an invoice row.
 - Without `RESEND_API_KEY` outside production, emails are logged instead of sent; the sign-in code
   appears in the log.
+- Urungkan takes the whole batch back: a transaction of the batch edited after Simpan (within the
+  30 s window) is deleted with the rest, and its draft returns with the values it was saved with.
+- The data export (`GET /api/me/export` and its email) holds at most 50 000 transactions
+  (`EXPORT_ROW_LIMIT`), newest first. Years of typical use stay far below it.
+- Someone else can spend an address's code tries and checks (10 per 15 minutes) by guessing at it.
+  That briefly blocks its owner's sign-in; it never lets the guesser in.
 
 ---
 
@@ -320,12 +326,16 @@ which run before the logger can exist).
 **Rule 24 — A rate limit decides allow or deny first, exactly once, before any work it guards.**
 The kit's form of this rule is about Redis (`await next()` never inside the Redis try/catch; see
 `.claude/anti-patterns/rate-limit-double-next.md`). This repo runs no Redis, by the owner's decision,
-so its limits are counted in Postgres. The one limiter today is in `src/modules/auth/auth.service.ts`
-(`requestCode`): the 60 s cooldown, 5 codes per hour per address and 20 per hour per network are
-counted from `auth_codes` and refused (429 `AUTH_CODE_RATE_LIMITED`) before a code is stored or an
-email sent; a code's 5 tries are counted on its row. A future limiter, middleware or not, keeps that
-shape: decide first, then call `next()` (or do the work) exactly once, and never fail open on a
-counting error. Enforcement: advisory / `agent-be-hono:reviewer`.
+so its limits are counted in Postgres. The limiters today are the sign-in code requests and checks
+(`src/modules/auth/auth.limits.ts`, values in SSOT.md § Authentication). Each decision runs inside
+the transaction that writes, under advisory locks on the address and the network
+(`auth-codes.repository.ts`), so parallel requests cannot all pass a count read before any of them
+wrote; over a limit they answer 429 `AUTH_CODE_RATE_LIMITED` before a code is stored, an email sent
+or a code compared, and a code's 5 tries are claimed one by one with a conditional `UPDATE`. A
+future limiter, middleware or not, keeps that shape: decide first, atomically with the write, then
+call `next()` (or do the work) exactly once, and never fail open on a counting error. Enforcement:
+advisory / `agent-be-hono:reviewer`; the parallel-burst tests in
+`src/modules/auth/__tests__/auth.concurrency.test.ts`.
 
 **Rule 25 — No `.env` file or secret is ever committed.** Enforcement: a staged gitleaks scan in
 pre-commit (`scripts/check/gates.list`), then the quality gate's secret scan (gitleaks) +

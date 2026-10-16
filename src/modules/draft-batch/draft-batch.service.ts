@@ -15,6 +15,7 @@ import {
   UndoExpiredError,
 } from './draft-batch.errors.ts';
 import {
+  type CommitPlan,
   type DraftBatchRepository,
   draftBatchRepository,
   type NewTransaction,
@@ -88,7 +89,18 @@ async function budgetAfter(
   });
 }
 
-/** Saves a pending reply's drafts as transactions and answers with the remaining money. */
+/** A reply's payload, as stored. */
+type MessagePayload = CommitPlan['payload'];
+
+function isPending(payload: MessagePayload): boolean {
+  return payload.draftStatus === DRAFT_STATUS.pending && (payload.drafts ?? []).length > 0;
+}
+
+/**
+ * Saves a pending reply's drafts as transactions and answers with the remaining money. The save is
+ * built from the drafts as locked inside the saving transaction, so an edit that lands while it
+ * runs is either saved or refused, never silently dropped.
+ */
 export async function commitDrafts(
   userId: string,
   messageId: string,
@@ -98,17 +110,35 @@ export async function commitDrafts(
   const found = await repository.findDraftsMessage(userId, messageId);
   if (!found) throw new MessageNotFoundError();
   const { message, sourceKind } = found;
-  const drafts = message.payload.drafts ?? [];
   if (message.kind !== MESSAGE_KIND.drafts) throw new DraftsNotPendingError('not a drafts reply');
-  if (message.payload.draftStatus !== DRAFT_STATUS.pending || drafts.length === 0) {
-    throw new DraftsNotPendingError('already settled');
-  }
-  const budget = await budgetAfter(repository, userId, drafts, now);
-  const batchId = newId();
+  if (!isPending(message.payload)) throw new DraftsNotPendingError('already settled');
   const source =
     sourceKind === MESSAGE_KIND.personReceipt
       ? TRANSACTION_SOURCE.receipt
       : TRANSACTION_SOURCE.chat;
+  const saved = await repository.commit({ userId, messageId, now }, async (locked) =>
+    isPending(locked)
+      ? planCommit({ userId, locked, replyToId: message.replyToId, source, now, newId, repository })
+      : null,
+  );
+  if (!saved) throw new DraftsNotPendingError('settled during the save');
+  return { message: toChatMessage(saved.message), remaining: toChatMessage(saved.remaining) };
+}
+
+/** The transactions and messages a save writes, from the drafts as locked. */
+async function planCommit(input: {
+  userId: string;
+  locked: MessagePayload;
+  replyToId: string | null;
+  source: NewTransaction['source'];
+  now: Date;
+  newId: () => string;
+  repository: DraftBatchRepository;
+}): Promise<CommitPlan> {
+  const { userId, locked, source, now, newId, repository } = input;
+  const drafts = locked.drafts ?? [];
+  const budget = await budgetAfter(repository, userId, drafts, now);
+  const batchId = newId();
   const rows: NewTransaction[] = drafts.map((draft) => ({
     id: newId(),
     userId,
@@ -118,16 +148,14 @@ export async function commitDrafts(
     name: draft.name,
     occurredAt: new Date(draft.occurredAt),
     source,
-    sourceMessageId: message.replyToId,
+    sourceMessageId: input.replyToId,
     sourceSpanStart: draft.spanStart,
     sourceSpanEnd: draft.spanEnd,
     batchId,
   }));
-  const saved = await repository.commit({
-    userId,
-    messageId,
+  return {
     payload: {
-      ...message.payload,
+      ...locked,
       draftStatus: DRAFT_STATUS.committed,
       batchId,
       transactionIds: rows.map((row) => row.id),
@@ -140,10 +168,7 @@ export async function commitDrafts(
       remaining: budget.remaining,
       perDay: budget.perDay,
     },
-    now,
-  });
-  if (!saved) throw new DraftsNotPendingError('settled during the save');
-  return { message: toChatMessage(saved.message), remaining: toChatMessage(saved.remaining) };
+  };
 }
 
 /** Urungkan: deletes a batch's transactions and puts its drafts back to pending. */

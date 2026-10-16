@@ -130,9 +130,10 @@ export async function commitImport(
   const transactions = [...chosen].map(([id, category]) => {
     const row = rows.get(id);
     if (!row) throw new ImportRowUnknownError();
+    if (typeOfCategory(category) !== row.type) throw new ImportRowUnknownError('category type');
     return {
       userId,
-      type: typeOfCategory(category),
+      type: row.type,
       amount: row.amount,
       category,
       name: row.description.slice(0, 80),

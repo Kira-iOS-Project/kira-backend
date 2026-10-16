@@ -16,7 +16,8 @@ export const requestCodeHandler: RouteHandler<typeof requestCodeRoute, AppEnv> =
 };
 
 export const verifyCodeHandler: RouteHandler<typeof verifyCodeRoute, AppEnv> = async (c) => {
-  return c.json(await verifyCode(c.req.valid('json')), 200);
+  const ip = clientIp((name) => c.req.header(name));
+  return c.json(await verifyCode({ ...c.req.valid('json'), ip }), 200);
 };
 
 export const refreshHandler: RouteHandler<typeof refreshRoute, AppEnv> = async (c) => {

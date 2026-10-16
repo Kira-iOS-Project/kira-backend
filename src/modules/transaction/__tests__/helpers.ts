@@ -49,7 +49,7 @@ export function createTransactionRepositoryMock(
   overrides: Partial<TransactionRepository> = {},
 ): TransactionRepository {
   return {
-    findManualByClientId: async () => null,
+    findManualByClientId: async () => ({ transaction: null, message: null }),
     createManual: async () => null,
     list: async () => [],
     dailyTotals: async () => [],

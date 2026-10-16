@@ -88,17 +88,30 @@ of it lives in `src/modules/auth/`; the numbers are constants at the top of `aut
 
 - **Codes.** Six digits from `crypto.randomInt`, valid 10 minutes, one active code per address (a
   new one retires the old). Stored as **HMAC-SHA256(`AUTH_SECRET`, email:code)**, never in clear;
-  compared with `timingSafeEqual`. A code allows **5 tries**, then it is spent. The email is the
-  only delivery channel; `POST /auth/code` answers 202 whether or not the address has an account.
+  compared with `timingSafeEqual`. A code allows **5 tries**, then it is spent; each try is
+  claimed by a conditional `UPDATE … WHERE attempts < 5` before the compare, so parallel guesses
+  get five and no more. The email is the only delivery channel; `POST /auth/code` answers 202
+  whether or not the address has an account.
 - **Tokens.** Opaque random tokens (32 bytes, base64url), **not JWTs**. The `sessions` table stores
   only their **SHA-256** hashes. Access token 15 minutes, refresh token 60 days.
 - **Rotation with reuse detection.** `POST /auth/refresh` issues a new pair and keeps the previous
   refresh hash on the session. Presenting that previous token again revokes the session (`reused`);
-  a revoked, expired or unknown token answers 401 `AUTH_REFRESH_INVALID`.
-- **Rate limits, counted in Postgres** (no Redis, AGENTS.md Rule 24): a **60 s** cooldown between
-  codes for one address, **5 codes per hour per address**, **20 per hour per network** (the
-  `cf-connecting-ip` header, else the first `x-forwarded-for` hop). Counted from `auth_codes`
-  (indexed on email and on IP, each with `created_at`), decided before anything is stored or sent.
+  so does losing a race: rotation is a conditional `UPDATE` on the presented token, and the refresh
+  that finds it already rotated revokes the session. A revoked, expired or unknown token answers
+  401 `AUTH_REFRESH_INVALID`.
+- **Rate limits, counted in Postgres** (no Redis, AGENTS.md Rule 24), values in
+  `src/modules/auth/auth.limits.ts`. The network is the `cf-connecting-ip` header, else the first
+  `x-forwarded-for` hop.
+  - Code requests: a **60 s** cooldown per address, **5 per hour per address**, **20 per hour per
+    network**, counted from `auth_codes`.
+  - Code checks (`POST /auth/verify`): **10 per 15 minutes per address** (two codes' five tries
+    each, so an honest typo and a new code still fit) and **60 per 15 minutes per network** (many
+    people share one address behind a mobile carrier's NAT), counted from `sign_in_attempts`.
+    Every check counts, right or wrong; a refused one is not recorded.
+  - Each decision runs inside the transaction that writes, under `pg_advisory_xact_lock` on the
+    address and then the network (`auth-codes.repository.ts`), so a burst of parallel requests is
+    counted one at a time. Over a limit: 429 `AUTH_CODE_RATE_LIMITED`, before anything is stored
+    or sent. The hourly cleanup deletes codes and checks a day old.
 - **Sign-up** is the first verified code: the account is created then, with `displayName` taken
   from the address's local part ("dinda@…" → Dinda). `needsOnboarding` stays true until the
   consents are given (`users.consentedAt`). Codes older than a day are deleted by the
@@ -189,7 +202,7 @@ and bank-CSV imports with duplicate detection and an atomic commit.
 - Two Postgres 18 instances (pgvector image) on the VPS, managed by Dokploy project **Kira**:
   `DB-Kira` (production, database `kira`, owner `kira`) and `DB-Kira-Dev` (development, database
   `kira_dev`, owner `kira_dev`). Access, roles and the tunnel: `.claude/DATABASE.md`.
-- Tables (`src/db/schema/`): `users`, `auth_codes`, `sessions`, `consents` (accounts.ts);
+- Tables (`src/db/schema/`): `users`, `auth_codes`, `sign_in_attempts`, `sessions`, `consents` (accounts.ts);
   `financial_profiles`, `debt_accounts`, `score_snapshots` (finances.ts); `chat_messages`,
   `transactions`, `usage_counters`, `bank_imports`, `bank_import_rows` (ledger.ts); `subscriptions`,
   `invoices`, `gifts`, `scholarship_applications` (billing.ts). Amounts are whole rupiah (`bigint`).

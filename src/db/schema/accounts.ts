@@ -3,8 +3,10 @@
  * open and the consents they give (ONB-05 to ONB-08, AKN-04).
  */
 
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   index,
   pgEnum,
   pgTable,
@@ -40,7 +42,10 @@ export const users = pgTable(
     debtEmergencyModeUsedAt: moment('debt_emergency_mode_used_at'),
     ...timestamps,
   },
-  (table) => [uniqueIndex('users_email_idx').on(table.email)],
+  (table) => [
+    uniqueIndex('users_email_idx').on(table.email),
+    check('users_payday_day_check', sql`${table.paydayDay} between 1 and 31`),
+  ],
 );
 
 export const authCodes = pgTable(
@@ -60,6 +65,8 @@ export const authCodes = pgTable(
   (table) => [
     index('auth_codes_email_created_idx').on(table.email, table.createdAt.desc().nullsFirst()),
     index('auth_codes_ip_created_idx').on(table.requestIp, table.createdAt.desc().nullsFirst()),
+    index('auth_codes_created_idx').on(table.createdAt),
+    check('auth_codes_attempts_check', sql`${table.attempts} >= 0`),
   ],
 );
 
@@ -85,6 +92,32 @@ export const sessions = pgTable(
     uniqueIndex('sessions_access_token_hash_idx').on(table.accessTokenHash),
     uniqueIndex('sessions_refresh_token_hash_idx').on(table.refreshTokenHash),
     index('sessions_previous_refresh_token_hash_idx').on(table.previousRefreshTokenHash),
+  ],
+);
+
+/**
+ * One row per code check that passed the rate limit (POST /api/auth/verify), counted per address
+ * and per network so a burst of guesses is refused before any code is compared. Deleted by the
+ * hourly cleanup a day later.
+ */
+export const signInAttempts = pgTable(
+  'sign_in_attempts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: varchar('email', { length: 320 }).notNull(),
+    requestIp: varchar('request_ip', { length: 64 }).notNull(),
+    createdAt: moment('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('sign_in_attempts_email_created_idx').on(
+      table.email,
+      table.createdAt.desc().nullsFirst(),
+    ),
+    index('sign_in_attempts_ip_created_idx').on(
+      table.requestIp,
+      table.createdAt.desc().nullsFirst(),
+    ),
+    index('sign_in_attempts_created_idx').on(table.createdAt),
   ],
 );
 

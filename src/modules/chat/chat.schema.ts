@@ -40,6 +40,11 @@ export const sendMessageBodySchema = z
     /** What the device read from the text; empty when it found no amount. */
     drafts: z.array(draftInputSchema).max(MAX_DRAFTS),
   })
+  /** A spoken message says how long it was, so the voice quota is always spent. */
+  .refine((body) => body.inputMethod !== INPUT_METHOD.voice || body.voiceSeconds !== undefined, {
+    path: ['voiceSeconds'],
+    message: 'Required for a spoken message',
+  })
   .openapi('ChatMessageInput');
 
 export const sendReceiptBodySchema = z

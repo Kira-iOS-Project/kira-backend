@@ -20,9 +20,13 @@ export type ScoreDeps = { repository?: ScoreRepository; now?: () => Date };
 
 type Scored = { evaluation: Evaluation; report: ScoreReport };
 
-function snapshotOf(evaluation: Evaluation, reason: NewSnapshot['reason']): NewSnapshot {
+function snapshotOf(
+  evaluation: Evaluation,
+  reason: NewSnapshot['reason'],
+  periodStart: string,
+): NewSnapshot {
   const { score, band, points } = evaluation;
-  return { score, band, indicators: points, reason };
+  return { score, band, indicators: points, reason, periodStart };
 }
 
 /** Scores the answers on file, taking this period's snapshot if there is none yet; null before the quiz. */
@@ -40,7 +44,10 @@ async function scoreOf(userId: string, deps: ScoreDeps): Promise<Scored | null> 
   const evaluation = evaluate(input);
   let { count, latestInPeriodAt } = history;
   if (latestInPeriodAt === null) {
-    await repository.insertSnapshot(userId, snapshotOf(evaluation, SNAPSHOT_REASON.recompute));
+    await repository.insertSnapshot(
+      userId,
+      snapshotOf(evaluation, SNAPSHOT_REASON.recompute, period.start),
+    );
     count += 1;
     latestInPeriodAt = now;
   }
@@ -110,7 +117,11 @@ export async function saveHealthCheck(
   await repository.saveHealthCheck(
     userId,
     body,
-    snapshotOf(evaluation, SNAPSHOT_REASON.healthCheck),
+    snapshotOf(
+      evaluation,
+      SNAPSHOT_REASON.healthCheck,
+      paydayPeriod(wibDate(now), body.payday).start,
+    ),
     now,
   );
   return getScoreReport(userId, { repository, now: () => now });

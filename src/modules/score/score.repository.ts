@@ -41,6 +41,8 @@ export type NewSnapshot = {
   band: ScoreBand;
   indicators: IndicatorPoints;
   reason: Values<typeof SNAPSHOT_REASON>;
+  /** The payday period's first day (`YYYY-MM-DD`). */
+  periodStart: string;
 };
 
 /** At most this many open debt accounts are read: the quiz accepts twenty. */
@@ -140,8 +142,15 @@ export function createScoreRepository(client: PostgresJsDatabase = db): ScoreRep
       };
     },
 
+    /** A second recompute for the same period is dropped by the partial unique index. */
     async insertSnapshot(userId, snapshot) {
-      await client.insert(scoreSnapshots).values({ userId, ...snapshot });
+      await client
+        .insert(scoreSnapshots)
+        .values({ userId, ...snapshot })
+        .onConflictDoNothing({
+          target: [scoreSnapshots.userId, scoreSnapshots.periodStart],
+          where: sql`${scoreSnapshots.reason} = ${sql.raw(`'${SNAPSHOT_REASON.recompute}'`)}`,
+        });
     },
 
     async saveHealthCheck(userId, body, snapshot, now) {

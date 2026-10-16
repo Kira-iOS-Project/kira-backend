@@ -26,7 +26,8 @@ CREATE TABLE "auth_codes" (
 	"attempts" smallint DEFAULT 0 NOT NULL,
 	"expires_at" timestamp (3) with time zone NOT NULL,
 	"consumed_at" timestamp (3) with time zone,
-	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "auth_codes_attempts_check" CHECK ("auth_codes"."attempts" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "consents" (
@@ -51,6 +52,13 @@ CREATE TABLE "sessions" (
 	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "sign_in_attempts" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"email" varchar(320) NOT NULL,
+	"request_ip" varchar(64) NOT NULL,
+	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" varchar(320) NOT NULL,
@@ -62,7 +70,8 @@ CREATE TABLE "users" (
 	"consented_at" timestamp (3) with time zone,
 	"debt_emergency_mode_used_at" timestamp (3) with time zone,
 	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "users_payday_day_check" CHECK ("users"."payday_day" between 1 and 31)
 );
 --> statement-breakpoint
 CREATE TABLE "gifts" (
@@ -71,7 +80,9 @@ CREATE TABLE "gifts" (
 	"months" smallint NOT NULL,
 	"amount" bigint NOT NULL,
 	"payment_method" "payment_method" NOT NULL,
-	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "gifts_months_check" CHECK ("gifts"."months" in (1, 3, 6)),
+	CONSTRAINT "gifts_amount_check" CHECK ("gifts"."amount" > 0)
 );
 --> statement-breakpoint
 CREATE TABLE "invoices" (
@@ -84,7 +95,8 @@ CREATE TABLE "invoices" (
 	"payment_method" "payment_method" NOT NULL,
 	"period_start" timestamp (3) with time zone NOT NULL,
 	"period_end" timestamp (3) with time zone NOT NULL,
-	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "invoices_amount_check" CHECK ("invoices"."amount" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "scholarship_applications" (
@@ -99,7 +111,9 @@ CREATE TABLE "scholarship_applications" (
 	"subscription_id" uuid,
 	"result_email_sent_at" timestamp (3) with time zone,
 	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "scholarship_applications_situations_check" CHECK (cardinality("scholarship_applications"."situations") >= 1),
+	CONSTRAINT "scholarship_applications_story_check" CHECK (char_length("scholarship_applications"."story") <= 1000)
 );
 --> statement-breakpoint
 CREATE TABLE "subscriptions" (
@@ -130,7 +144,9 @@ CREATE TABLE "debt_accounts" (
 	"payment_status" "debt_payment_status" DEFAULT 'on_time' NOT NULL,
 	"paid_off_at" timestamp (3) with time zone,
 	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "debt_accounts_amounts_check" CHECK ("debt_accounts"."remaining_amount" between 0 and "debt_accounts"."original_amount" and "debt_accounts"."monthly_instalment" >= 0),
+	CONSTRAINT "debt_accounts_tenor_check" CHECK ("debt_accounts"."remaining_tenor_months" between 0 and 600)
 );
 --> statement-breakpoint
 CREATE TABLE "financial_profiles" (
@@ -146,7 +162,9 @@ CREATE TABLE "financial_profiles" (
 	"protections" "protection"[] DEFAULT '{}' NOT NULL,
 	"completed_at" timestamp (3) with time zone NOT NULL,
 	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "financial_profiles_amounts_check" CHECK ("financial_profiles"."net_monthly_income" >= 0 and "financial_profiles"."essential_monthly_expenses" >= 0 and "financial_profiles"."emergency_fund" >= 0 and "financial_profiles"."monthly_savings" >= 0 and "financial_profiles"."other_assets" >= 0 and "financial_profiles"."property_assets" >= 0),
+	CONSTRAINT "financial_profiles_dependents_check" CHECK ("financial_profiles"."dependents" between 0 and 3)
 );
 --> statement-breakpoint
 CREATE TABLE "score_snapshots" (
@@ -156,7 +174,9 @@ CREATE TABLE "score_snapshots" (
 	"band" "score_band" NOT NULL,
 	"indicators" jsonb NOT NULL,
 	"reason" "snapshot_reason" NOT NULL,
-	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"period_start" date NOT NULL,
+	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "score_snapshots_score_check" CHECK ("score_snapshots"."score" between 0 and 100)
 );
 --> statement-breakpoint
 CREATE TABLE "bank_import_rows" (
@@ -168,7 +188,8 @@ CREATE TABLE "bank_import_rows" (
 	"type" "transaction_type" NOT NULL,
 	"amount" bigint NOT NULL,
 	"category" "transaction_category" NOT NULL,
-	"is_duplicate" boolean NOT NULL
+	"is_duplicate" boolean NOT NULL,
+	CONSTRAINT "bank_import_rows_amount_check" CHECK ("bank_import_rows"."amount" between 1 and 10000000000000)
 );
 --> statement-breakpoint
 CREATE TABLE "bank_imports" (
@@ -182,7 +203,9 @@ CREATE TABLE "bank_imports" (
 	"committed_at" timestamp (3) with time zone,
 	"saved_count" integer,
 	"skipped_count" integer,
-	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "bank_imports_file_size_check" CHECK ("bank_imports"."file_size" between 1 and 10000000),
+	CONSTRAINT "bank_imports_dates_check" CHECK ("bank_imports"."date_to" >= "bank_imports"."date_from")
 );
 --> statement-breakpoint
 CREATE TABLE "chat_messages" (
@@ -215,7 +238,8 @@ CREATE TABLE "transactions" (
 	"import_id" uuid,
 	"client_id" uuid,
 	"created_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "transactions_amount_check" CHECK ("transactions"."amount" between 1 and 10000000000000)
 );
 --> statement-breakpoint
 CREATE TABLE "usage_counters" (
@@ -225,7 +249,8 @@ CREATE TABLE "usage_counters" (
 	"receipts" integer DEFAULT 0 NOT NULL,
 	"voice_seconds" integer DEFAULT 0 NOT NULL,
 	"updated_at" timestamp (3) with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "usage_counters_user_id_period_start_pk" PRIMARY KEY("user_id","period_start")
+	CONSTRAINT "usage_counters_user_id_period_start_pk" PRIMARY KEY("user_id","period_start"),
+	CONSTRAINT "usage_counters_counts_check" CHECK ("usage_counters"."ai_messages" >= 0 and "usage_counters"."receipts" >= 0 and "usage_counters"."voice_seconds" >= 0)
 );
 --> statement-breakpoint
 ALTER TABLE "consents" ADD CONSTRAINT "consents_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -249,11 +274,15 @@ ALTER TABLE "transactions" ADD CONSTRAINT "transactions_import_id_bank_imports_i
 ALTER TABLE "usage_counters" ADD CONSTRAINT "usage_counters_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "auth_codes_email_created_idx" ON "auth_codes" USING btree ("email","created_at" DESC NULLS FIRST);--> statement-breakpoint
 CREATE INDEX "auth_codes_ip_created_idx" ON "auth_codes" USING btree ("request_ip","created_at" DESC NULLS FIRST);--> statement-breakpoint
+CREATE INDEX "auth_codes_created_idx" ON "auth_codes" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "consents_user_purpose_decided_idx" ON "consents" USING btree ("user_id","purpose","decided_at" DESC NULLS FIRST);--> statement-breakpoint
 CREATE INDEX "sessions_user_idx" ON "sessions" USING btree ("user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "sessions_access_token_hash_idx" ON "sessions" USING btree ("access_token_hash");--> statement-breakpoint
 CREATE UNIQUE INDEX "sessions_refresh_token_hash_idx" ON "sessions" USING btree ("refresh_token_hash");--> statement-breakpoint
 CREATE INDEX "sessions_previous_refresh_token_hash_idx" ON "sessions" USING btree ("previous_refresh_token_hash");--> statement-breakpoint
+CREATE INDEX "sign_in_attempts_email_created_idx" ON "sign_in_attempts" USING btree ("email","created_at" DESC NULLS FIRST);--> statement-breakpoint
+CREATE INDEX "sign_in_attempts_ip_created_idx" ON "sign_in_attempts" USING btree ("request_ip","created_at" DESC NULLS FIRST);--> statement-breakpoint
+CREATE INDEX "sign_in_attempts_created_idx" ON "sign_in_attempts" USING btree ("created_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "users_email_idx" ON "users" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "gifts_user_idx" ON "gifts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "gifts_created_idx" ON "gifts" USING btree ("created_at");--> statement-breakpoint
@@ -262,16 +291,19 @@ CREATE INDEX "invoices_subscription_idx" ON "invoices" USING btree ("subscriptio
 CREATE INDEX "scholarship_applications_user_submitted_idx" ON "scholarship_applications" USING btree ("user_id","submitted_at" DESC NULLS FIRST);--> statement-breakpoint
 CREATE INDEX "scholarship_applications_status_submitted_idx" ON "scholarship_applications" USING btree ("status","submitted_at");--> statement-breakpoint
 CREATE INDEX "scholarship_applications_subscription_idx" ON "scholarship_applications" USING btree ("subscription_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "scholarship_applications_one_open_idx" ON "scholarship_applications" USING btree ("user_id") WHERE "scholarship_applications"."status" in ('in_review', 'waitlisted');--> statement-breakpoint
+CREATE INDEX "scholarship_applications_unsent_result_idx" ON "scholarship_applications" USING btree ("decided_at") WHERE "scholarship_applications"."status" = 'accepted' and "scholarship_applications"."result_email_sent_at" is null;--> statement-breakpoint
 CREATE INDEX "subscriptions_user_idx" ON "subscriptions" USING btree ("user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "subscriptions_one_active_idx" ON "subscriptions" USING btree ("user_id") WHERE "subscriptions"."status" = 'active';--> statement-breakpoint
 CREATE INDEX "subscriptions_status_period_end_idx" ON "subscriptions" USING btree ("status","current_period_end");--> statement-breakpoint
 CREATE INDEX "debt_accounts_user_idx" ON "debt_accounts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "score_snapshots_user_created_idx" ON "score_snapshots" USING btree ("user_id","created_at" DESC NULLS FIRST);--> statement-breakpoint
+CREATE UNIQUE INDEX "score_snapshots_user_period_recompute_idx" ON "score_snapshots" USING btree ("user_id","period_start") WHERE "score_snapshots"."reason" = 'recompute';--> statement-breakpoint
 CREATE INDEX "bank_import_rows_import_idx" ON "bank_import_rows" USING btree ("import_id","row_index");--> statement-breakpoint
 CREATE INDEX "bank_imports_user_idx" ON "bank_imports" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "chat_messages_user_created_idx" ON "chat_messages" USING btree ("user_id","created_at" DESC NULLS FIRST,"id" DESC NULLS FIRST);--> statement-breakpoint
 CREATE INDEX "chat_messages_reply_to_idx" ON "chat_messages" USING btree ("reply_to_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "chat_messages_user_client_idx" ON "chat_messages" USING btree ("user_id","client_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "chat_messages_user_client_idx" ON "chat_messages" USING btree ("user_id","client_id") WHERE "chat_messages"."sender" = 'person';--> statement-breakpoint
 CREATE INDEX "transactions_user_occurred_idx" ON "transactions" USING btree ("user_id","occurred_at" DESC NULLS FIRST,"id" DESC NULLS FIRST);--> statement-breakpoint
 CREATE INDEX "transactions_source_message_idx" ON "transactions" USING btree ("source_message_id");--> statement-breakpoint
 CREATE INDEX "transactions_batch_idx" ON "transactions" USING btree ("batch_id");--> statement-breakpoint

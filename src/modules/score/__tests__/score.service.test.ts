@@ -53,7 +53,11 @@ describe('getScoreReport', () => {
 
     expect(periodStart).toEqual(new Date('2026-09-24T17:00:00.000Z'));
     expect(taken).toEqual([
-      expect.objectContaining({ score: 66, reason: SNAPSHOT_REASON.recompute }),
+      expect.objectContaining({
+        score: 66,
+        reason: SNAPSHOT_REASON.recompute,
+        periodStart: '2026-09-25',
+      }),
     ]);
     expect(report).toMatchObject({ delta: 4, isInitial: false, computedAt: NOW.toISOString() });
   });

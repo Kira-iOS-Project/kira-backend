@@ -5,11 +5,14 @@
 
 import {
   bigint,
+  check,
+  date,
   index,
   jsonb,
   pgEnum,
   pgTable,
   smallint,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -38,28 +41,38 @@ function rupiah(name: string) {
 }
 
 /** The health-check answers; a skipped question stays null and its indicator scores 0. */
-export const financialProfiles = pgTable('financial_profiles', {
-  userId: uuid('user_id')
-    .primaryKey()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  netMonthlyIncome: rupiah('net_monthly_income'),
-  essentialMonthlyExpenses: rupiah('essential_monthly_expenses'),
-  emergencyFund: rupiah('emergency_fund'),
-  monthlySavings: rupiah('monthly_savings'),
-  /** Tabungan dan investasi lain, outside the emergency fund. */
-  otherAssets: rupiah('other_assets'),
-  /** Kendaraan dan properti. */
-  propertyAssets: rupiah('property_assets'),
-  /** 0, 1, 2, or 3 for "3 Orang atau Lebih". */
-  dependents: smallint('dependents').default(0).notNull(),
-  maritalStatus: maritalStatusEnum('marital_status'),
-  protections: protectionEnum('protections')
-    .array()
-    .default(sql`'{}'`)
-    .notNull(),
-  completedAt: moment('completed_at').notNull(),
-  ...timestamps,
-});
+export const financialProfiles = pgTable(
+  'financial_profiles',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    netMonthlyIncome: rupiah('net_monthly_income'),
+    essentialMonthlyExpenses: rupiah('essential_monthly_expenses'),
+    emergencyFund: rupiah('emergency_fund'),
+    monthlySavings: rupiah('monthly_savings'),
+    /** Tabungan dan investasi lain, outside the emergency fund. */
+    otherAssets: rupiah('other_assets'),
+    /** Kendaraan dan properti. */
+    propertyAssets: rupiah('property_assets'),
+    /** 0, 1, 2, or 3 for "3 Orang atau Lebih". */
+    dependents: smallint('dependents').default(0).notNull(),
+    maritalStatus: maritalStatusEnum('marital_status'),
+    protections: protectionEnum('protections')
+      .array()
+      .default(sql`'{}'`)
+      .notNull(),
+    completedAt: moment('completed_at').notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    check(
+      'financial_profiles_amounts_check',
+      sql`${table.netMonthlyIncome} >= 0 and ${table.essentialMonthlyExpenses} >= 0 and ${table.emergencyFund} >= 0 and ${table.monthlySavings} >= 0 and ${table.otherAssets} >= 0 and ${table.propertyAssets} >= 0`,
+    ),
+    check('financial_profiles_dependents_check', sql`${table.dependents} between 0 and 3`),
+  ],
+);
 
 export const debtAccounts = pgTable(
   'debt_accounts',
@@ -81,7 +94,14 @@ export const debtAccounts = pgTable(
     paidOffAt: moment('paid_off_at'),
     ...timestamps,
   },
-  (table) => [index('debt_accounts_user_idx').on(table.userId)],
+  (table) => [
+    index('debt_accounts_user_idx').on(table.userId),
+    check(
+      'debt_accounts_amounts_check',
+      sql`${table.remainingAmount} between 0 and ${table.originalAmount} and ${table.monthlyInstalment} >= 0`,
+    ),
+    check('debt_accounts_tenor_check', sql`${table.remainingTenorMonths} between 0 and 600`),
+  ],
 );
 
 export type IndicatorPoints = Record<(typeof INDICATOR)[keyof typeof INDICATOR], number>;
@@ -97,9 +117,16 @@ export const scoreSnapshots = pgTable(
     band: scoreBandEnum('band').notNull(),
     indicators: jsonb('indicators').$type<IndicatorPoints>().notNull(),
     reason: snapshotReasonEnum('reason').notNull(),
+    /** The payday period the snapshot belongs to (its first day, WIB). */
+    periodStart: date('period_start', { mode: 'string' }).notNull(),
     createdAt: moment('created_at').defaultNow().notNull(),
   },
   (table) => [
     index('score_snapshots_user_created_idx').on(table.userId, table.createdAt.desc().nullsFirst()),
+    /** One payday re-check per period: two reads racing at its start store it once. */
+    uniqueIndex('score_snapshots_user_period_recompute_idx')
+      .on(table.userId, table.periodStart)
+      .where(sql`${table.reason} = ${sql.raw(`'${SNAPSHOT_REASON.recompute}'`)}`),
+    check('score_snapshots_score_check', sql`${table.score} between 0 and 100`),
   ],
 );

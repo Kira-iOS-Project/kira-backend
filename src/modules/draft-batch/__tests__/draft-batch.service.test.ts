@@ -6,10 +6,9 @@ import {
   TRANSACTION_TYPE,
 } from '../../../lib/constants/money.ts';
 import type { MessageRow } from '../../../lib/chat/chat-message.ts';
-import type { CommitInput } from '../draft-batch.repository.ts';
-import { commitDrafts, remainingMoney, UNDO_WINDOW_MS, undoBatch } from '../draft-batch.service.ts';
+import type { CommitPlan } from '../draft-batch.repository.ts';
+import { commitDrafts, remainingMoney } from '../draft-batch.service.ts';
 import {
-  BATCH_ID,
   createDraftBatchRepositoryMock,
   createDraftMock,
   createDraftsMessageMock,
@@ -51,7 +50,7 @@ describe('remainingMoney', () => {
 
 describe('commitDrafts', () => {
   test('saves the drafts as one batch and answers with the remaining money', async () => {
-    const commits: CommitInput[] = [];
+    const commits: CommitPlan[] = [];
     const message = createDraftsMessageMock({
       payload: {
         drafts: [
@@ -73,7 +72,9 @@ describe('commitDrafts', () => {
         netMonthlyIncome: 6_000_000,
       }),
       periodTotals: async () => ({ income: 1_000_000, spent: 100_000 }),
-      commit: async (input) => {
+      commit: async (_input, plan) => {
+        const input = await plan(message.payload);
+        if (!input) return null;
         commits.push(input);
         return {
           message: { ...message, payload: input.payload },
@@ -106,8 +107,9 @@ describe('commitDrafts', () => {
         message: createDraftsMessageMock(),
         sourceKind: MESSAGE_KIND.personReceipt,
       }),
-      commit: async (input) => {
-        sources.push(String(input.transactions[0]?.source));
+      commit: async (_input, plan) => {
+        const input = await plan(createDraftsMessageMock().payload);
+        sources.push(String(input?.transactions[0]?.source));
         return { message: createDraftsMessageMock(), remaining: createDraftsMessageMock() };
       },
     });
@@ -144,69 +146,13 @@ describe('commitDrafts', () => {
       statusCode: 409,
     });
     await expect(run(found())).rejects.toMatchObject({ code: 'CHAT_DRAFTS_NOT_PENDING' });
-  });
-});
-
-describe('undoBatch', () => {
-  const committed = (committedAt: string | null) =>
-    createDraftsMessageMock({
-      payload: {
-        drafts: [createDraftMock()],
-        draftStatus: DRAFT_STATUS.committed,
-        batchId: BATCH_ID,
-        transactionIds: ['tx-1'],
-        committedAt,
-      },
+    const settledMeanwhile = createDraftBatchRepositoryMock({
+      findDraftsMessage: async () => ({ message: createDraftsMessageMock(), sourceKind: null }),
+      commit: async (_input, plan) =>
+        (await plan({ drafts: [createDraftMock()], draftStatus: DRAFT_STATUS.discarded }))
+          ? { message: createDraftsMessageMock(), remaining: createDraftsMessageMock() }
+          : null,
     });
-
-  test('puts the drafts back to pending within the window', async () => {
-    const message = committed(new Date(NOW.getTime() - UNDO_WINDOW_MS).toISOString());
-    const undone: unknown[] = [];
-    const repository = createDraftBatchRepositoryMock({
-      findBatch: async () => message,
-      undo: async (input) => {
-        undone.push(input);
-        return { ...message, payload: input.payload };
-      },
-    });
-
-    const result = await undoBatch('user-1', BATCH_ID, { repository, now: clock });
-
-    expect(result).toMatchObject({
-      draftStatus: DRAFT_STATUS.pending,
-      batchId: null,
-      transactionIds: null,
-      committedAt: null,
-    });
-    expect(undone).toEqual([expect.objectContaining({ messageId: MESSAGE_ID, batchId: BATCH_ID })]);
-  });
-
-  test('refuses an unknown batch, an expired window and a lost race', async () => {
-    const late = committed(new Date(NOW.getTime() - UNDO_WINDOW_MS - 1).toISOString());
-    const run = (repository = createDraftBatchRepositoryMock()) =>
-      undoBatch('user-1', BATCH_ID, { repository, now: clock });
-
-    await expect(run()).rejects.toMatchObject({
-      statusCode: 404,
-      code: 'TRANSACTION_BATCH_NOT_FOUND',
-    });
-    await expect(
-      run(createDraftBatchRepositoryMock({ findBatch: async () => late })),
-    ).rejects.toMatchObject({
-      statusCode: 409,
-      code: 'TRANSACTION_UNDO_EXPIRED',
-    });
-    await expect(
-      run(createDraftBatchRepositoryMock({ findBatch: async () => committed(null) })),
-    ).rejects.toMatchObject({
-      code: 'TRANSACTION_UNDO_EXPIRED',
-    });
-    await expect(
-      run(createDraftBatchRepositoryMock({ findBatch: async () => committed(NOW.toISOString()) })),
-    ).rejects.toMatchObject({ code: 'TRANSACTION_BATCH_NOT_FOUND' });
-  });
-
-  test('uses the real clock by default', async () => {
-    await expect(undoBatch('user-1', BATCH_ID)).rejects.toMatchObject({ statusCode: 404 });
+    await expect(run(settledMeanwhile)).rejects.toMatchObject({ code: 'CHAT_DRAFTS_NOT_PENDING' });
   });
 });

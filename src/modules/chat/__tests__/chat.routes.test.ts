@@ -4,7 +4,12 @@
 
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
-import { DRAFT_STATUS, MESSAGE_KIND, MESSAGE_SENDER } from '../../../lib/constants/chat.ts';
+import {
+  DRAFT_STATUS,
+  INPUT_METHOD,
+  MESSAGE_KIND,
+  MESSAGE_SENDER,
+} from '../../../lib/constants/chat.ts';
 import { EXPENSE_CATEGORY } from '../../../lib/constants/money.ts';
 import { inOrder } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
@@ -74,6 +79,18 @@ describe('POST /api/chat/messages', () => {
     expect(res.status).toBe(201);
     expect(body.reply.kind).toBe(MESSAGE_KIND.noDrafts);
     expect(body.usage.aiMessages).toEqual({ used: 1, limit: 30 });
+  });
+
+  test('refuses a spoken message without its length with a 422', async () => {
+    dbControl.respond = signedIn();
+    const res = await send('POST', '/api/chat/messages', {
+      ...MESSAGE_BODY,
+      inputMethod: INPUT_METHOD.voice,
+      voiceSeconds: undefined,
+    });
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).fields).toEqual({ voiceSeconds: 'custom' });
   });
 
   test('answers 403 when Kira AI is off', async () => {

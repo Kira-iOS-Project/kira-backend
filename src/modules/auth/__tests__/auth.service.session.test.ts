@@ -18,7 +18,10 @@ describe('refreshSession', () => {
     const result = await refreshSession('refresh-1', {
       repository: createAuthRepositoryMock({
         findSessionByRefreshToken: async () => session,
-        rotateSession: async (...args) => void rotations.push(args),
+        rotateSession: async (...args) => {
+          rotations.push(args);
+          return true;
+        },
       }),
       now: clock,
       makeToken: () => 'next',
@@ -42,6 +45,21 @@ describe('refreshSession', () => {
       refreshSession('stolen', {
         repository: createAuthRepositoryMock({
           findSessionByPreviousRefreshToken: async () => ({ sessionId: 's1' }),
+          revokeSession: async (id) => void revoked.push(id),
+        }),
+        now: clock,
+      }),
+    ).rejects.toMatchObject({ statusCode: 401, code: 'AUTH_REFRESH_INVALID' });
+    expect(revoked).toEqual(['s1']);
+  });
+
+  test('ends the session when another refresh of the same token rotated it first', async () => {
+    const revoked: string[] = [];
+    await expect(
+      refreshSession('refresh-1', {
+        repository: createAuthRepositoryMock({
+          findSessionByRefreshToken: async () => session,
+          rotateSession: async () => false,
           revokeSession: async (id) => void revoked.push(id),
         }),
         now: clock,

@@ -501,7 +501,8 @@ flowchart LR
   kira -- "daily 00:00 WIB" --> r2[("Cloudflare R2<br/>latest 7 dumps")]
 ```
 
-- **Schema.** Sixteen tables in four files under `src/db/schema/`. Amounts are whole rupiah
+- **Schema.** Seventeen tables in four files under `src/db/schema/`, with CHECK constraints that
+  mirror the request validation. Amounts are whole rupiah
   (`bigint`); every person's row cascades from `users`, so deleting an account deletes its data.
   Only a gift outlives its giver, anonymised, because gifted months fund Beasiswa Kira's places.
 

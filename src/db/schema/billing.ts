@@ -7,6 +7,7 @@
 import {
   bigint,
   boolean,
+  check,
   index,
   pgEnum,
   pgTable,
@@ -24,7 +25,11 @@ import {
   SUBSCRIPTION_SOURCE,
   SUBSCRIPTION_STATUS,
 } from '../../lib/constants/plans.ts';
-import { APPLICATION_STATUS, SCHOLARSHIP_SITUATION } from '../../lib/constants/scholarship.ts';
+import {
+  APPLICATION_STATUS,
+  OPEN_APPLICATION_INDEX,
+  SCHOLARSHIP_SITUATION,
+} from '../../lib/constants/scholarship.ts';
 import { users } from './accounts.ts';
 import { moment, timestamps } from './columns.ts';
 
@@ -96,6 +101,7 @@ export const invoices = pgTable(
   (table) => [
     index('invoices_user_created_idx').on(table.userId, table.createdAt.desc().nullsFirst()),
     index('invoices_subscription_idx').on(table.subscriptionId),
+    check('invoices_amount_check', sql`${table.amount} >= 0`),
   ],
 );
 
@@ -113,6 +119,9 @@ export const gifts = pgTable(
   (table) => [
     index('gifts_user_idx').on(table.userId),
     index('gifts_created_idx').on(table.createdAt),
+    /** Traktir Kira sells one, three or six months (GIFT_MONTHS in modules/billing/billing.schema.ts). */
+    check('gifts_months_check', sql`${table.months} in (1, 3, 6)`),
+    check('gifts_amount_check', sql`${table.amount} > 0`),
   ],
 );
 
@@ -143,5 +152,24 @@ export const scholarshipApplications = pgTable(
     ),
     index('scholarship_applications_status_submitted_idx').on(table.status, table.submittedAt),
     index('scholarship_applications_subscription_idx').on(table.subscriptionId),
+    /** One open (in review or waitlisted) application a person; the service maps a clash to 409. */
+    uniqueIndex(OPEN_APPLICATION_INDEX)
+      .on(table.userId)
+      .where(
+        sql`${table.status} in (${sql.raw(
+          [APPLICATION_STATUS.inReview, APPLICATION_STATUS.waitlisted]
+            .map((status) => `'${status}'`)
+            .join(', '),
+        )})`,
+      ),
+    /** The result emails still to send, oldest decision first. */
+    index('scholarship_applications_unsent_result_idx')
+      .on(table.decidedAt)
+      .where(
+        sql`${table.status} = ${sql.raw(`'${APPLICATION_STATUS.accepted}'`)} and ${table.resultEmailSentAt} is null`,
+      ),
+    check('scholarship_applications_situations_check', sql`cardinality(${table.situations}) >= 1`),
+    /** Ajukan Beasiswa's story field (STORY_MAX_LENGTH in modules/scholarship/scholarship.schema.ts). */
+    check('scholarship_applications_story_check', sql`char_length(${table.story}) <= 1000`),
   ],
 );

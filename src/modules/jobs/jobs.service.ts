@@ -15,10 +15,14 @@ const AUTH_CODE_RETENTION_MS = 24 * 60 * 60 * 1000;
 export async function deleteStaleAuthCodes(
   now: Date,
   deps: { repository?: JobsRepository } = {},
-): Promise<{ deleted: number }> {
+): Promise<{ deleted: number; checks: number }> {
   const repository = deps.repository ?? jobsRepository;
   const before = new Date(now.getTime() - AUTH_CODE_RETENTION_MS);
-  return { deleted: await repository.deleteAuthCodesCreatedBefore(before) };
+  const [deleted, checks] = await Promise.all([
+    repository.deleteAuthCodesCreatedBefore(before),
+    repository.deleteSignInChecksCreatedBefore(before),
+  ]);
+  return { deleted, checks };
 }
 
 /**
