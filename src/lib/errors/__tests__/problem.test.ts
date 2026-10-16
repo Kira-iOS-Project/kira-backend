@@ -161,8 +161,15 @@ describe('errorResponses', () => {
   test('builds one problem+json entry per status, with a fallback description', () => {
     const responses = errorResponses(404, 418);
 
-    expect(Object.keys(responses)).toEqual(['404', '418']);
+    expect(Object.keys(responses)).toEqual(['404', '418', 'default']);
     expect(responses[404]?.description).toBe('Resource not found');
     expect(responses[418]?.description).toBe('Error');
+  });
+
+  test('declares every other status as a problem, so a client decodes a 500 or a 504 too', () => {
+    const fallback = errorResponses()['default'];
+
+    expect(fallback?.content['application/problem+json'].schema).toBeDefined();
+    expect(fallback?.description).toContain('server failure');
   });
 });

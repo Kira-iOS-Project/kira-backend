@@ -198,14 +198,25 @@ const DESCRIPTIONS: Readonly<Record<number, string>> = {
  * The problem+json entries of a route's `responses` map, one per status its service can raise
  * (Rule 13): `responses: { 200: {...}, ...errorResponses(404, 422) }`.
  */
-export function errorResponses(...statuses: number[]) {
-  return Object.fromEntries(
-    statuses.map((status) => [
-      status,
-      {
-        content: { 'application/problem+json': { schema: problemSchema } },
-        description: DESCRIPTIONS[status] ?? 'Error',
-      },
-    ]),
-  );
+type ProblemResponse = {
+  content: { 'application/problem+json': { schema: typeof problemSchema } };
+  description: string;
+};
+
+export function errorResponses(...statuses: number[]): Record<string, ProblemResponse> {
+  const problem = { content: { 'application/problem+json': { schema: problemSchema } } };
+  return {
+    ...Object.fromEntries(
+      statuses.map((status) => [
+        status,
+        { ...problem, description: DESCRIPTIONS[status] ?? 'Error' },
+      ]),
+    ),
+    /** Any status a route does not list (a 500, the 504 budget, the 413 body limit) is a problem too,
+       so a generated client decodes its code and request id instead of dropping the body. */
+    default: {
+      ...problem,
+      description: 'Any other problem: a server failure, a timeout, a body too large',
+    },
+  };
 }
