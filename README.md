@@ -4,10 +4,10 @@ The backend of **Kira**, a personal-finance companion for people in Indonesia, o
 one server the iOS app ([kira-mobile-ios](https://github.com/Kira-iOS-Project/kira-mobile-ios))
 talks to, live at `https://api-kira.serenitycode.tech`.
 
-> **Status.** The foundation is built and deployed: the request pipeline, the error contract,
-> PostgreSQL with migrations, the OpenAPI spec the iOS client is generated from, and CI/CD. The one
-> route so far is `GET /health`. Product modules are added one ticket at a time on this base
-> ([Roadmap](#roadmap)).
+> **Status.** The first product flows are built on the foundation: sign-in with an email code,
+> the account and its consents, the health check and the Kira Score, Beranda, plans with simulated
+> billing, and Beasiswa Kira, with transactional email and an hourly scheduler. Catat (chat,
+> transactions and bank imports) is in progress and not merged yet ([Roadmap](#roadmap)).
 
 ## Contents
 
@@ -15,6 +15,12 @@ talks to, live at `https://api-kira.serenitycode.tech`.
 - [System Design](#system-design)
 - [Request Lifecycle](#request-lifecycle)
 - [Code Architecture](#code-architecture)
+- [Endpoints](#endpoints)
+- [Authentication](#authentication)
+- [Kira Score](#kira-score)
+- [On-Device AI](#on-device-ai)
+- [Email](#email)
+- [Scheduled Jobs](#scheduled-jobs)
 - [API Contract and the iOS Client](#api-contract-and-the-ios-client)
 - [Error Contract](#error-contract)
 - [Data](#data)
@@ -38,6 +44,7 @@ talks to, live at `https://api-kira.serenitycode.tech`.
 | ORM and migrations | [Drizzle ORM](https://orm.drizzle.team) and drizzle-kit | 0.45.4, 0.31.11 |
 | PostgreSQL driver | postgres.js | 3.4.9 |
 | Logging | Pino (pino-pretty in development) | 10.4.0 |
+| Email | [Resend](https://resend.com) over `fetch`, no SDK | |
 | Language and type check | TypeScript, checked by the native compiler (tsgo) | 7.0.2 |
 | Lint, format, dead code | oxlint with tsgolint, oxfmt, knip | 1.87.0, 0.72.0, 6.40.0 |
 | Tests | `bun test`, 100% line and function coverage per file | |
@@ -68,10 +75,12 @@ flowchart LR
     devdb[("PostgreSQL 18<br/>kira_dev")]
   end
   r2[("Cloudflare R2<br/>backups")]
+  resend["Resend<br/>transactional email"]
   laptop["Developer laptop"]
 
   app -- "HTTPS, JSON" --> cf --> traefik --> api
   api -- "internal network" --> db
+  api -- "HTTPS" --> resend
   db -. "daily dump, latest 7 kept" .-> r2
   laptop -. "SSH tunnel: read and write" .-> devdb
   laptop -. "SSH tunnel: read, and write as the owner" .-> db
@@ -85,6 +94,9 @@ flowchart LR
 | PostgreSQL `kira` | Production data. The API reaches it over Dokploy's internal network; developers reach it through the SSH tunnel, never through a public port |
 | PostgreSQL `kira_dev` | Development data, read and written by developers through the SSH tunnel |
 | Cloudflare R2 | Daily dumps of `kira`, the latest seven kept |
+| Resend | Sends the transactional emails; their images load from the API's own `/email/*` |
+
+There is no AI provider: Kira's AI features run on the iPhone ([On-Device AI](#on-device-ai)).
 
 ## Request Lifecycle
 
@@ -135,7 +147,9 @@ sequenceDiagram
 | `timeout` (`/api/*`) | Caps the handler's total time (504) |
 | `app.onError` | The single mapper from any thrown error to problem+json |
 
-`/health` sits outside `/api/*`, so it answers whatever the request budget says.
+`/health` sits outside `/api/*`, so it answers whatever the request budget says. Every protected
+router runs `requireSession` (from the auth module) before its routes: it resolves the bearer token
+to a session and sets `userId`, or answers 401 `AUTH_UNAUTHENTICATED`.
 
 ## Code Architecture
 
@@ -222,9 +236,9 @@ transaction lives inside one repository method.
 
 | Layer | How it is tested | What a test replaces |
 | --- | --- | --- |
-| Repository | `bun test` with a client double passed to its factory; the SQL through `.toSQL()` where its shape matters | The database client |
+| Repository | `bun test` with the fake Postgres client (`createFakeDb` in `src/test/fake-postgres.ts`) passed to its factory: a real Drizzle database that records each statement and answers with rows the test gives | The database client |
 | Service | `bun test`, passing a repository double | The repository |
-| Handler and route | `app.request()` through the real middleware and error mapper | The database client, through the shared doubles in `src/test/preload.ts` |
+| Handler and route | `app.request()` through the real middleware and error mapper, signed in with `signedIn()` from `src/test/session.ts` | The database client and Resend, through the shared doubles in `src/test/preload.ts` |
 | Database | The integration tier against a real PostgreSQL (`bun run test:integration`) | Nothing |
 
 ### Why This Architecture
@@ -236,6 +250,164 @@ transaction lives inside one repository method.
 | Full hexagonal or DDD (entities, aggregates, a port for every dependency) | Not chosen | The repository port gives the decoupling that matters. Rich domain objects and a port per dependency would add types without adding safety for a product of this size. |
 | A DI framework such as NestJS | Not chosen | Decorators and a container for what default parameters do. Hono on Bun starts fast and stays small. |
 | Serverless functions | Not chosen | Cold starts and per-invocation database connections; one long-running container keeps a warm connection pool. |
+
+### The Modules
+
+| Module | Responsibility |
+| --- | --- |
+| `meta` | `GET /health`, the reference module |
+| `auth` | Sign-in codes, sessions, and `requireSession`, the gate in front of every protected route |
+| `account` | The signed-in person, their settings and consents, the data export and account deletion |
+| `score` | The health-check quiz and the deterministic Kira Score engine |
+| `home` | Beranda: one aggregate in one of three layouts |
+| `billing` | Plans, simulated checkout, invoices, gifted months, and the renewal jobs |
+| `scholarship` | Beasiswa Kira applications and their simulated review |
+| `jobs` | The ordered list of hourly jobs (no routes) |
+
+```mermaid
+flowchart LR
+  auth["auth<br/>requireSession"]
+  account --> auth
+  score --> auth
+  home --> auth
+  billing --> auth
+  scholarship --> auth
+  home -- "findScoreReport" --> score
+  jobs --> billing
+  jobs --> scholarship
+  lib["src/lib<br/>constants, errors, email, time, usage, scheduler"]
+  account -.-> lib
+  billing -.-> lib
+  scholarship -.-> lib
+```
+
+A module reaches another only through its `index.ts`; `src/lib` never imports a module.
+
+## Endpoints
+
+Every path below sits under `/api` and needs a bearer token, except the first three sign-in routes
+and `/health`. The full contract, with every request and response shape, is `openapi.json`
+(and `/docs` in development).
+
+| Area | Method and path | What it does |
+| --- | --- | --- |
+| Meta | `GET /health` | The server is up and PostgreSQL answers |
+| Auth | `POST /auth/code` | Emails a six-digit sign-in code |
+| Auth | `POST /auth/verify` | Trades the code for a token pair; creates the account on a first sign-in |
+| Auth | `POST /auth/refresh` | Trades a refresh token for a new pair |
+| Auth | `POST /auth/sign-out` | Ends this session |
+| Account | `GET /me`, `PATCH /me` | The person, plan, usage and payday period; focus, payday and hidden balances |
+| Account | `GET /me/consents`, `PUT /me/consents` | Consents with their policy version (an append-only audit trail) |
+| Account | `GET /me/export`, `POST /me/export/email` | The transactions as CSV, downloaded or emailed |
+| Account | `POST /me/deletion` | Deletes the account after typing `HAPUS`, with a notice email |
+| Score | `PUT /health-check` | Saves the six-step quiz and returns the first score |
+| Score | `GET /score` | Score, band, three groups, six indicators, up to three steps |
+| Score | `GET /score/indicators/{key}` | One indicator's ladder in rupiah, next rung and milestones |
+| Home | `GET /home` | Beranda in its layout: money left, next step, score, checklist or debt plan |
+| Billing | `GET /plans` | The three plans and the current one |
+| Billing | `POST /billing/checkout` | Buys Muda or Plus (simulated) |
+| Billing | `GET /subscription`, `POST /subscription/cancel`, `PUT /subscription/payment-method` | The paid plan |
+| Billing | `GET /billing/invoices`, `POST /billing/gifts` | Invoice history; gifted Plus months for Beasiswa Kira |
+| Scholarship | `GET /scholarship`, `POST /scholarship/applications`, `DELETE /scholarship/applications/current` | Eligibility, places left, applying and withdrawing |
+| Catat (in progress) | `/chat/messages`, `/chat/receipts`, `/transactions`, `/imports`, `/usage` | Not merged yet: chat with on-device drafts, manual entries, history, undo, bank-CSV imports |
+
+## Authentication
+
+Sign-in is an email and a six-digit code, hand-rolled on PostgreSQL with no auth library and no
+Apple or Google sign-in.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant App as iOS app
+  participant API as kira-backend
+  participant DB as PostgreSQL
+  participant RS as Resend
+
+  App->>API: POST /api/auth/code {email}
+  API->>DB: Count recent codes (cooldown, per address, per network)
+  API->>DB: Retire the old code, store HMAC(code)
+  API->>RS: Email the code
+  API-->>App: 202 {expiresInSeconds: 600, resendAfterSeconds: 60}
+  App->>API: POST /api/auth/verify {email, code}
+  API->>DB: Check the HMAC, count the try
+  API->>DB: Use the code, create the account if new, open a session
+  API-->>App: 200 {accessToken, refreshToken, needsOnboarding}
+  App->>API: POST /api/auth/refresh {refreshToken}
+  API->>DB: Rotate the pair, keep the old refresh hash
+  API-->>App: 200 a new pair
+```
+
+| Decision | Value |
+| --- | --- |
+| Code | Six digits, valid 10 minutes, one active per address, stored as HMAC-SHA256 under `AUTH_SECRET` |
+| Tries | Five per code, then a new code is needed |
+| Limits, counted in PostgreSQL | 60 s between codes, 5 codes an hour per address, 20 an hour per network |
+| Tokens | Opaque random strings, stored only as SHA-256 hashes; access 15 minutes, refresh 60 days |
+| Rotation | Every refresh issues a new pair; reusing a replaced refresh token revokes the session |
+| Account | Created by the first verified code; the display name comes from the address ("dinda@…" is Dinda) |
+
+`POST /auth/code` answers the same whether or not the address has an account. An hourly job deletes
+codes older than a day.
+
+## Kira Score
+
+The score is computed by a deterministic engine from the health-check answers, never by AI. It is
+the plain average of six indicators of 0 to 100 points, rounded half up, after the FinHealth Score.
+
+| Group | Indicator | Measures |
+| --- | --- | --- |
+| Save | Emergency fund | Liquid savings in months of essential spending, against a 6× to 15× target |
+| Save | Savings ratio | Monthly savings as a share of income |
+| Debt | Instalment ratio | Monthly instalments as a share of income |
+| Debt | Consumer debt | Open paylater, online-loan and credit-card accounts, and lateness |
+| Debt | Debt to assets | Total debt as a share of all assets |
+| Protect | Protection | Health cover and income cover |
+
+Bands: vulnerable 0–39, coping 40–79, healthy 80–100. A consumer-debt indicator at 0 holds the
+band at vulnerable. The engine also orders up to three next steps (expensive debt first, then the
+emergency fund, protection, savings, instalments and debt) and estimates what each would add. A
+score snapshot is stored with each health check and on the first read of each payday period, which
+is what the score's change compares against.
+
+## On-Device AI
+
+The server calls no AI model. The app reads chat text, receipts (Vision), voice (Speech) and bank
+statements on the iPhone, and sends the server structured results. The server validates and stores
+them: whole-rupiah amounts, a receipt's items adding up to its total, an import of at most three
+months. The plans' AI quotas are product tiers the server counts; turning the AI consent off
+switches those inputs off, never manual entry.
+
+## Email
+
+Transactional only: the sign-in code, the data export, the deletion notice, the renewal reminder
+three days ahead, and the Beasiswa Kira result. There are no push notifications.
+
+```mermaid
+flowchart LR
+  module["A module's *.email.ts<br/>its own words"] --> layout["src/lib/email/layout.ts<br/>renderEmail: HTML tables and plain text"]
+  layout --> resend["src/lib/email/resend.ts<br/>one POST to Resend"]
+  ds["Design system components"] -- "bun run generate:email-assets" --> png["public/email/*.png"]
+  png -- "GET /email/*" --> inbox["The reader's mail client"]
+  resend --> inbox
+```
+
+Email clients read neither web fonts nor SVG, so the header, icons, mark and handwritten line are
+PNGs, rendered from the design system's components by headless Chrome and committed. Without
+`RESEND_API_KEY` outside production, emails are written to the log instead of sent.
+
+## Scheduled Jobs
+
+An in-process scheduler (`src/lib/server/scheduler.ts`) runs these every hour, one after another,
+when `JOBS_ENABLED` is true. Each is idempotent and handles a batch per run; a failure is logged and
+the next job still runs.
+
+| Job | What it does |
+| --- | --- |
+| `subscription-rollover` | Ends a cancelled or finished period, or renews a paid plan with a new invoice (simulated) |
+| `renewal-reminders` | Emails a paid plan three days before it renews, once per period |
+| `scholarship-review` | Accepts Beasiswa Kira applications open for a day while this month's places last |
+| `auth-code-cleanup` | Deletes sign-in codes older than a day |
 
 ## API Contract and the iOS Client
 
@@ -285,6 +457,24 @@ message for each code. The real response for an unknown route:
 | `INTERNAL_ERROR` | 500 | Anything unexpected; the body reveals nothing, the log keeps the cause |
 | `META_HEALTH_UNHEALTHY` | 503 | `/health` cannot reach PostgreSQL |
 
+The modules add their own codes, each on one of seven bases (400, 401, 403, 404, 409, 429, 503):
+
+| Code | Status | When |
+| --- | --- | --- |
+| `AUTH_CODE_INVALID`, `AUTH_CODE_EXPIRED` | 400 | The sign-in code is wrong or past its ten minutes |
+| `AUTH_UNAUTHENTICATED` | 401 | No valid access token on a protected route |
+| `AUTH_REFRESH_INVALID` | 401 | The refresh token is unknown, expired, revoked or reused |
+| `AUTH_CODE_RATE_LIMITED`, `AUTH_CODE_ATTEMPTS_EXCEEDED` | 429 | Too many codes asked for, or five wrong tries |
+| `EMAIL_DELIVERY_FAILED` | 503 | Resend did not take the sign-in code or the data export |
+| `SCORE_NOT_AVAILABLE` | 404 | The score or an indicator before the health check (Beranda shows no score instead) |
+| `SUBSCRIPTION_NOT_FOUND` | 404 | No paid plan to show or change |
+| `SUBSCRIPTION_NOT_CANCELLABLE` | 409 | A Beasiswa Kira plan cannot be cancelled |
+| `SCHOLARSHIP_NOT_ELIGIBLE` | 409 | A paid plan, a running scholarship or an open application |
+| `SCHOLARSHIP_APPLICATION_NOT_FOUND` | 404 | No open application to withdraw |
+
+Catat's codes (`CHAT_*`, `TRANSACTION_*`, `IMPORT_*`, `RECEIPT_TOTAL_MISMATCH`,
+`PLAN_FEATURE_UNAVAILABLE`) are registered and arrive with that module.
+
 ```mermaid
 flowchart LR
   thrown["Thrown anywhere"] --> kind{"Error type"}
@@ -311,8 +501,31 @@ flowchart LR
   kira -- "daily 00:00 WIB" --> r2[("Cloudflare R2<br/>latest 7 dumps")]
 ```
 
-- **Schema.** No table yet. `src/db/schema/schema.ts` holds the `timestamps` columns every table will
-  spread, and the first product module brings the first table and its entity diagram.
+- **Schema.** Sixteen tables in four files under `src/db/schema/`. Amounts are whole rupiah
+  (`bigint`); every person's row cascades from `users`, so deleting an account deletes its data.
+  Only a gift outlives its giver, anonymised, because gifted months fund Beasiswa Kira's places.
+
+```mermaid
+erDiagram
+  users ||--o{ sessions : "signs in with"
+  users ||--o{ consents : "decides"
+  users ||--o| financial_profiles : "answers"
+  users ||--o{ debt_accounts : "owes"
+  users ||--o{ score_snapshots : "is scored"
+  users ||--o{ chat_messages : "writes"
+  users ||--o{ transactions : "records"
+  users ||--o{ usage_counters : "uses"
+  users ||--o{ bank_imports : "imports"
+  bank_imports ||--o{ bank_import_rows : "holds"
+  chat_messages ||--o{ transactions : "is the source of"
+  users ||--o{ subscriptions : "holds"
+  users ||--o{ invoices : "pays"
+  subscriptions ||--o{ invoices : "bills"
+  users |o--o{ gifts : "gifts"
+  users ||--o{ scholarship_applications : "applies"
+```
+
+`auth_codes` stands alone, keyed by address: a code exists before its account does.
 - **Migrations.** `bun run db:generate` writes SQL from the schema, which is committed with the
   change. The server applies pending migrations before it serves anything, over one connection of
   its own. A failed migration stops the new container before it takes a request.
@@ -364,6 +577,10 @@ request. The developer machine runs the same gates in a pre-commit hook.
 
 - **Edge.** TLS at Cloudflare. The server only answers Cloudflare's addresses, so a direct request
   gets 403. The database ports and SSH are closed on the public interface.
+- **Authentication.** One-time codes stored as HMACs, bearer tokens stored only as SHA-256 hashes,
+  15-minute access tokens, refresh rotation that revokes a session on reuse, and code limits
+  counted in PostgreSQL ([Authentication](#authentication)). Every route but `/health`, `/email/*`
+  and the three sign-in routes requires a session.
 - **Application.** Secure headers, an empty CORS allowlist, a body limit and a time budget on every
   API request, and request ids on every log line. Logs redact `authorization`, cookies, passwords,
   tokens and email addresses. Error bodies never carry internals.
@@ -387,12 +604,17 @@ request. The developer machine runs the same gates in a pre-commit hook.
 | 3 | OpenAPI-first routes with `@hono/zod-openapi` | One schema validates input, documents the API and generates the iOS client | Routes must use the OpenAPI router; a plain `app.get()` is invisible to the spec, which the gate catches |
 | 4 | RFC 9457 errors with registered codes and a fixed `type` base | The app branches on a stable code and localizes the message itself | Every new code is registered in the backend and mapped in the app |
 | 5 | PostgreSQL 18 with Drizzle; migrations applied at boot | Schema and code ship together; a failing migration stops the release before it serves | A long migration delays the container's start |
-| 6 | No Redis or queue | The product is small; rate limits and jobs will use memory or PostgreSQL | Revisit if the API runs on more than one replica |
+| 6 | No Redis or queue | The product is small; rate limits are counted in PostgreSQL and jobs run in-process | Revisit if the API runs on more than one replica |
 | 7 | Cloudflare in front, Cloudflare-only origin, private database | The server's address does not matter to clients, and the database is unreachable from outside | Developers reach the database through an SSH tunnel |
 | 8 | Configuration validated at boot from the environment | A bad value fails at start, not at the first request that needs it | Every variable is listed in `src/env.ts` and the example files |
 | 9 | Unit tests need no database; 100% per-file coverage | Fast, deterministic tests on every pull request | Database behaviour is covered by a separate integration tier |
 | 10 | `dev` and `prod` branches; deploy on merge into `prod` through a webhook | Releases are explicit pull requests; the server pulls from the repository with a read-only key | A release waits for a promotion pull request |
 | 11 | Pinned versions everywhere (dependencies, images, actions) | Reproducible builds and no silent upstream change | Updates are deliberate pull requests |
+| 12 | Hand-rolled email-code sign-in with opaque tokens | A few hundred lines the team fully understands; tokens can be revoked at once, which a JWT cannot | Every request looks its session up in PostgreSQL |
+| 13 | A deterministic Kira Score engine | The same answers always give the same score, and every point can be explained on screen | The methodology changes only through code |
+| 14 | AI on the device, none on the server | No financial text leaves the phone for a model, and no provider cost per message | Parsing quality depends on the phone; the server can only validate |
+| 15 | An in-process hourly scheduler | No queue or cron service to run for four small jobs | Exactly one replica may run it (`JOBS_ENABLED`) |
+| 16 | Simulated payments and scholarship review | The flows ship and can be tested before a payment provider is chosen | Nothing is charged until a provider replaces the simulation |
 
 ## Getting Started
 
@@ -411,6 +633,9 @@ docker run -d --name kira-pg -e POSTGRES_USER=kira -e POSTGRES_PASSWORD=kira \
   -e POSTGRES_DB=kira_dev -p 127.0.0.1:55432:5432 postgres:18
 DATABASE_URL=postgresql://kira:kira@127.0.0.1:55432/kira_dev bun run dev
 curl http://localhost:3000/health   # {"status":"ok","database":"healthy"}
+curl -X POST http://localhost:3000/api/auth/code \
+  -H 'Content-Type: application/json' -d '{"email":"dinda@example.com"}'
+                                    # without RESEND_API_KEY the code appears in the server log
 open http://localhost:3000/docs     # the API reference
 ```
 
@@ -427,6 +652,7 @@ tunnel it points at.
 | `bun run test:integration` | Integration tests against a real PostgreSQL |
 | `bun run db:generate` | A migration from the schema; commit it with the change |
 | `bun run spec:export` | Writes `openapi.json`, which the iOS app generates its client from |
+| `bun run generate:email-assets -- --design-system <dir> --fonts <dir>` | Renders the email images into `public/email/` |
 | `bash scripts/check/gates.sh` | Every gate, as the pre-commit hook and CI run them |
 
 ## Configuration
@@ -447,6 +673,11 @@ Every variable is validated in `src/env.ts`. The unit tests and the spec export 
 | `DOCS_ENABLED` | on outside production | Serves `/docs` |
 | `LOG_LEVEL` | `debug` in development, `info` in production, `silent` in tests | Pino level |
 | `SHUTDOWN_FORCE_EXIT_MS` | `8000` | Grace period before a forced exit on shutdown |
+| `RESEND_API_KEY` | none | Resend's key; required in production. Unset elsewhere, emails are logged instead of sent |
+| `EMAIL_FROM` | Kira's sender | The sender, on a domain verified in Resend |
+| `AUTH_SECRET` | random per process | At least 32 characters; signs the stored sign-in codes. Required in production |
+| `PUBLIC_BASE_URL` | the production API | Where the images inside emails load from (`/email/*.png`) |
+| `JOBS_ENABLED` | `true` | Runs the hourly scheduler; true on exactly one replica |
 
 ## Repository Layout
 
@@ -455,22 +686,26 @@ src/
   index.ts          bootstrap: env, migrations, docs, Bun.serve, ordered shutdown
   app.ts            composition: middleware, error mapper, route mounts
   env.ts            the environment schema
-  lib/              constants, errors (DomainError, the problem mapper), server utilities
-  db/               client (pool, boot migrations), schema, migrations
+  lib/              constants, errors (DomainError, the problem mapper), email (layout, Resend),
+                    server utilities (router factory, logger, scheduler), time (WIB), usage
+  db/               client (pool, boot migrations), schema (four domain files), migrations
   middlewares/      the request logger
-  modules/meta/     GET /health: the reference module
-  test/             the shared test doubles
-scripts/            the quality gates, the bundler and operations helpers
+  modules/          meta, auth, account, score, home, billing, scholarship, jobs
+  test/             the shared doubles, the fake Postgres client and the signed-in helper
+public/email/       the images every email shows, served at /email/*
+scripts/            the quality gates, the bundler, the email-image renderer and operations helpers
 openapi.json        the exported contract the iOS app consumes
 Dockerfile          the multi-stage production image
 ```
 
 ## Roadmap
 
-1. **Authentication.** Email and a one-time code sent with Resend, with no Apple or Google sign-in;
-   the code routes rate-limited per email and per address; short-lived bearer tokens.
-2. **Product modules** for the app's areas, each with its tables, routes and error codes: recording
-   transactions (Catat), wallets, budgets and bills, the Kira Score (computed by a deterministic
-   engine, never by AI), and plans.
-3. **Providers** arrive with the ticket that needs them (email first). An AI provider for the chat
-   is not chosen yet.
+Done: sign-in, the account and consents, the health check and Kira Score, Beranda, plans with
+simulated billing, Beasiswa Kira, transactional email and the hourly jobs.
+
+1. **Catat**, in progress: chat with on-device drafts, manual entries, receipts, history, undo and
+   bank-CSV imports, with the plans' usage counted on the server.
+2. **The next areas** of the app, each with its tables, routes and error codes: wallets, budgets
+   and bills, the debt repayment plan and score history, Kira Peduli, and the weekly summary.
+3. **A payment provider** to replace the simulated checkout, chosen with its own ticket.
+4. **The first integration tests** against a real PostgreSQL, and a rehearsed backup restore.
