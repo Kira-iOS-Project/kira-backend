@@ -35,16 +35,6 @@ export const CHECK_IN_STATUS = {
   cancelled: 'cancelled',
 } as const;
 
-/** A check-in's state as Unduh Datamu words it for people. */
-export const CHECK_IN_STATUS_LABEL: Record<
-  (typeof CHECK_IN_STATUS)[keyof typeof CHECK_IN_STATUS],
-  string
-> = {
-  [CHECK_IN_STATUS.scheduled]: 'Terjadwal',
-  [CHECK_IN_STATUS.seen]: 'Sudah Dilihat',
-  [CHECK_IN_STATUS.cancelled]: 'Dibatalkan',
-};
-
 /** Besok, Lusa, Tiga Hari Lagi. */
 export const CHECK_IN_DELAY_HOURS = [24, 48, 72] as const;
 

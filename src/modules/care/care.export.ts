@@ -7,13 +7,26 @@
  * the labels people read instead of stored values.
  */
 
-import { CHECK_IN_STATUS_LABEL } from '../../lib/constants/care.ts';
+import { CHECK_IN_STATUS } from '../../lib/constants/care.ts';
 import type { ExportScope, ExportSection } from '../../lib/export/export-section.ts';
 import { wibDate, wibTime } from '../../lib/time/wib.ts';
 import { type CareRepository, careRepository } from './care.repository.ts';
 import { exportKey, readablePlan } from './care.safety-plan.service.ts';
 
 type ExportDeps = { repository?: CareRepository; key?: () => Promise<CryptoKey> };
+
+/**
+ * A check-in's state in the words a person reads, like the transactions' labels in account.csv.ts:
+ * waiting for its time, shown in Catat, or called off.
+ */
+const CHECK_IN_STATUS_LABEL: Record<
+  (typeof CHECK_IN_STATUS)[keyof typeof CHECK_IN_STATUS],
+  string
+> = {
+  [CHECK_IN_STATUS.scheduled]: 'Terjadwal',
+  [CHECK_IN_STATUS.seen]: 'Sudah Dilihat',
+  [CHECK_IN_STATUS.cancelled]: 'Dibatalkan',
+};
 
 /** An instant as the export's two columns, Tanggal and Jam; none is two empty cells. */
 function dateAndTime(instant: Date | null): [string, string] {
@@ -51,12 +64,13 @@ export async function careExportSections(
         'Tanggal Dilihat',
         'Jam Dilihat',
       ],
-      rows: checkIns.map((row) => [
-        ...dateAndTime(row.createdAt),
-        ...dateAndTime(row.dueAt),
-        CHECK_IN_STATUS_LABEL[row.status],
-        ...dateAndTime(row.seenAt),
-      ]),
+      rows: checkIns.map((row) =>
+        dateAndTime(row.createdAt).concat(
+          dateAndTime(row.dueAt),
+          [CHECK_IN_STATUS_LABEL[row.status]],
+          dateAndTime(row.seenAt),
+        ),
+      ),
     });
   }
   if (activatedAt) {
