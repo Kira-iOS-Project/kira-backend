@@ -15,6 +15,7 @@ import { createRouter } from './lib/server/factory.ts';
 import { requestLogger } from './middlewares/logger.middleware.ts';
 import { authRouter } from './modules/auth/index.ts';
 import { metaApp } from './modules/meta/index.ts';
+import { usageRouter } from './modules/usage/index.ts';
 
 export const app = createRouter();
 
@@ -57,6 +58,7 @@ app.notFound(handleNotFound);
    Feature modules mount under /api. */
 app.route('/', metaApp);
 app.route('/api/auth', authRouter);
+app.route('/api/usage', usageRouter);
 
 /** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
