@@ -85,11 +85,9 @@
         "check:openapi": "bun scripts/check/openapi.ts",
         "db:generate": "drizzle-kit generate",
         "fl": "bun run format && bun run lint",
-        "fl:ci": "bun run format:check && oxlint --type-aware src scripts",
         "format": "oxfmt src scripts",
         "format:check": "oxfmt --check src scripts",
         "generate:endpoints": "bun scripts/generate/endpoints.ts",
-        "lint": "oxlint --type-aware src scripts",
         "spec:export": "bun scripts/generate/openapi.ts",
         "test:coverage": "bun test src --coverage && node scripts/check/coverage-files.mjs",
         "type-check": "tsc --noEmit"
@@ -134,7 +132,7 @@
         ]
       },
       "stack": "be-hono",
-      "version": "2.0.0"
+      "version": "2.0.1"
     },
     "agent-core": {
       "answers": {
@@ -163,8 +161,8 @@
         "scripts/check/double-assertion.sh": "sha256:94bc75d179dfc360b747b5ae024061097798e71f61380de15dafcaa92390a5a2",
         "scripts/check/folder-shape.mjs": "sha256:b46030fc7e230048d764659966ce00a9cfdccd759c6bd7ab19f913fe1bdbf836",
         "scripts/check/gates.sh": "sha256:d861a983ea509bb185df11b37d9d57dbfc13950c59eccd3bd40638d62adc06eb",
-        "scripts/check/hook-probes.sh": "sha256:df34a86ab9e93411952ce6ece12aa997ea1e57eee81d399a5e9f630fd3665881",
-        "scripts/check/hook-probes.tsv": "sha256:1b9575672788ad3fd8266fd9909fc944a7ef479004531cb2e757480c1e44e90f",
+        "scripts/check/hook-probes.sh": "sha256:fbccd5f17279d57378de12f6508f759d03a5fd42c4c6fdb101fbfb36960c853d",
+        "scripts/check/hook-probes.tsv": "sha256:7ccc1a348488d5d2f5d85b505dc29819f50c2add811e5c21f7f8a68321367d42",
         "scripts/check/secrets.sh": "sha256:cbac8c3aa1e46dab73b32d77b5f716fa4bf2b2edaea2f72d3fa337279d8e86d7",
         "scripts/check/skills.sh": "sha256:4eef76ed5ecb9b5a2f1d4d655c781e89096dff64f302134938a17fe3bb5758d3",
         "scripts/env/envfile.py": "sha256:5341f982368b7bc5362b95d4d996203ab9f2cce10456323bad61a91431e059ad",
@@ -264,7 +262,7 @@
         ]
       },
       "stack": "common",
-      "version": "1.2.0"
+      "version": "1.2.1"
     },
     "agent-deploy": {
       "answers": {
@@ -275,7 +273,7 @@
       "claudeMd": "sha256:7fed40dab60a2787c89811f4780515e492a14dbe8f61e5bfaca756d871578544",
       "files": {
         ".github/workflows/deploy.yml": "sha256:ab89aab7d4bb0f95a360102442f3ba2b1a16351ec1abbcad164cbb5baf566fa1",
-        ".github/workflows/strip-ai.yml": "sha256:557259bc4f655b5762c28b20f2e521e867f2ecc080bf8c8a728b9929d3da5617",
+        ".github/workflows/strip-ai.yml": "sha256:79f88053d9b77ff6b82b383741db17a4249d106b17f110f1acbe9f3429c3b751",
         "scripts/deploy/trigger-deploy.sh": "sha256:04c7b47d1138b86f833e742c2f3a7b90a48c2c4e8d99b17e3f68ce6c2f7e4935",
         "scripts/deploy/verify-deploy.sh": "sha256:989b1d9acbd481d653ac9678575044871ddbe2f7c01d3ade2eb83bbbbae0787a"
       },
@@ -298,7 +296,7 @@
         ]
       },
       "stack": "deploy",
-      "version": "1.1.3"
+      "version": "1.1.4"
     }
   }
 }
