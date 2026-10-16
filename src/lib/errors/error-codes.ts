@@ -22,6 +22,7 @@ export const ERROR_CODES = [
 
   /** Sign-in with an email and a one-time code (ONB-05 to ONB-07b, ONB-15). */
   'AUTH_CODE_RATE_LIMITED',
+  'AUTH_VERIFY_RATE_LIMITED',
   'AUTH_CODE_INVALID',
   'AUTH_CODE_EXPIRED',
   'AUTH_CODE_ATTEMPTS_EXCEEDED',

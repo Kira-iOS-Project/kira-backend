@@ -151,7 +151,7 @@ describe('verifyCode', () => {
           },
         }),
       ),
-    ).rejects.toMatchObject({ statusCode: 429, code: 'AUTH_CODE_RATE_LIMITED' });
+    ).rejects.toMatchObject({ statusCode: 429, code: 'AUTH_VERIFY_RATE_LIMITED' });
     expect(looked).toBe(false);
   });
 

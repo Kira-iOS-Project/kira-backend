@@ -33,6 +33,7 @@ const TITLES = {
   INTERNAL_ERROR: 'Internal Server Error',
   META_HEALTH_UNHEALTHY: 'Service Unhealthy',
   AUTH_CODE_RATE_LIMITED: 'Too Many Code Requests',
+  AUTH_VERIFY_RATE_LIMITED: 'Too Many Sign-in Tries',
   AUTH_CODE_INVALID: 'Invalid Code',
   AUTH_CODE_EXPIRED: 'Code Expired',
   AUTH_CODE_ATTEMPTS_EXCEEDED: 'Too Many Attempts',

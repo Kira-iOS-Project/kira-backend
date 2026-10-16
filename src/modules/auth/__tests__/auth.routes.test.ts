@@ -86,6 +86,59 @@ describe('POST /api/auth/verify', () => {
   });
 });
 
+describe('auth problem codes', () => {
+  const recent = () => new Date().toISOString();
+
+  test('POST /api/auth/code answers 429 AUTH_CODE_RATE_LIMITED inside the resend minute', async () => {
+    dbControl.respond = (query) =>
+      query.sql.startsWith('select "created_at" from "auth_codes"') ? [{ createdAt: recent() }] : [];
+
+    const res = await post('/api/auth/code', { email: 'dinda@email.com' });
+
+    expect(res.status).toBe(429);
+    expect((await res.json()).code).toBe('AUTH_CODE_RATE_LIMITED');
+    expect(emailControl.sent).toHaveLength(0);
+  });
+
+  test('POST /api/auth/code answers 503 EMAIL_DELIVERY_FAILED when the email cannot go', async () => {
+    emailControl.send = async () => {
+      throw new Error('Resend is down');
+    };
+
+    const res = await post('/api/auth/code', { email: 'dinda@email.com' });
+
+    expect(res.status).toBe(503);
+    expect((await res.json()).code).toBe('EMAIL_DELIVERY_FAILED');
+  });
+
+  test('POST /api/auth/verify answers 429 AUTH_VERIFY_RATE_LIMITED after ten checks', async () => {
+    dbControl.respond = (query) =>
+      query.sql.startsWith('select count(*) from "sign_in_attempts"') ? [{ count: 10 }] : [];
+
+    const res = await post('/api/auth/verify', { email: 'dinda@email.com', code: '381427' });
+
+    expect(res.status).toBe(429);
+    expect((await res.json()).code).toBe('AUTH_VERIFY_RATE_LIMITED');
+  });
+
+  test('POST /api/auth/verify answers AUTH_CODE_EXPIRED and AUTH_CODE_ATTEMPTS_EXCEEDED', async () => {
+    let expiresAt = new Date(Date.now() - 1_000).toISOString();
+    dbControl.respond = (query) =>
+      query.sql.startsWith('select "id", "code_hash"')
+        ? [{ id: 'code-1', codeHash: 'x', attempts: 5, expiresAt }]
+        : [];
+
+    const expired = await post('/api/auth/verify', { email: 'dinda@email.com', code: '381427' });
+    expiresAt = new Date(Date.now() + 60_000).toISOString();
+    const spent = await post('/api/auth/verify', { email: 'dinda@email.com', code: '381427' });
+
+    expect(expired.status).toBe(400);
+    expect((await expired.json()).code).toBe('AUTH_CODE_EXPIRED');
+    expect(spent.status).toBe(429);
+    expect((await spent.json()).code).toBe('AUTH_CODE_ATTEMPTS_EXCEEDED');
+  });
+});
+
 describe('POST /api/auth/refresh', () => {
   test('answers 401 for an unknown refresh token', async () => {
     const res = await post('/api/auth/refresh', { refreshToken: 'nope' });
