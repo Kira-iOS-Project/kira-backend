@@ -10,9 +10,16 @@ const encoder = new TextEncoder();
 
 /** The safety plan's key under `secret`. */
 export async function deriveSafetyPlanKey(secret: string): Promise<CryptoKey> {
-  const base = await crypto.subtle.importKey('raw', encoder.encode(secret), 'HKDF', false, ['deriveKey']);
+  const base = await crypto.subtle.importKey('raw', encoder.encode(secret), 'HKDF', false, [
+    'deriveKey',
+  ]);
   return crypto.subtle.deriveKey(
-    { name: 'HKDF', hash: 'SHA-256', salt: encoder.encode('kira-care'), info: encoder.encode('safety-plan') },
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: encoder.encode('kira-care'),
+      info: encoder.encode('safety-plan'),
+    },
     base,
     { name: 'AES-GCM', length: 256 },
     false,
@@ -23,8 +30,16 @@ export async function deriveSafetyPlanKey(secret: string): Promise<CryptoKey> {
 /** `plaintext` sealed under `key`. */
 export async function seal(key: CryptoKey, plaintext: string): Promise<string> {
   const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
-  const sealed = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(plaintext));
-  return [VERSION, Buffer.from(iv).toString('base64url'), Buffer.from(sealed).toString('base64url')].join('.');
+  const sealed = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    encoder.encode(plaintext),
+  );
+  return [
+    VERSION,
+    Buffer.from(iv).toString('base64url'),
+    Buffer.from(sealed).toString('base64url'),
+  ].join('.');
 }
 
 /** The plaintext of `sealed`; throws when it was not sealed under `key` or was changed. */

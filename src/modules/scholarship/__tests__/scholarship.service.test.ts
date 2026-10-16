@@ -97,6 +97,17 @@ describe('getScholarship', () => {
     expect(done.eligible).toBe(true);
     expect(done.application?.status).toBe(APPLICATION_STATUS.accepted);
   });
+
+  test('is closed until Mode Darurat Utang has been opened', async () => {
+    const repository = createScholarshipRepositoryMock({
+      hasUsedDebtEmergencyMode: async () => false,
+    });
+
+    const state = await getScholarship(USER_ID, { repository, now });
+
+    expect(state.eligible).toBe(false);
+    expect(state.ineligibleReason).toBe(INELIGIBLE_REASON.debtEmergencyNotUsed);
+  });
 });
 
 describe('apply', () => {

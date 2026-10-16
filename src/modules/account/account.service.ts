@@ -10,6 +10,7 @@ import type { ExportSection } from '../../lib/export/export-section.ts';
 import { logger } from '../../lib/server/logger.ts';
 import { paydayPeriod, wibDate } from '../../lib/time/wib.ts';
 import { activePlanOf, quotaPeriod, usageOf } from '../../lib/usage/plan-usage.ts';
+import { careExportSections } from '../care/index.ts';
 import { communityExportSections } from '../community/index.ts';
 import { exportFileName, sectionsCsv, transactionsCsv } from './account.csv.ts';
 import { accountDeletedEmail, dataExportEmail } from './account.email.ts';
@@ -31,8 +32,7 @@ type AccountDeps = {
 
 /** Every other module's blocks of Unduh Datamu, after the transactions in this order. */
 async function moduleExportSections(userId: string): Promise<ExportSection[]> {
-  const parts = await Promise.all([communityExportSections(userId)]);
-  return parts.flat();
+  return (await Promise.all([communityExportSections(userId), careExportSections(userId)])).flat();
 }
 
 function resolve(deps: AccountDeps) {

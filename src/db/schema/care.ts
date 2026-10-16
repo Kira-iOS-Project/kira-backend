@@ -41,7 +41,7 @@ export const careCheckIns = pgTable(
     userId: uuid('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
-    status: checkInStatusEnum('status').default(CHECK_IN_STATUS.pending).notNull(),
+    status: checkInStatusEnum('status').default(CHECK_IN_STATUS.scheduled).notNull(),
     dueAt: moment('due_at').notNull(),
     seenAt: moment('seen_at'),
     ...timestamps,
@@ -51,7 +51,7 @@ export const careCheckIns = pgTable(
     /** One pending check-in a person: scheduling another cancels the first in the same transaction. */
     uniqueIndex(ONE_PENDING_CHECK_IN_INDEX)
       .on(table.userId)
-      .where(sql`${table.status} = ${sql.raw(`'${CHECK_IN_STATUS.pending}'`)}`),
+      .where(sql`${table.status} = ${sql.raw(`'${CHECK_IN_STATUS.scheduled}'`)}`),
   ],
 );
 

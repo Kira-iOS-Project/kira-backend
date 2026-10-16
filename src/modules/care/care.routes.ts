@@ -15,7 +15,12 @@ import {
 } from './care.check-ins.routes.ts';
 import * as handle from './care.handler.ts';
 import { safetyPlanBodySchema, safetyPlanSchema } from './care.safety-plan.schema.ts';
-import { careContactsSchema, careSignalBodySchema, debtEmergencySchema, debtsSchema } from './care.schema.ts';
+import {
+  careContactsSchema,
+  careSignalBodySchema,
+  debtEmergencySchema,
+  debtsSchema,
+} from './care.schema.ts';
 
 const json = <T>(schema: T) => ({ content: { 'application/json': { schema } } });
 const common = { tags: ['Care'], security: [{ bearerAuth: [] }] };
@@ -26,7 +31,10 @@ export const contactsRoute = createRoute({
   path: '/care/contacts',
   operationId: 'listCareContacts',
   summary: 'The verified crisis contacts, re-checked monthly',
-  responses: { 200: { ...json(careContactsSchema), description: 'Contacts' }, ...errorResponses(401) },
+  responses: {
+    200: { ...json(careContactsSchema), description: 'Contacts' },
+    ...errorResponses(401),
+  },
 });
 
 export const signalRoute = createRoute({
@@ -45,7 +53,10 @@ export const debtEmergencyRoute = createRoute({
   path: '/care/debt-emergency',
   operationId: 'activateDebtEmergency',
   summary: 'Turn Mode Darurat Utang on (idempotent, keeps the first time)',
-  responses: { 200: { ...json(debtEmergencySchema), description: 'Active' }, ...errorResponses(401) },
+  responses: {
+    200: { ...json(debtEmergencySchema), description: 'Active' },
+    ...errorResponses(401),
+  },
 });
 
 export const debtsRoute = createRoute({

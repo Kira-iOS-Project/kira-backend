@@ -4,6 +4,7 @@
  */
 
 import { env } from '../../env.ts';
+import { logger } from '../../lib/server/logger.ts';
 import { deriveSafetyPlanKey, open, seal } from './care.crypto.ts';
 import { CareSafetyPlanNotFoundError } from './care.errors.ts';
 import { type CareRepository, careRepository, type SealedPlanRow } from './care.repository.ts';
@@ -31,16 +32,34 @@ function sections(body: SafetyPlanBody): SafetyPlanBody {
 }
 
 /** The plan inside a stored row. */
-export async function openPlan(row: SealedPlanRow, key: CryptoKey): Promise<SafetyPlan> {
+async function openPlan(row: SealedPlanRow, key: CryptoKey): Promise<SafetyPlan> {
   const body: SafetyPlanBody = JSON.parse(await open(key, row.sealed));
   return { ...sections(body), updatedAt: row.updatedAt.toISOString() };
 }
 
-export async function getSafetyPlan(userId: string, deps: SafetyPlanDeps = {}): Promise<SafetyPlan> {
+/**
+ * The plan inside a row, or null when it cannot be opened: sealed under another key (an
+ * AUTH_SECRET that changed, or a development process's random one) or altered. The person then
+ * writes a new plan, which replaces the unreadable one.
+ */
+export async function readablePlan(row: SealedPlanRow, key: CryptoKey): Promise<SafetyPlan | null> {
+  try {
+    return await openPlan(row, key);
+  } catch (error) {
+    logger.warn({ err: error }, 'A stored safety plan could not be opened');
+    return null;
+  }
+}
+
+export async function getSafetyPlan(
+  userId: string,
+  deps: SafetyPlanDeps = {},
+): Promise<SafetyPlan> {
   const repository = deps.repository ?? careRepository;
   const row = await repository.findSafetyPlan(userId);
-  if (row === null) throw new CareSafetyPlanNotFoundError();
-  return openPlan(row, await safetyPlanKey(deps));
+  const plan = row ? await readablePlan(row, await safetyPlanKey(deps)) : null;
+  if (plan === null) throw new CareSafetyPlanNotFoundError();
+  return plan;
 }
 
 export async function saveSafetyPlan(

@@ -15,7 +15,7 @@ export type KiraCareLine = { phone: string | undefined; whatsapp: string | undef
 export const CARE_CONTACTS_VERIFIED_ON = '2026-10-01';
 
 /** The contacts that do not depend on the environment, in Kira Peduli's order, Kira's slot empty. */
-export const PUBLIC_CARE_CONTACTS: readonly CareContact[] = [
+const PUBLIC_CARE_CONTACTS: readonly CareContact[] = [
   {
     key: CARE_CONTACT_KEY.healing119,
     name: 'Healing119',
@@ -90,6 +90,8 @@ export function kiraCareContact(line: KiraCareLine): CareContact | null {
 export function careContacts(line: KiraCareLine): CareContacts {
   const [healing, ...rest] = PUBLIC_CARE_CONTACTS;
   const kira = kiraCareContact(line);
-  const contacts = [healing, ...(kira ? [kira] : []), ...rest].filter((contact) => contact !== undefined);
+  const contacts = [healing, ...(kira ? [kira] : []), ...rest].filter(
+    (contact) => contact !== undefined,
+  );
   return { verifiedOn: CARE_CONTACTS_VERIFIED_ON, contacts };
 }

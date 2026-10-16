@@ -8,12 +8,15 @@ import { z } from '@hono/zod-openapi';
 /** The most text one answer holds. */
 export const SAFETY_PLAN_TEXT_MAX = 500;
 /** The most people, and the most professionals, a plan names. */
-export const SAFETY_PLAN_PEOPLE_MAX = 3;
+const SAFETY_PLAN_PEOPLE_MAX = 3;
 
 const answer = z.string().max(SAFETY_PLAN_TEXT_MAX);
 
 const personSchema = z
-  .object({ name: z.string().max(SAFETY_PLAN_TEXT_MAX), phone: z.string().max(SAFETY_PLAN_TEXT_MAX) })
+  .object({
+    name: z.string().max(SAFETY_PLAN_TEXT_MAX),
+    phone: z.string().max(SAFETY_PLAN_TEXT_MAX),
+  })
   .openapi('SafetyPlanPerson');
 
 export const safetyPlanBodySchema = z

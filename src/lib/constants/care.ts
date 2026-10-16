@@ -3,6 +3,8 @@
  * signal, a check-in's states and delays, and the index that keeps one check-in pending a person.
  */
 
+import { TRANSACTION_SOURCE } from './money.ts';
+
 /** The contacts of GET /care/contacts, in the order Kira Peduli lists them. */
 export const CARE_CONTACT_KEY = {
   healing119: 'healing119',
@@ -20,15 +22,15 @@ export const CARE_SIGNAL_LEVEL = {
   danger: 'danger',
 } as const;
 
-/** Where the device read them: a Catat message or a reply to a check-in. */
+/** Where the device read them: a Catat message (the chat's own word) or a reply to a check-in. */
 export const CARE_SIGNAL_SOURCE = {
-  chat: 'chat',
+  chat: TRANSACTION_SOURCE.chat,
   checkIn: 'check_in',
 } as const;
 
-/** A check-in (PED-05, PED-06): waiting for its time, shown in Catat, or called off. */
+/** A check-in (PED-05, PED-06): scheduled and waiting for its time, shown in Catat, or called off. */
 export const CHECK_IN_STATUS = {
-  pending: 'pending',
+  scheduled: 'scheduled',
   seen: 'seen',
   cancelled: 'cancelled',
 } as const;

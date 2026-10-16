@@ -16,14 +16,18 @@ import {
 import { CHECK_IN_STATUS } from '../../lib/constants/care.ts';
 import type { CareSignalBody, Debt } from './care.schema.ts';
 
-export type CheckInRow = { id: string; dueAt: Date };
-export type CheckInHistoryRow = CheckInRow & { status: string; seenAt: Date | null; createdAt: Date };
+type CheckInRow = { id: string; dueAt: Date };
+type CheckInHistoryRow = CheckInRow & {
+  status: string;
+  seenAt: Date | null;
+  createdAt: Date;
+};
 export type SealedPlanRow = { sealed: string; updatedAt: Date };
 
 /** The most debts one list carries: far more than a health check lets a person add. */
-export const DEBT_LIST_LIMIT = 50;
+const DEBT_LIST_LIMIT = 50;
 /** The most check-ins one export carries. */
-export const CHECK_IN_EXPORT_LIMIT = 1_000;
+const CHECK_IN_EXPORT_LIMIT = 1_000;
 
 export type CareRepository = {
   recordSignal(userId: string, signal: CareSignalBody): Promise<void>;
@@ -45,12 +49,15 @@ export type CareRepository = {
 };
 
 const checkInColumns = { id: careCheckIns.id, dueAt: careCheckIns.dueAt };
-const mine = (userId: string, id: string) => and(eq(careCheckIns.userId, userId), eq(careCheckIns.id, id));
+const mine = (userId: string, id: string) =>
+  and(eq(careCheckIns.userId, userId), eq(careCheckIns.id, id));
 
 export function createCareRepository(client: PostgresJsDatabase = db): CareRepository {
   return {
     async recordSignal(userId, signal) {
-      await client.insert(careSignals).values({ userId, level: signal.level, source: signal.source });
+      await client
+        .insert(careSignals)
+        .values({ userId, level: signal.level, source: signal.source });
     },
 
     async scheduleCheckIn(userId, dueAt) {
@@ -58,8 +65,16 @@ export function createCareRepository(client: PostgresJsDatabase = db): CareRepos
         await tx
           .update(careCheckIns)
           .set({ status: CHECK_IN_STATUS.cancelled })
-          .where(and(eq(careCheckIns.userId, userId), eq(careCheckIns.status, CHECK_IN_STATUS.pending)));
-        const [row] = await tx.insert(careCheckIns).values({ userId, dueAt }).returning(checkInColumns);
+          .where(
+            and(
+              eq(careCheckIns.userId, userId),
+              eq(careCheckIns.status, CHECK_IN_STATUS.scheduled),
+            ),
+          );
+        const [row] = await tx
+          .insert(careCheckIns)
+          .values({ userId, dueAt })
+          .returning(checkInColumns);
         if (row === undefined) throw new Error('The check-in was not stored');
         return row;
       });
@@ -69,7 +84,7 @@ export function createCareRepository(client: PostgresJsDatabase = db): CareRepos
       const rows = await client
         .update(careCheckIns)
         .set({ status: CHECK_IN_STATUS.cancelled })
-        .where(and(mine(userId, id), eq(careCheckIns.status, CHECK_IN_STATUS.pending)))
+        .where(and(mine(userId, id), eq(careCheckIns.status, CHECK_IN_STATUS.scheduled)))
         .returning({ id: careCheckIns.id });
       return rows.length > 0;
     },
@@ -81,7 +96,7 @@ export function createCareRepository(client: PostgresJsDatabase = db): CareRepos
         .where(
           and(
             eq(careCheckIns.userId, userId),
-            eq(careCheckIns.status, CHECK_IN_STATUS.pending),
+            eq(careCheckIns.status, CHECK_IN_STATUS.scheduled),
             lte(careCheckIns.dueAt, now),
           ),
         )
@@ -93,9 +108,15 @@ export function createCareRepository(client: PostgresJsDatabase = db): CareRepos
     async markCheckInSeen(userId, id, now) {
       const rows = await client
         .update(careCheckIns)
-        .set({ status: CHECK_IN_STATUS.seen, seenAt: sql`coalesce(${careCheckIns.seenAt}, ${now})` })
+        .set({
+          status: CHECK_IN_STATUS.seen,
+          seenAt: sql`coalesce(${careCheckIns.seenAt}, ${now})`,
+        })
         .where(
-          and(mine(userId, id), inArray(careCheckIns.status, [CHECK_IN_STATUS.pending, CHECK_IN_STATUS.seen])),
+          and(
+            mine(userId, id),
+            inArray(careCheckIns.status, [CHECK_IN_STATUS.scheduled, CHECK_IN_STATUS.seen]),
+          ),
         )
         .returning({ id: careCheckIns.id });
       return rows.length > 0;
@@ -103,7 +124,12 @@ export function createCareRepository(client: PostgresJsDatabase = db): CareRepos
 
     async listCheckIns(userId) {
       return client
-        .select({ ...checkInColumns, status: careCheckIns.status, seenAt: careCheckIns.seenAt, createdAt: careCheckIns.createdAt })
+        .select({
+          ...checkInColumns,
+          status: careCheckIns.status,
+          seenAt: careCheckIns.seenAt,
+          createdAt: careCheckIns.createdAt,
+        })
         .from(careCheckIns)
         .where(eq(careCheckIns.userId, userId))
         .orderBy(asc(careCheckIns.createdAt))
@@ -156,7 +182,10 @@ export function createCareRepository(client: PostgresJsDatabase = db): CareRepos
       const [row] = await client
         .insert(careSafetyPlans)
         .values({ userId, sealed })
-        .onConflictDoUpdate({ target: careSafetyPlans.userId, set: { sealed, updatedAt: new Date() } })
+        .onConflictDoUpdate({
+          target: careSafetyPlans.userId,
+          set: { sealed, updatedAt: new Date() },
+        })
         .returning({ sealed: careSafetyPlans.sealed, updatedAt: careSafetyPlans.updatedAt });
       if (row === undefined) throw new Error('The safety plan was not stored');
       return row;

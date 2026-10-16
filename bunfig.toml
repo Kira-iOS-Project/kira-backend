@@ -59,4 +59,5 @@ coveragePathIgnorePatterns = [
   # Type-only declarations: erased at runtime, so no test can load them.
   "src/types/**",
   "src/**/*.types.ts",
+  "src/lib/export/export-section.ts",
 ]
