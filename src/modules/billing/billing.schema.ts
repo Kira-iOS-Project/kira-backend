@@ -84,7 +84,11 @@ export const invoicesResponseSchema = z
 
 export const giftBodySchema = z
   .object({
-    months: z.literal(GIFT_MONTHS),
+    months: z
+      .number()
+      .int()
+      .refine((months) => GIFT_MONTHS.some((allowed) => allowed === months))
+      .openapi({ enum: [...GIFT_MONTHS] }),
     paymentMethod: paymentMethodSchema,
   })
   .openapi('GiftRequest');
