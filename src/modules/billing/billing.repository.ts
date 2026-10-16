@@ -6,7 +6,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
-import { gifts, invoices, subscriptions, usageCounters } from '../../db/schema/schema.ts';
+import { gifts, invoices, subscriptions, usageCounters, users } from '../../db/schema/schema.ts';
 import { SUBSCRIPTION_SOURCE, SUBSCRIPTION_STATUS } from '../../lib/constants/plans.ts';
 import type { PlanId, UsageCounters } from '../../lib/usage/plan-usage.ts';
 import type { BillingPeriod, PaidPlan, PaymentMethod } from './billing.schema.ts';
@@ -45,7 +45,7 @@ type CheckoutInput = {
 export type BillingRepository = {
   findActiveSubscription(userId: string): Promise<SubscriptionRow | null>;
   findUsageCounters(userId: string, periodStart: string): Promise<UsageCounters | null>;
-  /** Ends any active subscription, starts the new one and writes its invoice, together. */
+  /** Ends any active plan, starts the new one and writes its invoice; one checkout per person at once. */
   startSubscription(input: CheckoutInput): Promise<SubscriptionRow>;
   cancelAtPeriodEnd(subscriptionId: string): Promise<SubscriptionRow | null>;
   changePaymentMethod(
@@ -101,6 +101,16 @@ export function createBillingRepository(client: PostgresJsDatabase = db): Billin
 
     startSubscription({ userId, plan, period, paymentMethod, amount, start, end }) {
       return client.transaction(async (tx) => {
+        /**
+         * The person's row, locked until commit: a second checkout (or a Beasiswa Kira grant) waits
+         * here, then ends this plan instead of colliding with it on subscriptions_one_active_idx.
+         * `no key update` leaves the key-share locks of inserts that reference the person alone.
+         */
+        await tx
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.id, userId))
+          .for('no key update');
         await tx
           .update(subscriptions)
           .set({ status: SUBSCRIPTION_STATUS.ended, currentPeriodEnd: start })

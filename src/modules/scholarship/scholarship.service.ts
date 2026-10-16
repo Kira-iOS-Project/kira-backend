@@ -127,6 +127,8 @@ export async function apply(
     usedDebtEmergencyMode: await repository.hasUsedDebtEmergencyMode(userId),
     status: quota.remaining > 0 ? APPLICATION_STATUS.inReview : APPLICATION_STATUS.waitlisted,
   });
+  /** A second apply that raced the first past the check above lost at the unique index. */
+  if (row === null) throw new ScholarshipNotEligibleError(INELIGIBLE_REASON.hasOpenApplication);
   return toApplication(row);
 }
 

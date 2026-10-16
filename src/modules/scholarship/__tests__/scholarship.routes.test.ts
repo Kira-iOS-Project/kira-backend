@@ -6,7 +6,11 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
 import { SUBSCRIPTION_SOURCE } from '../../../lib/constants/plans.ts';
-import { APPLICATION_STATUS, SCHOLARSHIP_SITUATION } from '../../../lib/constants/scholarship.ts';
+import {
+  APPLICATION_STATUS,
+  OPEN_APPLICATION_INDEX,
+  SCHOLARSHIP_SITUATION,
+} from '../../../lib/constants/scholarship.ts';
 import { inOrder } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
 import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
@@ -72,6 +76,24 @@ describe('scholarship routes', () => {
     expect(empty.status).toBe(422);
     expect(paid.status).toBe(409);
     expect((await paid.json()).code).toBe('SCHOLARSHIP_NOT_ELIGIBLE');
+  });
+
+  test('POST /api/scholarship/applications answers 409, not 500, to a concurrent second apply', async () => {
+    const duplicate = Object.assign(new Error('duplicate key value'), {
+      code: '23505',
+      constraint_name: OPEN_APPLICATION_INDEX,
+    });
+    dbControl.respond = signedIn((query) => {
+      if (query.sql.startsWith('insert into "scholarship_applications"')) throw duplicate;
+      return [];
+    });
+
+    const res = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+    });
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe('SCHOLARSHIP_NOT_ELIGIBLE');
   });
 
   test('DELETE /api/scholarship/applications/current answers 204, or 404 with none', async () => {

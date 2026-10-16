@@ -13,7 +13,7 @@ import {
 } from '../../../lib/constants/plans.ts';
 import { inOrder } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
-import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
+import { AUTH_HEADER, signedIn, TEST_USER_ID } from '../../../test/session.ts';
 
 beforeEach(() => resetExternalMocks());
 
@@ -55,7 +55,7 @@ describe('billing routes', () => {
   });
 
   test('POST /api/billing/checkout answers the new subscription', async () => {
-    dbControl.respond = signedIn(inOrder([], [SUBSCRIPTION], [], []));
+    dbControl.respond = signedIn(inOrder([{ id: TEST_USER_ID }], [], [SUBSCRIPTION], [], []));
 
     const res = await call('POST', '/api/billing/checkout', {
       plan: PLAN.plus,

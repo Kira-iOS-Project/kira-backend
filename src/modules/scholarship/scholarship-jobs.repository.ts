@@ -1,9 +1,10 @@
 /**
- * The scholarship review job's data access: the applications old enough to decide, and the
- * decisions themselves (a Kira Plus grant per accepted application, written together).
+ * The scholarship review job's data access: the applications old enough to decide, the decisions
+ * themselves (each acceptance and its Kira Plus grant in a transaction of its own), and the
+ * accepted applications whose result email has not gone out yet.
  */
 
-import { and, asc, eq, inArray, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, lte, notExists, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
 import { scholarshipApplications, subscriptions, users } from '../../db/schema/schema.ts';
@@ -27,14 +28,30 @@ export type ReviewableApplication = {
   hasActivePlan: boolean;
 };
 
+export type UnsentResult = {
+  id: string;
+  email: string;
+  displayName: string;
+  grantStart: Date;
+  grantEnd: Date;
+};
+
 export type ScholarshipJobsRepository = {
   /** Open applications submitted at or before `before`, oldest first. */
   findReviewable(before: Date, limit: number): Promise<ReviewableApplication[]>;
-  /** Grants Kira Plus from `start` to `end` to each application's person and accepts it. */
-  accept(applications: { id: string; userId: string }[], start: Date, end: Date): Promise<void>;
+  /**
+   * Accepts the application and grants its person Kira Plus from `start` to `end`. False, with
+   * nothing written, when it is no longer open (withdrawn meanwhile) or the person holds a plan.
+   */
+  accept(application: { id: string; userId: string }, start: Date, end: Date): Promise<boolean>;
+  /** Moves the applications that are still open to `status`; a decided one keeps its own. */
   setStatus(ids: string[], status: ApplicationStatus): Promise<void>;
+  /** Accepted applications whose result email has not gone out, oldest decision first. */
+  findUnsentResults(limit: number): Promise<UnsentResult[]>;
   markResultEmailsSent(ids: string[], now: Date): Promise<void>;
 };
+
+const stillOpen = inArray(scholarshipApplications.status, OPEN_STATUSES);
 
 export function createScholarshipJobsRepository(
   client: PostgresJsDatabase = db,
@@ -52,21 +69,44 @@ export function createScholarshipJobsRepository(
         })
         .from(scholarshipApplications)
         .innerJoin(users, eq(users.id, scholarshipApplications.userId))
-        .where(
-          and(
-            inArray(scholarshipApplications.status, OPEN_STATUSES),
-            lte(scholarshipApplications.submittedAt, before),
-          ),
-        )
+        .where(and(stillOpen, lte(scholarshipApplications.submittedAt, before)))
         .orderBy(asc(scholarshipApplications.submittedAt))
         .limit(limit);
     },
 
-    async accept(applications, start, end) {
-      if (applications.length === 0) return;
-      await client.transaction(async (tx) => {
-        await tx.insert(subscriptions).values(
-          applications.map(({ userId }) => ({
+    accept({ id, userId }, start, end) {
+      return client.transaction(async (tx) => {
+        /** The same per-person lock as checkout: a purchase and a grant never cross. */
+        await tx
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.id, userId))
+          .for('no key update');
+        const [decided] = await tx
+          .update(scholarshipApplications)
+          .set({ status: APPLICATION_STATUS.accepted, decidedAt: start })
+          .where(
+            and(
+              eq(scholarshipApplications.id, id),
+              stillOpen,
+              notExists(
+                tx
+                  .select({ id: subscriptions.id })
+                  .from(subscriptions)
+                  .where(
+                    and(
+                      eq(subscriptions.userId, userId),
+                      eq(subscriptions.status, SUBSCRIPTION_STATUS.active),
+                    ),
+                  ),
+              ),
+            ),
+          )
+          .returning({ id: scholarshipApplications.id });
+        if (!decided) return false;
+        const [grant] = await tx
+          .insert(subscriptions)
+          .values({
             userId,
             plan: PLAN.plus,
             period: BILLING_PERIOD.monthly,
@@ -74,21 +114,14 @@ export function createScholarshipJobsRepository(
             status: SUBSCRIPTION_STATUS.active,
             currentPeriodStart: start,
             currentPeriodEnd: end,
-          })),
-        );
+          })
+          .returning({ id: subscriptions.id });
+        if (!grant) throw new Error('The grant was not created');
         await tx
           .update(scholarshipApplications)
-          .set({
-            status: APPLICATION_STATUS.accepted,
-            decidedAt: start,
-            subscriptionId: sql`(select ${subscriptions.id} from ${subscriptions} where ${subscriptions.userId} = ${scholarshipApplications.userId} and ${subscriptions.status} = ${SUBSCRIPTION_STATUS.active} limit 1)`,
-          })
-          .where(
-            inArray(
-              scholarshipApplications.id,
-              applications.map(({ id }) => id),
-            ),
-          );
+          .set({ subscriptionId: grant.id })
+          .where(eq(scholarshipApplications.id, id));
+        return true;
       });
     },
 
@@ -97,7 +130,29 @@ export function createScholarshipJobsRepository(
       await client
         .update(scholarshipApplications)
         .set({ status })
-        .where(inArray(scholarshipApplications.id, ids));
+        .where(and(inArray(scholarshipApplications.id, ids), stillOpen));
+    },
+
+    findUnsentResults(limit) {
+      return client
+        .select({
+          id: scholarshipApplications.id,
+          email: users.email,
+          displayName: users.displayName,
+          grantStart: subscriptions.currentPeriodStart,
+          grantEnd: subscriptions.currentPeriodEnd,
+        })
+        .from(scholarshipApplications)
+        .innerJoin(users, eq(users.id, scholarshipApplications.userId))
+        .innerJoin(subscriptions, eq(subscriptions.id, scholarshipApplications.subscriptionId))
+        .where(
+          and(
+            eq(scholarshipApplications.status, APPLICATION_STATUS.accepted),
+            isNull(scholarshipApplications.resultEmailSentAt),
+          ),
+        )
+        .orderBy(asc(scholarshipApplications.decidedAt))
+        .limit(limit);
     },
 
     async markResultEmailsSent(ids, now) {
