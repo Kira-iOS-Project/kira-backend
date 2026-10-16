@@ -73,6 +73,10 @@
               "EMAIL_DELIVERY_FAILED",
               "SCORE_NOT_AVAILABLE",
               "PAYOFF_EXTRA_TOO_HIGH",
+              "PAYOFF_NOTHING_TO_PLAN",
+              "PAYOFF_PLAN_NOT_FOUND",
+              "PAYOFF_DEBT_NOT_FOUND",
+              "PAYOFF_PAYMENT_TOO_HIGH",
               "CHAT_AI_DISABLED",
               "CHAT_MESSAGE_NOT_FOUND",
               "CHAT_DRAFTS_NOT_PENDING",
@@ -1437,6 +1441,298 @@
         },
         "required": [
           "method"
+        ]
+      },
+      "PayoffActivePlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "snowball",
+              "avalanche"
+            ]
+          },
+          "extraPayment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayoffPlanAccount"
+            }
+          },
+          "nextPayment": {
+            "$ref": "#/components/schemas/PayoffNextPayment"
+          }
+        },
+        "required": [
+          "id",
+          "method",
+          "extraPayment",
+          "startedAt",
+          "accounts",
+          "nextPayment"
+        ]
+      },
+      "PayoffPlanAccount": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "paylater",
+              "online_loan",
+              "credit_card",
+              "vehicle",
+              "mortgage",
+              "family_loan"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "original": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "progressPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "monthlyInstalment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "annualInterestRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 300
+          },
+          "dueDay": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 31
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in_progress",
+              "next",
+              "ongoing"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "remaining",
+          "original",
+          "progressPercent",
+          "monthlyInstalment",
+          "annualInterestRate",
+          "dueDay",
+          "status"
+        ]
+      },
+      "PayoffNextPayment": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "debtId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "dueDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "daysLeft": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "debtId",
+          "name",
+          "amount",
+          "dueDate",
+          "daysLeft"
+        ]
+      },
+      "CreatePayoffPlan": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "snowball",
+              "avalanche"
+            ]
+          },
+          "extraPayment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": 0
+          }
+        },
+        "required": [
+          "method"
+        ]
+      },
+      "SetPayoffFocus": {
+        "type": "object",
+        "properties": {
+          "focusDebtId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "focusDebtId"
+        ]
+      },
+      "DebtPaymentResult": {
+        "type": "object",
+        "properties": {
+          "debtId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paid": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "progressPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "paidOff": {
+            "type": "boolean"
+          },
+          "nextAccount": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "scoreEstimate": {
+            "$ref": "#/components/schemas/PayoffScoreEstimate"
+          }
+        },
+        "required": [
+          "debtId",
+          "paid",
+          "remaining",
+          "progressPercent",
+          "paidOff",
+          "nextAccount",
+          "scoreEstimate"
+        ]
+      },
+      "PayoffScoreEstimate": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "before": {
+            "type": "integer"
+          },
+          "after": {
+            "type": "integer"
+          },
+          "consumerDebtBefore": {
+            "type": "integer"
+          },
+          "consumerDebtAfter": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "before",
+          "after",
+          "consumerDebtBefore",
+          "consumerDebtAfter"
+        ]
+      },
+      "RecordDebtPayment": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "amount"
         ]
       },
       "Home": {
@@ -3894,7 +4190,6 @@
     },
     "/api/payoff/simulate": {
       "post": {
-        "operationId": "simulatePayoff",
         "tags": [
           "Payoff"
         ],
@@ -3903,6 +4198,7 @@
             "bearerAuth": []
           }
         ],
+        "operationId": "simulatePayoff",
         "summary": "Simulate a debt payoff plan",
         "description": "Orders the consumer debts by snowball or avalanche and returns the month and interest of each, set against the other method. Nothing is saved.",
         "requestBody": {
@@ -3938,6 +4234,273 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payoff/plans": {
+      "post": {
+        "tags": [
+          "Payoff"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createPayoffPlan",
+        "summary": "Make this the plan (Jadikan Rencanaku)",
+        "description": "Ends the active plan, if any, and starts one on the first consumer account of the method. The extra payment may not exceed the money left this payday period.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePayoffPlan"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new active plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoffActivePlan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A business rule refused the request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payoff/plans/active": {
+      "get": {
+        "tags": [
+          "Payoff"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getActivePayoffPlan",
+        "summary": "Rencanaku",
+        "description": "The active plan: every account with its progress and tag, and the next payment with the days left.",
+        "responses": {
+          "200": {
+            "description": "The active plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoffActivePlan"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Payoff"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "setPayoffFocus",
+        "summary": "Move the plan to another account",
+        "description": "Moves the focus of the active plan to an open consumer account (\"Lanjut ke Paylater B\").",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPayoffFocus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The plan with its new focus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoffActivePlan"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/debts/{id}/payments": {
+      "post": {
+        "tags": [
+          "Payoff"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "recordDebtPayment",
+        "summary": "Mark a payment (Tandai Sudah Bayar)",
+        "description": "Records a payment against an open debt account. When it settles the account the response says so once, with the score the engine expects and the account the plan moves to next.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordDebtPayment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The account after the payment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtPaymentResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A business rule refused the request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
             "content": {
               "application/problem+json": {
                 "schema": {

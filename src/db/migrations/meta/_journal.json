@@ -15,6 +15,13 @@
       "when": 1792168702753,
       "tag": "0001_open_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792169526218,
+      "tag": "0002_funny_saracen",
+      "breakpoints": true
     }
   ]
 }

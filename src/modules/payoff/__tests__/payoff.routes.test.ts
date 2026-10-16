@@ -5,37 +5,11 @@
 
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
-import { FOCUS } from '../../../lib/constants/profile.ts';
-import type { FakeQuery, FakeRow } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
 import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
-import { DINDA_OPEN } from './helpers.ts';
+import { dinda } from './routes-fixtures.ts';
 
 beforeEach(() => resetExternalMocks());
-
-/** Dinda: 7,5 juta income and 5,66 juta spent, so 1,84 juta is left whatever day the suite runs. */
-function dinda(query: FakeQuery): FakeRow[] {
-  if (query.sql.includes('"display_name"')) {
-    return [
-      {
-        displayName: 'Dinda',
-        hideBalances: false,
-        focus: FOCUS.trackSpending,
-        paydayDay: 25,
-        paydayEndOfMonth: false,
-        completedAt: new Date().toISOString(),
-        income: 7_500_000,
-        essential: 4_200_000,
-        emergencyFund: 4_800_000,
-      },
-    ];
-  }
-  if (query.sql.includes('from "transactions"')) {
-    return [{ income: 0, expense: 5_660_000, count: 12 }];
-  }
-  if (query.sql.includes('from "debt_accounts"')) return DINDA_OPEN;
-  return [];
-}
 
 function simulate(body: unknown) {
   return app.request('/api/payoff/simulate', {

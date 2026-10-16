@@ -1,1 +1,1 @@
-export { payoffRouter } from './payoff.routes.ts';
+export { debtRouter, payoffRouter } from './payoff.routes.ts';

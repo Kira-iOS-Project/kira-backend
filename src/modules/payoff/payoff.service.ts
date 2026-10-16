@@ -44,7 +44,10 @@ function comparisonOf(
 }
 
 /** Sisa uang of this period, from the Beranda figure unless a test supplies another. */
-function remainingOf(userId: string, deps: PayoffDeps): Promise<number> {
+export function remainingOf(
+  userId: string,
+  deps: Pick<PayoffDeps, 'now' | 'remainingMoney'>,
+): Promise<number> {
   if (deps.remainingMoney) return deps.remainingMoney(userId);
   return findRemainingMoney(userId, deps.now ? { now: deps.now } : {});
 }

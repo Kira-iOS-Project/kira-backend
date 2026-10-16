@@ -52,11 +52,11 @@ const smallestFirst = (a: PayoffDebt, b: PayoffDebt) => a.remaining - b.remainin
 const dearestFirst = (a: PayoffDebt, b: PayoffDebt) => rateOf(b) - rateOf(a);
 
 /** The order a method pays in; a tie keeps the order the accounts were added in. */
-export function payoffOrder(debts: PayoffDebt[], method: PayoffMethod): PayoffDebt[] {
+export function payoffOrder<T extends PayoffDebt>(debts: T[], method: PayoffMethod): T[] {
   const compare =
     method === PAYOFF_METHOD.snowball
-      ? (a: PayoffDebt, b: PayoffDebt) => smallestFirst(a, b) || dearestFirst(a, b)
-      : (a: PayoffDebt, b: PayoffDebt) => dearestFirst(a, b) || smallestFirst(a, b);
+      ? (a: T, b: T) => smallestFirst(a, b) || dearestFirst(a, b)
+      : (a: T, b: T) => dearestFirst(a, b) || smallestFirst(a, b);
   return debts.toSorted(compare);
 }
 

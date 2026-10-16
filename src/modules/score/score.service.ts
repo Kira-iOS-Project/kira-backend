@@ -6,9 +6,9 @@
  */
 
 import { DEBT_PAYMENT_STATUS } from '../../lib/constants/profile.ts';
-import { SNAPSHOT_REASON } from '../../lib/constants/score.ts';
+import { INDICATOR, SNAPSHOT_REASON } from '../../lib/constants/score.ts';
 import { paydayPeriod, wibDate, wibStartOfDay } from '../../lib/time/wib.ts';
-import type { IndicatorKey, ScoreInput } from './score.engine.ts';
+import type { DebtInput, IndicatorKey, ScoreInput } from './score.engine.ts';
 import { ScoreNotAvailableError } from './score.errors.ts';
 import { ladderOf } from './score.ladder.ts';
 import { evaluate, type Evaluation } from './score.measure.ts';
@@ -92,6 +92,37 @@ export async function getIndicatorDetail(
   const indicator = evaluation.indicators.find((item) => item.key === key);
   if (!indicator) throw new ScoreNotAvailableError();
   return { ...indicator, ...ladderOf(key, evaluation.facts, evaluation.points) };
+}
+
+/** The score before and after an account was paid off; the official score waits for payday. */
+export type ScoreEstimate = {
+  before: number;
+  after: number;
+  consumerDebtBefore: number;
+  consumerDebtAfter: number;
+};
+
+/**
+ * What paying off `paid` is worth: the score with the open accounts now, less the score with `paid`
+ * still among them. Null before the health check.
+ */
+export async function estimateScoreChange(
+  userId: string,
+  paid: DebtInput,
+  deps: ScoreDeps = {},
+): Promise<ScoreEstimate | null> {
+  const repository = deps.repository ?? scoreRepository;
+  const state = await repository.findState(userId);
+  if (!state?.input) return null;
+  const debts = await repository.listOpenDebts(userId);
+  const after = evaluate({ ...state.input, debts });
+  const before = evaluate({ ...state.input, debts: [...debts, paid] });
+  return {
+    before: before.score,
+    after: after.score,
+    consumerDebtBefore: before.points[INDICATOR.consumerDebt],
+    consumerDebtAfter: after.points[INDICATOR.consumerDebt],
+  };
 }
 
 /** Saves the answers and returns the first score; the quiz never asks how a debt is being paid. */
