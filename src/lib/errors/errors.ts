@@ -58,6 +58,15 @@ export class ValidationError extends DomainError {
   }
 }
 
+/** 401: the request carries no valid session, or its token has expired. */
+export class UnauthorizedError extends DomainError {
+  override readonly statusCode = 401 as const;
+
+  constructor(userMessage: string, internalDetail: string | undefined, code: ErrorCode) {
+    super(userMessage, internalDetail, code);
+  }
+}
+
 /** 403: the caller is known and may not do this. */
 export class ForbiddenError extends DomainError {
   override readonly statusCode = 403 as const;
@@ -70,6 +79,15 @@ export class ForbiddenError extends DomainError {
 /** 409: the state changed under the request (a duplicate, a stale update). */
 export class ConflictError extends DomainError {
   override readonly statusCode = 409 as const;
+
+  constructor(userMessage: string, internalDetail: string | undefined, code: ErrorCode) {
+    super(userMessage, internalDetail, code);
+  }
+}
+
+/** 429: the caller asked too often; the limit resets on its own. */
+export class TooManyRequestsError extends DomainError {
+  override readonly statusCode = 429 as const;
 
   constructor(userMessage: string, internalDetail: string | undefined, code: ErrorCode) {
     super(userMessage, internalDetail, code);

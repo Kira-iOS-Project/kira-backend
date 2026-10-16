@@ -8,23 +8,56 @@
  */
 
 import { mock } from 'bun:test';
+import { createFakeDb, type FakeQuery, type FakeResponder } from './fake-postgres.ts';
 
 /** ── Postgres ────────────────────────────────────────────────────────────── */
 
+const fake = createFakeDb((query) => dbControl.respond(query));
+
 export const dbControl = {
-  /** What `db.execute` does: the health check's `SELECT 1`. */
-  execute: async (): Promise<unknown> => undefined,
+  /** Answers every statement the app's own `db` sends (src/test/fake-postgres.ts). */
+  respond: (async () => []) as FakeResponder,
+  /** The statements sent since the last reset, in order. */
+  queries: fake.queries as FakeQuery[],
 };
 
 /** The real module opens a pool from DATABASE_URL on import; the unit tier never dials it. */
 void mock.module('../db/client/index.ts', () => ({
-  db: { execute: () => dbControl.execute() },
+  db: fake.db,
   client: {},
+}));
+
+/** ── Resend ──────────────────────────────────────────────────────────────── */
+
+type SentEmail = {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  attachments?: { filename: string; content: string }[];
+};
+
+export const emailControl = {
+  /** Every email the app sent since the last reset. */
+  sent: [] as SentEmail[],
+  /** Throw from here to stand in for Resend refusing a message. */
+  send: async (message: SentEmail): Promise<void> => {
+    emailControl.sent.push(message);
+  },
+};
+
+void mock.module('../lib/email/resend.ts', () => ({
+  sendEmail: (message: SentEmail) => emailControl.send(message),
 }));
 
 /** ── Reset ───────────────────────────────────────────────────────────────── */
 
 /** Call from `beforeEach`, so one test's steering cannot leak into the next. */
 export function resetExternalMocks(): void {
-  dbControl.execute = async () => undefined;
+  dbControl.respond = async () => [];
+  dbControl.queries.length = 0;
+  emailControl.sent = [];
+  emailControl.send = async (message) => {
+    emailControl.sent.push(message);
+  };
 }

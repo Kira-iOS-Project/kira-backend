@@ -13,6 +13,7 @@ import { env } from './env.ts';
 import { handleAppError, handleNotFound } from './lib/errors/problem.ts';
 import { createRouter } from './lib/server/factory.ts';
 import { requestLogger } from './middlewares/logger.middleware.ts';
+import { authRouter } from './modules/auth/index.ts';
 import { metaApp } from './modules/meta/index.ts';
 
 export const app = createRouter();
@@ -55,3 +56,10 @@ app.notFound(handleNotFound);
    The health check sits at /, outside the /api budget, so it answers whatever that budget says.
    Feature modules mount under /api. */
 app.route('/', metaApp);
+app.route('/api/auth', authRouter);
+
+/** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
+app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+});

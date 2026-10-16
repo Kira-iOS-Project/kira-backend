@@ -1,1 +1,13 @@
-{"version":"7","dialect":"postgresql","entries":[]}
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792136226359,
+      "tag": "0000_colossal_omega_flight",
+      "breakpoints": true
+    }
+  ]
+}

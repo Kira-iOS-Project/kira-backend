@@ -19,7 +19,7 @@ describe('GET /health', () => {
   });
 
   test('answers a 503 problem when the database does not', async () => {
-    dbControl.execute = async () => {
+    dbControl.respond = async () => {
       throw new Error('connection refused');
     };
 

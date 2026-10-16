@@ -3,5 +3,45 @@
     "name": "service identity",
     "home": "src/lib/constants/service.ts",
     "allow": []
+  },
+  {
+    "name": "profile",
+    "home": "src/lib/constants/profile.ts",
+    "allow": []
+  },
+  {
+    "name": "consents",
+    "home": "src/lib/constants/consents.ts",
+    "allow": []
+  },
+  {
+    "name": "score",
+    "home": "src/lib/constants/score.ts",
+    "allow": []
+  },
+  {
+    "name": "money",
+    "home": "src/lib/constants/money.ts",
+    "allow": []
+  },
+  {
+    "name": "chat",
+    "home": "src/lib/constants/chat.ts",
+    "allow": []
+  },
+  {
+    "name": "plans",
+    "home": "src/lib/constants/plans.ts",
+    "allow": []
+  },
+  {
+    "name": "scholarship",
+    "home": "src/lib/constants/scholarship.ts",
+    "allow": []
+  },
+  {
+    "name": "home",
+    "home": "src/lib/constants/home.ts",
+    "allow": []
   }
 ]

@@ -1,0 +1,105 @@
+/**
+ * What the health check learns about a person's money (ONB-10 to ONB-12 and the added steps 2, 4
+ * and 5), their debt accounts, and the Kira Score snapshots taken from them.
+ */
+
+import {
+  bigint,
+  index,
+  jsonb,
+  pgEnum,
+  pgTable,
+  smallint,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { enumValues } from '../../lib/constants/enum-values.ts';
+import {
+  DEBT_KIND,
+  DEBT_PAYMENT_STATUS,
+  MARITAL_STATUS,
+  PROTECTION,
+} from '../../lib/constants/profile.ts';
+import { INDICATOR, SCORE_BAND, SNAPSHOT_REASON } from '../../lib/constants/score.ts';
+import { users } from './accounts.ts';
+import { moment, timestamps } from './columns.ts';
+
+export const maritalStatusEnum = pgEnum('marital_status', enumValues(MARITAL_STATUS));
+export const protectionEnum = pgEnum('protection', enumValues(PROTECTION));
+export const debtKindEnum = pgEnum('debt_kind', enumValues(DEBT_KIND));
+export const debtPaymentStatusEnum = pgEnum('debt_payment_status', enumValues(DEBT_PAYMENT_STATUS));
+export const scoreBandEnum = pgEnum('score_band', enumValues(SCORE_BAND));
+export const snapshotReasonEnum = pgEnum('snapshot_reason', enumValues(SNAPSHOT_REASON));
+
+/** Whole rupiah: Kira writes every amount with ",00" and never stores a fraction. */
+function rupiah(name: string) {
+  return bigint(name, { mode: 'number' });
+}
+
+/** The health-check answers; a skipped question stays null and its indicator scores 0. */
+export const financialProfiles = pgTable('financial_profiles', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  netMonthlyIncome: rupiah('net_monthly_income'),
+  essentialMonthlyExpenses: rupiah('essential_monthly_expenses'),
+  emergencyFund: rupiah('emergency_fund'),
+  monthlySavings: rupiah('monthly_savings'),
+  /** Tabungan dan investasi lain, outside the emergency fund. */
+  otherAssets: rupiah('other_assets'),
+  /** Kendaraan dan properti. */
+  propertyAssets: rupiah('property_assets'),
+  /** 0, 1, 2, or 3 for "3 Orang atau Lebih". */
+  dependents: smallint('dependents').default(0).notNull(),
+  maritalStatus: maritalStatusEnum('marital_status'),
+  protections: protectionEnum('protections')
+    .array()
+    .default(sql`'{}'`)
+    .notNull(),
+  completedAt: moment('completed_at').notNull(),
+  ...timestamps,
+});
+
+export const debtAccounts = pgTable(
+  'debt_accounts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    kind: debtKindEnum('kind').notNull(),
+    name: varchar('name', { length: 60 }).notNull(),
+    /** The remaining balance when the account was added: the base of "sudah lunas". */
+    originalAmount: rupiah('original_amount').notNull(),
+    remainingAmount: rupiah('remaining_amount').notNull(),
+    monthlyInstalment: rupiah('monthly_instalment').notNull(),
+    remainingTenorMonths: smallint('remaining_tenor_months'),
+    paymentStatus: debtPaymentStatusEnum('payment_status')
+      .default(DEBT_PAYMENT_STATUS.onTime)
+      .notNull(),
+    paidOffAt: moment('paid_off_at'),
+    ...timestamps,
+  },
+  (table) => [index('debt_accounts_user_idx').on(table.userId)],
+);
+
+export type IndicatorPoints = Record<(typeof INDICATOR)[keyof typeof INDICATOR], number>;
+
+export const scoreSnapshots = pgTable(
+  'score_snapshots',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    score: smallint('score').notNull(),
+    band: scoreBandEnum('band').notNull(),
+    indicators: jsonb('indicators').$type<IndicatorPoints>().notNull(),
+    reason: snapshotReasonEnum('reason').notNull(),
+    createdAt: moment('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('score_snapshots_user_created_idx').on(table.userId, table.createdAt.desc().nullsFirst()),
+  ],
+);

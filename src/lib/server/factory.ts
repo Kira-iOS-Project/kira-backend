@@ -12,7 +12,9 @@ import type { RequestIdVariables } from 'hono/request-id';
 import { validationHook } from '../errors/problem.ts';
 
 export type AppEnv = {
-  Variables: RequestIdVariables;
+  /** `userId` and `sessionId` are set by the auth module's `requireSession` on every protected
+     router; the sign-in routes run without it and never read them. */
+  Variables: RequestIdVariables & { userId: string; sessionId: string };
 };
 
 /** Typed middleware: `factory.createMiddleware()` instead of `createMiddleware<AppEnv>()`. */
