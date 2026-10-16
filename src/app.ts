@@ -15,7 +15,9 @@ import { handleAppError, handleNotFound } from './lib/errors/problem.ts';
 import { createRouter } from './lib/server/factory.ts';
 import { requestLogger } from './middlewares/logger.middleware.ts';
 import { authRouter } from './modules/auth/index.ts';
+import { billingRouter } from './modules/billing/index.ts';
 import { metaApp } from './modules/meta/index.ts';
+import { scholarshipRouter } from './modules/scholarship/index.ts';
 
 export const app = createRouter();
 
@@ -60,6 +62,8 @@ app.notFound(handleNotFound);
 app.route('/', metaApp);
 app.get('/email/*', serveStatic({ root: './public' }));
 app.route('/api/auth', authRouter);
+app.route('/api', billingRouter);
+app.route('/api', scholarshipRouter);
 
 /** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
