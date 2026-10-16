@@ -13,8 +13,16 @@ export class ImportRangeTooLongError extends ValidationError {
   }
 }
 
+/**
+ * A chosen row is not part of this import, or its category points the other way: a debit saved
+ * under an income category (or a credit under an expense one) would turn money out into money in.
+ */
 export class ImportRowUnknownError extends ValidationError {
-  constructor() {
-    super('A row is not part of this import.', undefined, 'IMPORT_ROW_UNKNOWN');
+  constructor(reason = 'not in this import') {
+    super(
+      'A row is not part of this import, or its category does not match it.',
+      reason,
+      'IMPORT_ROW_UNKNOWN',
+    );
   }
 }

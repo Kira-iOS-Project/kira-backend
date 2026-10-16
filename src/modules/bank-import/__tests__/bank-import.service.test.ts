@@ -123,7 +123,12 @@ describe('commitImport', () => {
   const open = { committedAt: null, savedCount: null, skippedCount: null };
   const rows = [
     createImportRowMock(),
-    createImportRowMock({ id: OTHER_ROW_ID, description: 'X'.repeat(200) }),
+    createImportRowMock({
+      id: OTHER_ROW_ID,
+      description: 'X'.repeat(200),
+      type: TRANSACTION_TYPE.income,
+      category: INCOME_CATEGORY.salary,
+    }),
   ];
 
   test('saves the chosen rows with their reviewed category and skips the rest', async () => {
@@ -182,6 +187,28 @@ describe('commitImport', () => {
       savedCount: 0,
       skippedCount: 0,
     });
+  });
+
+  test('refuses a category that points the other way, so a debit never becomes income', async () => {
+    const commits: unknown[] = [];
+    const repository = createBankImportRepositoryMock({
+      findImport: async () => open,
+      findRows: async () => rows,
+      commit: async (input) => {
+        commits.push(input);
+        return true;
+      },
+    });
+
+    await expect(
+      commitImport(
+        'user-1',
+        IMPORT_ID,
+        { rows: [{ id: ROW_ID, category: INCOME_CATEGORY.salary }] },
+        { repository },
+      ),
+    ).rejects.toMatchObject({ statusCode: 400, code: 'IMPORT_ROW_UNKNOWN' });
+    expect(commits).toEqual([]);
   });
 
   test('refuses an unknown import and an unknown row', async () => {
