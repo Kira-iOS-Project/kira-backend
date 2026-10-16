@@ -69,34 +69,34 @@ function image(base: string, name: string, width: number, height: number, alt: s
 }
 
 function blockHtml(block: EmailBlock, base: string): string {
-  switch (block.kind) {
-    case 'code':
-      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:${COLOR.pandanSoft};border:1px solid ${COLOR.pandanLineOnSoft};border-radius:22px;"><tr><td align="center" style="padding:26px 24px 22px;"><div style="font-family:${DISPLAY_FONT};font-size:48px;line-height:52px;font-weight:800;letter-spacing:0.16em;color:${COLOR.pandan};white-space:nowrap;">${escapeHtml(spacedCode(block.code))}</div><div style="padding-top:10px;font-family:${TEXT_FONT};font-size:14px;line-height:20px;font-weight:600;color:${COLOR.inkMuted};"><img src="${base}/email/clock.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:-3px;border:0;margin-right:6px;">${escapeHtml(block.validity)}</div></td></tr></table>`;
-    case 'notice':
-      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:${COLOR.surface};border:1px solid ${COLOR.hairlineOnSurface};border-radius:18px;"><tr><td width="32" valign="top" style="padding:14px 0 14px 16px;">${image(base, block.icon, 32, 32, '')}</td><td valign="top" style="padding:16px 16px 14px 12px;font-family:${TEXT_FONT};"><div style="font-size:15px;line-height:20px;font-weight:600;color:${COLOR.ink};">${escapeHtml(block.title)}</div><div style="padding-top:2px;font-size:14px;line-height:20px;color:${COLOR.inkMuted};">${escapeHtml(block.text)}</div></td></tr></table>`;
-    case 'facts':
-      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:${COLOR.surface};border:1px solid ${COLOR.hairlineOnSurface};border-radius:18px;">${block.rows
-        .map(
-          (row, index) =>
-            `<tr><td style="padding:12px 16px;${index > 0 ? `border-top:1px solid ${COLOR.line};` : ''}font-family:${TEXT_FONT};"><div style="font-size:13px;line-height:18px;color:${COLOR.inkMuted};">${escapeHtml(row.label)}</div><div style="font-size:17px;line-height:22px;font-weight:600;color:${COLOR.ink};">${escapeHtml(row.value)}</div></td></tr>`,
-        )
-        .join('')}</table>`;
-    case 'paragraph':
-      return `<p style="margin:0;font-family:${TEXT_FONT};font-size:15px;line-height:23px;color:${COLOR.inkMuted};">${escapeHtml(block.text)}</p>`;
+  if (block.kind === 'code') {
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:${COLOR.pandanSoft};border:1px solid ${COLOR.pandanLineOnSoft};border-radius:22px;"><tr><td align="center" style="padding:26px 24px 22px;"><div style="font-family:${DISPLAY_FONT};font-size:48px;line-height:52px;font-weight:800;letter-spacing:0.16em;color:${COLOR.pandan};white-space:nowrap;">${escapeHtml(spacedCode(block.code))}</div><div style="padding-top:10px;font-family:${TEXT_FONT};font-size:14px;line-height:20px;font-weight:600;color:${COLOR.inkMuted};"><img src="${base}/email/clock.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:-3px;border:0;margin-right:6px;">${escapeHtml(block.validity)}</div></td></tr></table>`;
   }
+  if (block.kind === 'notice') {
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:${COLOR.surface};border:1px solid ${COLOR.hairlineOnSurface};border-radius:18px;"><tr><td width="32" valign="top" style="padding:14px 0 14px 16px;">${image(base, block.icon, 32, 32, '')}</td><td valign="top" style="padding:16px 16px 14px 12px;font-family:${TEXT_FONT};"><div style="font-size:15px;line-height:20px;font-weight:600;color:${COLOR.ink};">${escapeHtml(block.title)}</div><div style="padding-top:2px;font-size:14px;line-height:20px;color:${COLOR.inkMuted};">${escapeHtml(block.text)}</div></td></tr></table>`;
+  }
+  if (block.kind === 'facts') {
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;background:${COLOR.surface};border:1px solid ${COLOR.hairlineOnSurface};border-radius:18px;">${block.rows
+      .map(
+        (row, index) =>
+          `<tr><td style="padding:12px 16px;${index > 0 ? `border-top:1px solid ${COLOR.line};` : ''}font-family:${TEXT_FONT};"><div style="font-size:13px;line-height:18px;color:${COLOR.inkMuted};">${escapeHtml(row.label)}</div><div style="font-size:17px;line-height:22px;font-weight:600;color:${COLOR.ink};">${escapeHtml(row.value)}</div></td></tr>`,
+      )
+      .join('')}</table>`;
+  }
+  return `<p style="margin:0;font-family:${TEXT_FONT};font-size:15px;line-height:23px;color:${COLOR.inkMuted};">${escapeHtml(block.text)}</p>`;
 }
 
 function blockText(block: EmailBlock): string {
-  switch (block.kind) {
-    case 'code':
-      return `${spacedCode(block.code)}\n${block.validity}`;
-    case 'notice':
-      return `${block.title}\n${block.text}`;
-    case 'facts':
-      return block.rows.map((row) => `${row.label}: ${row.value}`).join('\n');
-    case 'paragraph':
-      return block.text;
+  if (block.kind === 'code') {
+    return `${spacedCode(block.code)}\n${block.validity}`;
   }
+  if (block.kind === 'notice') {
+    return `${block.title}\n${block.text}`;
+  }
+  if (block.kind === 'facts') {
+    return block.rows.map((row) => `${row.label}: ${row.value}`).join('\n');
+  }
+  return block.text;
 }
 
 /** Lib: renderEmail

@@ -8,7 +8,7 @@
  */
 
 import { mock } from 'bun:test';
-import { createFakeDb, type FakeQuery, type FakeResponder } from './fake-postgres.ts';
+import { createFakeDb, type FakeResponder } from './fake-postgres.ts';
 
 /** ── Postgres ────────────────────────────────────────────────────────────── */
 
@@ -18,7 +18,7 @@ export const dbControl = {
   /** Answers every statement the app's own `db` sends (src/test/fake-postgres.ts). */
   respond: (async () => []) as FakeResponder,
   /** The statements sent since the last reset, in order. */
-  queries: fake.queries as FakeQuery[],
+  queries: fake.queries,
 };
 
 /** The real module opens a pool from DATABASE_URL on import; the unit tier never dials it. */
