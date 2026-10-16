@@ -16,11 +16,15 @@ import { createRouter } from './lib/server/factory.ts';
 import { requestLogger } from './middlewares/logger.middleware.ts';
 import { accountRouter } from './modules/account/index.ts';
 import { authRouter } from './modules/auth/index.ts';
+import { bankImportRouter } from './modules/bank-import/index.ts';
 import { billingRouter } from './modules/billing/index.ts';
+import { chatRouter } from './modules/chat/index.ts';
 import { homeRouter } from './modules/home/index.ts';
 import { metaApp } from './modules/meta/index.ts';
 import { scholarshipRouter } from './modules/scholarship/index.ts';
 import { healthCheckRouter, scoreRouter } from './modules/score/index.ts';
+import { transactionRouter } from './modules/transaction/index.ts';
+import { usageRouter } from './modules/usage/index.ts';
 
 export const app = createRouter();
 
@@ -71,6 +75,10 @@ app.route('/api/score', scoreRouter);
 app.route('/api/home', homeRouter);
 app.route('/api', billingRouter);
 app.route('/api', scholarshipRouter);
+app.route('/api/usage', usageRouter);
+app.route('/api/chat', chatRouter);
+app.route('/api/transactions', transactionRouter);
+app.route('/api/imports', bankImportRouter);
 
 /** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
