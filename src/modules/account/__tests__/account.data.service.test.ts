@@ -121,7 +121,7 @@ describe('the data export', () => {
 });
 
 describe('deleteAccount', () => {
-  test('sends the notice first, then deletes', async () => {
+  test('deletes first, then sends the notice', async () => {
     const steps: string[] = [];
     const repository = createAccountRepositoryMock({
       deleteUser: async () => void steps.push('delete'),
@@ -133,7 +133,25 @@ describe('deleteAccount', () => {
       send: async (message) => void steps.push(message.subject),
     });
 
-    expect(steps).toEqual(['Akun Kira-mu sudah dihapus', 'delete']);
+    await Bun.sleep(0);
+    expect(steps).toEqual(['delete', 'Akun Kira-mu sudah dihapus']);
+  });
+
+  test('answers without waiting for a slow notice', async () => {
+    let release = () => {};
+    const steps: string[] = [];
+    const repository = createAccountRepositoryMock({
+      deleteUser: async () => void steps.push('delete'),
+    });
+    const send = () =>
+      new Promise<void>((resolve) => {
+        release = resolve;
+      });
+
+    await deleteAccount(USER_ID, { repository, now, send });
+
+    expect(steps).toEqual(['delete']);
+    release();
   });
 
   test('deletes even when the notice cannot be sent', async () => {
@@ -146,6 +164,7 @@ describe('deleteAccount', () => {
     };
 
     await deleteAccount(USER_ID, { repository, now, send });
+    await Bun.sleep(0);
 
     expect(steps).toEqual(['delete']);
   });
