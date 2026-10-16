@@ -29,6 +29,13 @@
       "when": 1792185309321,
       "tag": "0003_export_emailed_at",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792187984084,
+      "tag": "0004_story_limits",
+      "breakpoints": true
     }
   ]
 }
