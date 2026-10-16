@@ -7,7 +7,7 @@
  * `resetExternalMocks()` (AGENTS.md Rule 7, `bun run check:mocks`).
  */
 
-import { mock } from 'bun:test';
+import { beforeEach, mock } from 'bun:test';
 import { createFakeDb, type FakeResponder } from './fake-postgres.ts';
 
 /** ── Postgres ────────────────────────────────────────────────────────────── */
@@ -71,3 +71,12 @@ export function resetExternalMocks(): void {
     emailControl.sent.push(message);
   };
 }
+
+/**
+ * Before every test of every file, not only of the files that steer the controls: a file's own
+ * `beforeEach` resets before its tests, but whatever its last test left (a responder that throws
+ * "connection refused") reached the next file, and a test that calls a service with its default
+ * dependencies then failed or passed by file order (`bun test --randomize --seed=42` showed seven).
+ * A hook registered here, in the preload, runs for the whole run.
+ */
+beforeEach(() => resetExternalMocks());
