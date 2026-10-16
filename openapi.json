@@ -2053,11 +2053,17 @@
                 }
               },
               "linkCheckedOn": {
-                "type": "string",
+                "type": [
+                  "string",
+                  "null"
+                ],
                 "format": "date"
               },
               "adminUnchanged": {
-                "type": "boolean"
+                "type": [
+                  "boolean",
+                  "null"
+                ]
               },
               "rulesAccepted": {
                 "type": "boolean"
@@ -2145,7 +2151,8 @@
               "string",
               "null"
             ],
-            "maxLength": 500
+            "maxLength": 8000,
+            "description": "At most 500 characters (grapheme clusters)."
           }
         },
         "required": [
