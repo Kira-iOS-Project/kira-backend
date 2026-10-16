@@ -66,7 +66,7 @@ describe('summarizeTransactions', () => {
     const repository = createTransactionRepositoryMock({
       dailyTotals: async (_userId, from, to) => {
         expect([from, to]).toEqual([
-          new Date('2026-10-14T17:00:00.000Z'),
+          new Date('2026-10-13T17:00:00.000Z'),
           new Date('2026-10-16T17:00:00.000Z'),
         ]);
         return days;
