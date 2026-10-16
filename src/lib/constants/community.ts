@@ -66,3 +66,6 @@ export const COMMUNITY_REPORT_STORY_MAX = 500;
 
 /** The curated lists are short; a list never reads past this many rows (AGENTS.md Rule 29). */
 export const COMMUNITY_LIST_LIMIT = 100;
+
+/** The advisory-lock key the boot-time catalog sync holds, so two instances never interleave. */
+export const COMMUNITY_CATALOG_LOCK = 'community:catalog';
