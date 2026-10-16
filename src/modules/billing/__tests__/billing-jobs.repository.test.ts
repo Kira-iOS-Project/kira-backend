@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { BILLING_PERIOD, PAYMENT_METHOD, PLAN } from '../../../lib/constants/plans.ts';
+import {
+  BILLING_PERIOD,
+  PAYMENT_METHOD,
+  PLAN,
+  SUBSCRIPTION_STATUS,
+} from '../../../lib/constants/plans.ts';
 import { createFakeDb, inOrder } from '../../../test/fake-postgres.ts';
 import { createBillingJobsRepository } from '../billing-jobs.repository.ts';
 import { NOW, USER_ID } from './helpers.ts';
@@ -28,17 +33,24 @@ describe('createBillingJobsRepository', () => {
     expect(fake.queries[0]?.params.at(-1)).toBe(100);
   });
 
-  test('marks reminders sent, skipping an empty list', async () => {
-    const fake = createFakeDb();
+  test('claims a reminder only while none is stamped, and releases only its own claim', async () => {
+    const fake = createFakeDb(inOrder([{ id: 'sub-1' }], []));
     const repository = createBillingJobsRepository(fake.db);
 
-    await repository.markRemindersSent([], NOW);
-    await repository.markRemindersSent(['sub-1', 'sub-2'], NOW);
+    expect(await repository.claimReminder('sub-1', NOW)).toBe(true);
+    /** Another run stamped it first: the guarded update matches no row. */
+    expect(await repository.claimReminder('sub-1', NOW)).toBe(false);
+    await repository.releaseReminder('sub-1', NOW);
 
-    expect(fake.queries).toHaveLength(1);
     expect(fake.queries[0]?.sql).toContain('"reminder_sent_at" = $1');
+    expect(fake.queries[0]?.sql).toContain(
+      'where ("subscriptions"."id" = $3 and "subscriptions"."reminder_sent_at" is null) returning "id"',
+    );
     expect(fake.queries[0]?.params[0]).toBe(NOW.toISOString());
-    expect(fake.queries[0]?.params.slice(-2)).toEqual(['sub-1', 'sub-2']);
+    expect(fake.queries[2]?.sql).toContain('"reminder_sent_at" = $1');
+    expect(fake.queries[2]?.sql).toContain('"subscriptions"."reminder_sent_at" = $4');
+    expect(fake.queries[2]?.params[0]).toBeNull();
+    expect(fake.queries[2]?.params.slice(-2)).toEqual(['sub-1', NOW.toISOString()]);
   });
 
   test('ends cancelled and granted plans whose period ran out', async () => {
@@ -69,11 +81,40 @@ describe('createBillingJobsRepository', () => {
 
     expect(count).toBe(1);
     expect(fake.queries[0]?.sql).toContain('at time zone $');
-    expect(fake.queries[0]?.sql).toContain("interval '1 year' else interval '1 month'");
     expect(fake.queries[0]?.sql).toContain('"reminder_sent_at" = $');
     expect(fake.queries[1]?.sql).toStartWith('insert into "invoices"');
     expect(fake.queries[1]?.params).toContain(15_000);
     expect(fake.queries[1]?.params).toContain(PAYMENT_METHOD.qris);
+  });
+
+  test('renews only rows still due, skipping those an overlapping run holds', async () => {
+    const fake = createFakeDb();
+
+    await createBillingJobsRepository(fake.db).renewDuePeriods(NOW, 100, () => 0);
+
+    const sql = fake.queries[0]?.sql ?? '';
+    const [inner = '', outer = ''] = sql.split(' for update skip locked)');
+    expect(inner).toContain('"subscriptions"."current_period_end" <= $');
+    expect(outer).toContain('"subscriptions"."status" = $');
+    expect(outer).toContain('"subscriptions"."current_period_end" <= $');
+    expect(fake.queries[0]?.params.slice(-2)).toEqual([
+      SUBSCRIPTION_STATUS.active,
+      NOW.toISOString(),
+    ]);
+  });
+
+  test('counts the next end from the first invoice’s start, not the previous end', async () => {
+    const fake = createFakeDb();
+
+    await createBillingJobsRepository(fake.db).renewDuePeriods(NOW, 100, () => 0);
+
+    const sql = fake.queries[0]?.sql ?? '';
+    expect(sql).toContain(
+      'coalesce((select min("invoices"."period_start") from "invoices" where "invoices"."subscription_id" = "subscriptions"."id"), "subscriptions"."current_period_start")',
+    );
+    expect(sql).toContain('+ make_interval(months => ((extract(year from');
+    expect(sql).toContain('then 12 else 1 end)) at time zone $');
+    expect(sql).not.toContain('"current_period_end" at time zone $1) +');
   });
 
   test('writes no invoice when nothing ran out', async () => {

@@ -18,7 +18,11 @@ type BillingJobDeps = {
   send?: (message: EmailMessage) => Promise<void>;
 };
 
-/** Emails every bought plan that renews within three days, once per period. */
+/**
+ * Emails every bought plan that renews within three days, once per period. Each reminder is
+ * claimed before it is sent, so two overlapping runs never both send it; a failed send gives the
+ * claim back, so the next run tries again.
+ */
 export async function sendRenewalReminders(
   now: Date,
   deps: BillingJobDeps = {},
@@ -29,30 +33,35 @@ export async function sendRenewalReminders(
   const before = wibStartOfDay(addDays(wibDate(now), REMINDER_DAYS_BEFORE + 1));
   const due = await repository.findDueReminders(now, before, BATCH_SIZE);
   const results = await Promise.allSettled(
-    due.map((row) =>
-      send(
-        renewalReminderEmail({
-          to: row.email,
-          name: row.displayName,
-          plan: row.plan,
-          period: row.period,
-          paymentMethod: row.paymentMethod,
-          renewsOn: wibDate(row.currentPeriodEnd),
-        }),
-      ),
-    ),
+    due.map(async (row) => {
+      if (!(await repository.claimReminder(row.subscriptionId, now))) return false;
+      try {
+        await send(
+          renewalReminderEmail({
+            to: row.email,
+            name: row.displayName,
+            plan: row.plan,
+            period: row.period,
+            paymentMethod: row.paymentMethod,
+            renewsOn: wibDate(row.currentPeriodEnd),
+          }),
+        );
+      } catch (err) {
+        await repository.releaseReminder(row.subscriptionId, now);
+        throw err;
+      }
+      return true;
+    }),
   );
-  const sent = due.filter((_, index) => results[index]?.status === 'fulfilled');
+  let sent = 0;
+  let failed = 0;
   for (const result of results) {
     if (result.status === 'rejected') {
+      failed += 1;
       logger.error({ err: result.reason }, 'Renewal reminder email failed');
-    }
+    } else if (result.value) sent += 1;
   }
-  await repository.markRemindersSent(
-    sent.map((row) => row.subscriptionId),
-    now,
-  );
-  return { sent: sent.length, failed: due.length - sent.length };
+  return { sent, failed };
 }
 
 /** Ends cancelled and granted plans whose period ran out, and renews the rest (simulated). */

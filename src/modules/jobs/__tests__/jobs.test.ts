@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { createFakeDb, inOrder } from '../../../test/fake-postgres.ts';
-import { createJobsRepository } from '../jobs.repository.ts';
+import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
+import { createJobsRepository, type JobsRepository, type LockClient } from '../jobs.repository.ts';
 import { scheduledJobs } from '../index.ts';
-import { deleteStaleAuthCodes } from '../jobs.service.ts';
+import { deleteStaleAuthCodes, exclusive } from '../jobs.service.ts';
 
 const NOW = new Date('2026-10-16T05:10:00.000Z');
 
@@ -11,6 +12,7 @@ describe('deleteStaleAuthCodes', () => {
     const cutoffs: Date[] = [];
     const result = await deleteStaleAuthCodes(NOW, {
       repository: {
+        withJobLock: async () => ({ ran: false }),
         deleteAuthCodesCreatedBefore: async (before) => {
           cutoffs.push(before);
           return 4;
@@ -34,6 +36,134 @@ describe('createJobsRepository', () => {
     expect(await createJobsRepository(fake.db).deleteAuthCodesCreatedBefore(NOW)).toBe(2);
     expect(fake.queries[0]?.sql).toStartWith('delete from "auth_codes" where');
     expect(fake.queries[0]?.sql).toContain('"auth_codes"."created_at" < $1');
+  });
+});
+
+/** A postgres.js client whose reserved connection answers the try-lock with `locked`. */
+function lockClient(locked: boolean) {
+  const statements: { sql: string; params: string[] }[] = [];
+  const events: string[] = [];
+  const client: LockClient = {
+    async reserve() {
+      events.push('reserve');
+      return {
+        async unsafe(sql, params) {
+          statements.push({ sql, params });
+          return sql.includes('pg_try_advisory_lock')
+            ? [{ locked }]
+            : [{ pg_advisory_unlock: true }];
+        },
+        release() {
+          events.push('release');
+        },
+      };
+    },
+  };
+  return { client, statements, events };
+}
+
+describe('withJobLock', () => {
+  test('runs the job under its advisory lock, then unlocks and gives the connection back', async () => {
+    const lock = lockClient(true);
+    const repository = createJobsRepository(createFakeDb().db, lock.client);
+
+    const outcome = await repository.withJobLock('renewal-reminders', async () => 7);
+
+    expect(outcome).toEqual({ ran: true, result: 7 });
+    expect(lock.statements).toEqual([
+      {
+        sql: "select pg_try_advisory_lock(hashtextextended('kira-job:' || $1, 0)) as locked",
+        params: ['renewal-reminders'],
+      },
+      {
+        sql: "select pg_advisory_unlock(hashtextextended('kira-job:' || $1, 0))",
+        params: ['renewal-reminders'],
+      },
+    ]);
+    expect(lock.events).toEqual(['reserve', 'release']);
+  });
+
+  test('skips the job when another process holds the lock', async () => {
+    const lock = lockClient(false);
+    const ran: string[] = [];
+
+    const outcome = await createJobsRepository(createFakeDb().db, lock.client).withJobLock(
+      'renewal-reminders',
+      async () => ran.push('ran'),
+    );
+
+    expect(outcome).toEqual({ ran: false });
+    expect(ran).toEqual([]);
+    expect(lock.statements).toHaveLength(1);
+    expect(lock.events).toEqual(['reserve', 'release']);
+  });
+
+  test('unlocks and releases when the job throws', async () => {
+    const lock = lockClient(true);
+
+    const outcome = createJobsRepository(createFakeDb().db, lock.client).withJobLock(
+      'scholarship-review',
+      async () => {
+        throw new Error('boom');
+      },
+    );
+
+    await expect(outcome).rejects.toThrow('boom');
+    expect(lock.statements[1]?.sql).toContain('pg_advisory_unlock');
+    expect(lock.events).toEqual(['reserve', 'release']);
+  });
+});
+
+describe('exclusive', () => {
+  function repositoryHolding(held: boolean, keys: string[]): JobsRepository {
+    return {
+      deleteAuthCodesCreatedBefore: async () => 0,
+      async withJobLock(key, run) {
+        keys.push(key);
+        return held ? { ran: false } : { ran: true, result: await run() };
+      },
+    };
+  }
+
+  test('runs the job under the lock named after it', async () => {
+    const keys: string[] = [];
+    const seen: Date[] = [];
+    const job = exclusive(
+      'subscription-rollover',
+      async (now) => {
+        seen.push(now);
+        return { renewed: 1 };
+      },
+      { repository: repositoryHolding(false, keys) },
+    );
+
+    expect(await job.run(NOW)).toEqual({ renewed: 1 });
+    expect(job.name).toBe('subscription-rollover');
+    expect(keys).toEqual(['subscription-rollover']);
+    expect(seen).toEqual([NOW]);
+  });
+
+  test('skips quietly while another process runs the same job', async () => {
+    const ran: Date[] = [];
+    const job = exclusive('subscription-rollover', async (now) => ran.push(now), {
+      repository: repositoryHolding(true, []),
+    });
+
+    expect(await job.run(NOW)).toEqual({ skipped: 'locked' });
+    expect(ran).toEqual([]);
+  });
+
+  test('takes the lock through the real pool by default', async () => {
+    resetExternalMocks();
+    dbControl.respond = (query) =>
+      query.sql.includes('pg_try_advisory_lock') ? [{ locked: true }] : [];
+
+    expect(await exclusive('auth-code-cleanup', async () => 'ran').run(NOW)).toBe('ran');
+    expect(dbControl.queries.map((query) => query.sql.split('(')[0])).toEqual([
+      'select pg_try_advisory_lock',
+      'select pg_advisory_unlock',
+    ]);
+    resetExternalMocks();
   });
 });
 

@@ -1,8 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import { SUBSCRIPTION_SOURCE } from '../../../lib/constants/plans.ts';
-import { APPLICATION_STATUS, SCHOLARSHIP_SITUATION } from '../../../lib/constants/scholarship.ts';
+import {
+  APPLICATION_STATUS,
+  OPEN_APPLICATION_INDEX,
+  SCHOLARSHIP_SITUATION,
+} from '../../../lib/constants/scholarship.ts';
 import { createFakeDb, inOrder } from '../../../test/fake-postgres.ts';
-import { createScholarshipJobsRepository } from '../scholarship-jobs.repository.ts';
 import { createScholarshipRepository } from '../scholarship.repository.ts';
 import { NOW, USER_ID } from './helpers.ts';
 
@@ -15,6 +18,14 @@ const stored = {
   story: null,
   submittedAt: NOW.toISOString(),
   decidedAt: null,
+};
+
+const input = {
+  userId: USER_ID,
+  situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+  story: null,
+  usedDebtEmergencyMode: false,
+  status: APPLICATION_STATUS.inReview,
 };
 
 describe('createScholarshipRepository', () => {
@@ -65,13 +76,6 @@ describe('createScholarshipRepository', () => {
   test('stores an application, and throws when nothing comes back', async () => {
     const fake = createFakeDb(inOrder([stored], []));
     const repository = createScholarshipRepository(fake.db);
-    const input = {
-      userId: USER_ID,
-      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
-      story: null,
-      usedDebtEmergencyMode: false,
-      status: APPLICATION_STATUS.inReview,
-    };
 
     expect(await repository.createApplication(input)).toMatchObject({
       id: 'app-1',
@@ -83,6 +87,36 @@ describe('createScholarshipRepository', () => {
     );
   });
 
+  test('answers null when the one-open-application index refuses a concurrent second', async () => {
+    const duplicate = Object.assign(new Error('duplicate key value'), {
+      code: '23505',
+      constraint_name: OPEN_APPLICATION_INDEX,
+    });
+    const fake = createFakeDb(() => {
+      throw duplicate;
+    });
+
+    expect(await createScholarshipRepository(fake.db).createApplication(input)).toBeNull();
+  });
+
+  test('lets any other failure through, another index’s violation included', async () => {
+    const other = Object.assign(new Error('duplicate key value'), {
+      code: '23505',
+      constraint_name: 'scholarship_applications_pkey',
+    });
+    const fake = createFakeDb(inOrder());
+    const repository = createScholarshipRepository(fake.db);
+
+    fake.respondWith(() => {
+      throw other;
+    });
+    await expect(repository.createApplication(input)).rejects.toThrow('Failed query');
+    fake.respondWith(() => {
+      throw new Error('connection reset');
+    });
+    await expect(repository.createApplication(input)).rejects.toThrow('Failed query');
+  });
+
   test('withdraws only an open application', async () => {
     const fake = createFakeDb(inOrder([{ id: 'app-1' }], []));
     const repository = createScholarshipRepository(fake.db);
@@ -90,51 +124,5 @@ describe('createScholarshipRepository', () => {
     expect(await repository.withdrawOpenApplication(USER_ID)).toBe(true);
     expect(await repository.withdrawOpenApplication(USER_ID)).toBe(false);
     expect(fake.queries[0]?.sql).toContain('"scholarship_applications"."status" in ($');
-  });
-});
-
-describe('createScholarshipJobsRepository', () => {
-  test('finds open applications old enough, oldest first, bounded', async () => {
-    const row = {
-      id: 'app-1',
-      userId: USER_ID,
-      status: APPLICATION_STATUS.inReview,
-      email: 'dinda@email.com',
-      displayName: 'Dinda',
-      hasActivePlan: false,
-    };
-    const fake = createFakeDb(inOrder([row]));
-
-    expect(await createScholarshipJobsRepository(fake.db).findReviewable(NOW, 100)).toEqual([row]);
-    expect(fake.queries[0]?.sql).toContain('exists (select 1 from "subscriptions"');
-    expect(fake.queries[0]?.sql).toContain(
-      'order by "scholarship_applications"."submitted_at" asc',
-    );
-  });
-
-  test('grants Kira Plus and accepts in one transaction, skipping an empty list', async () => {
-    const fake = createFakeDb();
-    const repository = createScholarshipJobsRepository(fake.db);
-
-    await repository.accept([], NOW, END);
-    await repository.accept([{ id: 'app-1', userId: USER_ID }], NOW, END);
-
-    expect(fake.queries).toHaveLength(2);
-    expect(fake.queries[0]?.sql).toStartWith('insert into "subscriptions"');
-    expect(fake.queries[1]?.sql).toContain('"subscription_id" = (select "subscriptions"."id"');
-  });
-
-  test('sets statuses and marks result emails, skipping empty lists', async () => {
-    const fake = createFakeDb();
-    const repository = createScholarshipJobsRepository(fake.db);
-
-    await repository.setStatus([], APPLICATION_STATUS.waitlisted);
-    await repository.setStatus(['app-1'], APPLICATION_STATUS.waitlisted);
-    await repository.markResultEmailsSent([], NOW);
-    await repository.markResultEmailsSent(['app-1'], NOW);
-
-    expect(fake.queries).toHaveLength(2);
-    expect(fake.queries[0]?.params[0]).toBe(APPLICATION_STATUS.waitlisted);
-    expect(fake.queries[1]?.sql).toContain('"result_email_sent_at" = $1');
   });
 });

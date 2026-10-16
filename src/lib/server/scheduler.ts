@@ -1,7 +1,8 @@
 /**
  * The in-process scheduler: every hour it runs the scheduled jobs (renewal reminders, subscription
  * periods, Beasiswa Kira reviews, auth code cleanup) one after another. One replica runs it
- * (`JOBS_ENABLED`); each job is idempotent, so a run that overlaps a restart repeats nothing.
+ * (`JOBS_ENABLED`); each job also takes its own Postgres advisory lock (src/modules/jobs), so a run
+ * that overlaps another process's during a deploy skips the job instead of repeating it.
  *
  * A job that throws is logged and the next one still runs. A tick that arrives while the previous
  * run is still going is skipped rather than stacked.

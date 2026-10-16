@@ -46,7 +46,7 @@ describe('createBillingRepository', () => {
   });
 
   test('ends the active plan, starts the new one and writes its invoice together', async () => {
-    const fake = createFakeDb(inOrder([], [storedRow], []));
+    const fake = createFakeDb(inOrder([], [], [storedRow], []));
     const row = await createBillingRepository(fake.db).startSubscription({
       userId: USER_ID,
       plan: PLAN.plus,
@@ -59,11 +59,32 @@ describe('createBillingRepository', () => {
 
     expect(row).toEqual(mappedRow);
     expect(fake.queries.map((query) => query.sql.split(' ').slice(0, 3).join(' '))).toEqual([
+      'select "id" from',
       'update "subscriptions" set',
       'insert into "subscriptions"',
       'insert into "invoices"',
     ]);
-    expect(fake.queries[2]?.params).toContain(29_000);
+    expect(fake.queries[3]?.params).toContain(29_000);
+  });
+
+  test('locks the person’s row first, so a second checkout waits and then replaces the first', async () => {
+    const fake = createFakeDb(inOrder([{ id: USER_ID }], [], [storedRow], []));
+
+    await createBillingRepository(fake.db).startSubscription({
+      userId: USER_ID,
+      plan: PLAN.plus,
+      period: BILLING_PERIOD.monthly,
+      paymentMethod: PAYMENT_METHOD.qris,
+      amount: 29_000,
+      start: NOW,
+      end: END,
+    });
+
+    expect(fake.queries[0]?.sql).toBe(
+      'select "id" from "users" where "users"."id" = $1 for no key update',
+    );
+    expect(fake.queries[0]?.params).toEqual([USER_ID]);
+    expect(fake.queries[1]?.sql).toContain('"subscriptions"."status" = $');
   });
 
   test('throws when the new subscription comes back empty', async () => {

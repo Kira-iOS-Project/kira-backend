@@ -20,17 +20,23 @@ function reminder(id: string, overrides: Partial<DueReminder> = {}): DueReminder
 }
 
 describe('sendRenewalReminders', () => {
-  test('emails each due plan and marks only the ones that went out', async () => {
+  test('claims each due plan before emailing it, and gives back the claim of a failed send', async () => {
     const asked: Date[] = [];
-    const marked: string[][] = [];
+    const claimed: string[] = [];
+    const released: [string, Date][] = [];
     const repository = createBillingJobsRepositoryMock({
       findDueReminders: async (now, before, limit) => {
         asked.push(now, before);
         expect(limit).toBe(100);
         return [reminder('a'), reminder('b')];
       },
-      markRemindersSent: async (ids) => {
-        marked.push(ids);
+      claimReminder: async (id, now) => {
+        expect(now).toBe(NOW);
+        claimed.push(id);
+        return true;
+      },
+      releaseReminder: async (id, now) => {
+        released.push([id, now]);
       },
     });
     const subjects: string[] = [];
@@ -44,8 +50,26 @@ describe('sendRenewalReminders', () => {
     expect(result).toEqual({ sent: 1, failed: 1 });
     /** Renewing on or before 19 October (WIB): before 20 October 00.00 WIB. */
     expect(asked[1]?.toISOString()).toBe('2026-10-19T17:00:00.000Z');
+    expect(claimed).toEqual(['a', 'b']);
     expect(subjects).toEqual(['Kira Plus diperpanjang 19 Oktober 2026']);
-    expect(marked).toEqual([['a']]);
+    expect(released).toEqual([['b', NOW]]);
+  });
+
+  test('sends nothing for a reminder another run claimed first', async () => {
+    const sent: string[] = [];
+    const repository = createBillingJobsRepositoryMock({
+      findDueReminders: async () => [reminder('a'), reminder('b')],
+      claimReminder: async (id) => id === 'b',
+      releaseReminder: async () => {
+        throw new Error('nothing to release');
+      },
+    });
+    const send = async (message: { to: string }) => {
+      sent.push(message.to);
+    };
+
+    expect(await sendRenewalReminders(NOW, { repository, send })).toEqual({ sent: 1, failed: 0 });
+    expect(sent).toEqual(['b@email.com']);
   });
 
   test('sends through Resend by default', async () => {

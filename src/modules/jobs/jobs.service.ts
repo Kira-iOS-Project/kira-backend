@@ -1,6 +1,7 @@
 /**
- * The scheduled jobs, in the order each hourly run takes them (src/lib/server/scheduler.ts), and
- * the one that belongs to no feature: deleting sign-in codes a day after they were sent.
+ * The scheduled jobs, in the order each hourly run takes them (src/lib/server/scheduler.ts), each
+ * behind its own lock so only one process runs a job at a time, and the one job that belongs to no
+ * feature: deleting sign-in codes a day after they were sent.
  */
 
 import type { ScheduledJob } from '../../lib/server/scheduler.ts';
@@ -20,10 +21,29 @@ export async function deleteStaleAuthCodes(
   return { deleted: await repository.deleteAuthCodesCreatedBefore(before) };
 }
 
+/**
+ * The job under its lock, keyed by its name. When another process holds it (an overlapping run
+ * during a deploy), this run skips the job quietly: the holder is doing the same work.
+ */
+export function exclusive(
+  name: string,
+  run: (now: Date) => Promise<unknown>,
+  deps: { repository?: JobsRepository } = {},
+): ScheduledJob {
+  return {
+    name,
+    async run(now) {
+      const repository = deps.repository ?? jobsRepository;
+      const outcome = await repository.withJobLock(name, () => run(now));
+      return outcome.ran ? outcome.result : { skipped: 'locked' };
+    },
+  };
+}
+
 /** Periods roll over first, so a renewed plan's reminder is counted from its new period. */
 export const scheduledJobs: readonly ScheduledJob[] = [
-  { name: 'subscription-rollover', run: rollOverPeriods },
-  { name: 'renewal-reminders', run: sendRenewalReminders },
-  { name: 'scholarship-review', run: reviewScholarshipApplications },
-  { name: 'auth-code-cleanup', run: deleteStaleAuthCodes },
+  exclusive('subscription-rollover', rollOverPeriods),
+  exclusive('renewal-reminders', sendRenewalReminders),
+  exclusive('scholarship-review', reviewScholarshipApplications),
+  exclusive('auth-code-cleanup', deleteStaleAuthCodes),
 ];

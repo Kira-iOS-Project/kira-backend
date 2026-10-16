@@ -154,6 +154,19 @@ describe('apply', () => {
       apply(USER_ID, { situations: [SCHOLARSHIP_SITUATION.otherHardship] }, { repository, now }),
     ).rejects.toBeInstanceOf(ScholarshipNotEligibleError);
   });
+
+  test('answers 409 when a concurrent apply won the one-open-application index', async () => {
+    const repository = createScholarshipRepositoryMock({ createApplication: async () => null });
+
+    const refused = apply(
+      USER_ID,
+      { situations: [SCHOLARSHIP_SITUATION.otherHardship] },
+      { repository, now },
+    );
+
+    await expect(refused).rejects.toBeInstanceOf(ScholarshipNotEligibleError);
+    await expect(refused).rejects.toThrow(INELIGIBLE_REASON.hasOpenApplication);
+  });
 });
 
 describe('withdraw', () => {

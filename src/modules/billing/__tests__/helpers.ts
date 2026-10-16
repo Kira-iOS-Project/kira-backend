@@ -49,7 +49,8 @@ export function createBillingJobsRepositoryMock(
 ): BillingJobsRepository {
   return {
     findDueReminders: async () => [],
-    markRemindersSent: async () => undefined,
+    claimReminder: async () => true,
+    releaseReminder: async () => undefined,
     endFinishedPeriods: async () => 0,
     renewDuePeriods: async () => 0,
     ...overrides,

@@ -26,3 +26,6 @@ export const INELIGIBLE_REASON = {
   hasScholarship: 'has_scholarship',
   hasOpenApplication: 'has_open_application',
 } as const;
+
+/** The partial unique index that allows one open (in review or waitlisted) application a person. */
+export const OPEN_APPLICATION_INDEX = 'scholarship_applications_one_open_idx';

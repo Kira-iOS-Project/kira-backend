@@ -29,7 +29,10 @@ export type DueReminder = {
 export type BillingJobsRepository = {
   /** Active, bought, not cancelled, no reminder yet this period, renewing after `now` and before `before`. */
   findDueReminders(now: Date, before: Date, limit: number): Promise<DueReminder[]>;
-  markRemindersSent(subscriptionIds: string[], now: Date): Promise<void>;
+  /** Marks the reminder sent at `now` unless another run already did; true when this run won it. */
+  claimReminder(subscriptionId: string, now: Date): Promise<boolean>;
+  /** Undoes this run's claim (the one stamped `now`) after its email failed, so a later run retries. */
+  releaseReminder(subscriptionId: string, now: Date): Promise<void>;
   /** Ends the periods that ran out on a cancelled or granted plan; returns how many. */
   endFinishedPeriods(now: Date): Promise<number>;
   /** Moves the other run-out periods on by their length and writes their invoices; returns how many. */
@@ -43,8 +46,17 @@ export type BillingJobsRepository = {
 const WIB_ZONE = 'Asia/Jakarta';
 const active = eq(subscriptions.status, SUBSCRIPTION_STATUS.active);
 
-/** The same WIB wall-clock time one period later, a 31st falling on a short month's last day. */
-const nextPeriodEnd = sql`((${subscriptions.currentPeriodEnd} at time zone ${WIB_ZONE}) + case when ${subscriptions.period} = ${BILLING_PERIOD.yearly} then interval '1 year' else interval '1 month' end) at time zone ${WIB_ZONE}`;
+/**
+ * The first period's start in WIB wall-clock time: the subscription's first invoice, written at
+ * checkout. Every renewal counts from it, never from the previous end, so a plan bought on 31
+ * January renews on 28 February and then on 31 March rather than drifting to the 28th for good.
+ */
+const anchor = sql`(coalesce((select min(${invoices.periodStart}) from ${invoices} where ${invoices.subscriptionId} = ${subscriptions.id}), ${subscriptions.currentPeriodStart}) at time zone ${WIB_ZONE})`;
+const localEnd = sql`(${subscriptions.currentPeriodEnd} at time zone ${WIB_ZONE})`;
+/** Whole months from the anchor to the current end, then one period more. */
+const monthsToNextEnd = sql`((extract(year from ${localEnd}) - extract(year from ${anchor})) * 12 + extract(month from ${localEnd}) - extract(month from ${anchor}))::int + case when ${subscriptions.period} = ${BILLING_PERIOD.yearly} then 12 else 1 end`;
+/** The anchor's WIB wall-clock time that many months on, a 31st clamped to a short month's last day. */
+const nextPeriodEnd = sql`(${anchor} + make_interval(months => ${monthsToNextEnd})) at time zone ${WIB_ZONE}`;
 
 export function createBillingJobsRepository(
   client: PostgresJsDatabase = db,
@@ -77,12 +89,20 @@ export function createBillingJobsRepository(
         .limit(limit);
     },
 
-    async markRemindersSent(subscriptionIds, now) {
-      if (subscriptionIds.length === 0) return;
-      await client
+    async claimReminder(subscriptionId, now) {
+      const rows = await client
         .update(subscriptions)
         .set({ reminderSentAt: now })
-        .where(inArray(subscriptions.id, subscriptionIds));
+        .where(and(eq(subscriptions.id, subscriptionId), isNull(subscriptions.reminderSentAt)))
+        .returning({ id: subscriptions.id });
+      return rows.length > 0;
+    },
+
+    async releaseReminder(subscriptionId, now) {
+      await client
+        .update(subscriptions)
+        .set({ reminderSentAt: null })
+        .where(and(eq(subscriptions.id, subscriptionId), eq(subscriptions.reminderSentAt, now)));
     },
 
     async endFinishedPeriods(now) {
@@ -105,11 +125,14 @@ export function createBillingJobsRepository(
 
     renewDuePeriods(now, limit, priceOf) {
       return client.transaction(async (tx) => {
+        /** A run that overlaps this one skips the rows it holds instead of renewing them again. */
+        const runOut = and(active, lte(subscriptions.currentPeriodEnd, now));
         const due = tx
           .select({ id: subscriptions.id })
           .from(subscriptions)
-          .where(and(active, lte(subscriptions.currentPeriodEnd, now)))
-          .limit(limit);
+          .where(runOut)
+          .limit(limit)
+          .for('update', { skipLocked: true });
         const renewed = await tx
           .update(subscriptions)
           .set({
@@ -117,7 +140,8 @@ export function createBillingJobsRepository(
             currentPeriodEnd: nextPeriodEnd,
             reminderSentAt: null,
           })
-          .where(inArray(subscriptions.id, due))
+          /** Repeated on the outer statement: a row renewed meanwhile is no longer due. */
+          .where(and(inArray(subscriptions.id, due), runOut))
           .returning({
             id: subscriptions.id,
             userId: subscriptions.userId,
