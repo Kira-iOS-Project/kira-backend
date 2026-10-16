@@ -13,7 +13,8 @@ import { activePlanOf, quotaPeriod, usageOf } from '../../lib/usage/plan-usage.t
 import { careExportSections } from '../care/index.ts';
 import { exportFileName, sectionsCsv, transactionsCsv } from './account.csv.ts';
 import { accountDeletedEmail, dataExportEmail } from './account.email.ts';
-import { ExportEmailFailedError } from './account.errors.ts';
+import { type ExportEmailClaims, exportEmailClaims } from './account-export.repository.ts';
+import { ExportEmailFailedError, ExportEmailRateLimitedError } from './account.errors.ts';
 import {
   type AccountRepository,
   accountRepository,
@@ -27,7 +28,11 @@ type AccountDeps = {
   send?: (message: EmailMessage) => Promise<void>;
   now?: () => Date;
   exportSections?: (userId: string) => Promise<ExportSection[]>;
+  exportClaims?: ExportEmailClaims;
 };
+
+/** One emailed export every ten minutes. */
+export const EXPORT_EMAIL_COOLDOWN_MS = 10 * 60_000;
 
 /** Every other module's blocks of Unduh Datamu, after the transactions in this order. */
 async function moduleExportSections(userId: string): Promise<ExportSection[]> {
@@ -166,7 +171,10 @@ export async function exportData(userId: string, deps: AccountDeps = {}) {
 /** POST /me/export/email: Unduh Datamu Dulu, the same CSV sent to the account's address (AKN-05). */
 export async function emailExport(userId: string, deps: AccountDeps = {}): Promise<void> {
   const resolved = resolve(deps);
-  const { repository, send } = resolved;
+  const { repository, send, now } = resolved;
+  const claims = deps.exportClaims ?? exportEmailClaims;
+  const since = new Date(now.getTime() - EXPORT_EMAIL_COOLDOWN_MS);
+  if (!(await claims.claim(userId, now, since))) throw new ExportEmailRateLimitedError();
   const [profile, built] = await Promise.all([
     profileOf(repository, userId),
     buildExport(resolved, userId),
@@ -175,6 +183,7 @@ export async function emailExport(userId: string, deps: AccountDeps = {}): Promi
     await send(dataExportEmail({ to: profile.email, name: profile.displayName, ...built }));
   } catch (err) {
     logger.error({ err }, 'Data export email failed');
+    await claims.release(userId, now);
     throw new ExportEmailFailedError('data export');
   }
 }

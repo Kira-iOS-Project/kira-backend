@@ -95,7 +95,7 @@ export const emailExportRoute = createRoute({
   path: '/export/email',
   operationId: 'emailDataExport',
   summary: 'Email the CSV export to the account address',
-  responses: { 202: { description: 'The email is on its way' }, ...errorResponses(401, 503) },
+  responses: { 202: { description: 'The email is on its way' }, ...errorResponses(401, 429, 503) },
 });
 
 export const deleteAccountRoute = createRoute({

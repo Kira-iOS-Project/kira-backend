@@ -40,6 +40,7 @@ const TITLES = {
   AUTH_UNAUTHENTICATED: 'Not Signed In',
   AUTH_REFRESH_INVALID: 'Session Ended',
   EMAIL_DELIVERY_FAILED: 'Email Not Sent',
+  ACCOUNT_EXPORT_RATE_LIMITED: 'Export Recently Emailed',
   SCORE_NOT_AVAILABLE: 'Score Not Available',
   CHAT_AI_DISABLED: 'Kira AI Is Off',
   CHAT_MESSAGE_NOT_FOUND: 'Message Not Found',

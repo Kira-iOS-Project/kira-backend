@@ -31,6 +31,7 @@ export const ERROR_CODES = [
 
   /** Transactional email through Resend. */
   'EMAIL_DELIVERY_FAILED',
+  'ACCOUNT_EXPORT_RATE_LIMITED',
 
   /** The Kira Score before the health check has been answered. */
   'SCORE_NOT_AVAILABLE',

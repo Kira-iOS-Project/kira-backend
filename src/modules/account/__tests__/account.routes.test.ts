@@ -34,6 +34,9 @@ const EXPORT_ROW = {
 
 /** The profile for a select on users, the export rows for an unfiltered transactions read. */
 function byTable(query: FakeQuery): FakeRow[] {
+  if (query.sql.startsWith('update "users" set "export_emailed_at"') && query.sql.includes('returning')) {
+    return [{ id: TEST_USER_ID }];
+  }
   if (!query.sql.startsWith('select')) return [];
   if (query.sql.startsWith('select "debt_emergency_mode_used_at"')) return [];
   if (query.sql.includes('from "users"')) return [createProfile()];
@@ -128,6 +131,16 @@ describe('/api/me/export', () => {
 
     expect(res.status).toBe(202);
     expect(emailControl.sent[0]?.attachments).toHaveLength(1);
+  });
+
+  test('answers 429 ACCOUNT_EXPORT_RATE_LIMITED within ten minutes of the last one', async () => {
+    dbControl.respond = signedIn((query) => (query.sql.startsWith('update "users"') ? [] : byTable(query)));
+
+    const res = await call('POST', '/api/me/export/email');
+
+    expect(res.status).toBe(429);
+    expect((await res.json()).code).toBe('ACCOUNT_EXPORT_RATE_LIMITED');
+    expect(emailControl.sent).toHaveLength(0);
   });
 
   test('answers 503 when the email cannot be sent', async () => {
