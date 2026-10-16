@@ -1,0 +1,184 @@
+/**
+ * The account (AKN-01, AKN-04, AKN-05, ONB-08, ONB-09): who the person is and what their Profil
+ * shows, the settings they change, the consents they give, their data export, and deleting it all.
+ */
+
+import { CONSENT_PURPOSE, PRIVACY_POLICY_VERSION } from '../../lib/constants/consents.ts';
+import { EXPENSE_CATEGORY, INCOME_CATEGORY, TRANSACTION_TYPE } from '../../lib/constants/money.ts';
+import { type EmailMessage, sendEmail } from '../../lib/email/resend.ts';
+import { logger } from '../../lib/server/logger.ts';
+import { paydayPeriod, wibDate } from '../../lib/time/wib.ts';
+import { activePlanOf, quotaPeriod, usageOf } from '../../lib/usage/plan-usage.ts';
+import { exportFileName, transactionsCsv } from './account.csv.ts';
+import { accountDeletedEmail, dataExportEmail } from './account.email.ts';
+import { ExportEmailFailedError } from './account.errors.ts';
+import {
+  type AccountRepository,
+  accountRepository,
+  type ConsentDecision,
+  type Profile,
+} from './account.repository.ts';
+import type { Consents, ConsentsUpdate, Me, MeUpdate } from './account.schema.ts';
+
+type AccountDeps = {
+  repository?: AccountRepository;
+  send?: (message: EmailMessage) => Promise<void>;
+  now?: () => Date;
+};
+
+function resolve(deps: AccountDeps) {
+  return {
+    repository: deps.repository ?? accountRepository,
+    send: deps.send ?? sendEmail,
+    now: deps.now?.() ?? new Date(),
+  };
+}
+
+/** A signed-in session always has its account: the row and its sessions go together (cascade). */
+async function profileOf(repository: AccountRepository, userId: string): Promise<Profile> {
+  const profile = await repository.findProfile(userId);
+  if (!profile) throw new Error('The session has no account');
+  return profile;
+}
+
+function grantedOf(decisions: ConsentDecision[], purpose: ConsentDecision['purpose']): boolean {
+  return decisions.find((decision) => decision.purpose === purpose)?.granted ?? false;
+}
+
+/** The value as a word of the vocabulary, or null: narrows a category read by its type filter. */
+function wordOf<T extends string>(vocabulary: Record<string, T>, value: string | null): T | null {
+  return Object.values(vocabulary).find((word) => word === value) ?? null;
+}
+
+/** GET /me: everything Profil and the app's first screens need, in one answer. */
+export async function getMe(userId: string, deps: AccountDeps = {}): Promise<Me> {
+  const { repository, now } = resolve(deps);
+  const today = wibDate(now);
+  const [profile, subscriptions, decisions, healthCheck, expense, income, debts] =
+    await Promise.all([
+      profileOf(repository, userId),
+      repository.findActiveSubscriptions(userId),
+      repository.latestConsents(userId),
+      repository.hasHealthCheck(userId),
+      repository.lastCategory(userId, TRANSACTION_TYPE.expense),
+      repository.lastCategory(userId, TRANSACTION_TYPE.income),
+      repository.countOpenDebts(userId),
+    ]);
+  const plan = activePlanOf(subscriptions);
+  const quota = quotaPeriod(plan.subscription, today);
+  const counters = await repository.findUsage(userId, quota.start);
+  const payday = { day: profile.paydayDay, endOfMonth: profile.paydayEndOfMonth };
+  return {
+    id: userId,
+    email: profile.email,
+    displayName: profile.displayName,
+    focus: profile.focus,
+    payday,
+    hideBalances: profile.hideBalances,
+    consented: profile.consentedAt !== null,
+    healthCheckCompleted: healthCheck,
+    plan: { id: plan.id, source: plan.source, renewsOn: plan.renewsOn },
+    usage: usageOf(counters, plan.id, quota.resetsOn),
+    period: paydayPeriod(today, payday),
+    lastCategories: {
+      expense: wordOf(EXPENSE_CATEGORY, expense),
+      income: wordOf(INCOME_CATEGORY, income),
+    },
+    debtAccountCount: debts,
+    aiEnabled: grantedOf(decisions, CONSENT_PURPOSE.aiProcessing),
+    weeklySummaryEnabled: grantedOf(decisions, CONSENT_PURPOSE.weeklySummary),
+  };
+}
+
+/** PATCH /me: the focus (ONB-09, Profil), Sembunyikan Saldo (AKN-03) and the payday. */
+export async function updateMe(userId: string, changes: MeUpdate, deps: AccountDeps = {}) {
+  const { repository } = resolve(deps);
+  await repository.updateProfile(userId, {
+    ...(changes.focus === undefined ? {} : { focus: changes.focus }),
+    ...(changes.hideBalances === undefined ? {} : { hideBalances: changes.hideBalances }),
+    ...(changes.payday === undefined
+      ? {}
+      : { paydayDay: changes.payday.day, paydayEndOfMonth: changes.payday.endOfMonth }),
+  });
+  return getMe(userId, deps);
+}
+
+/** GET /me/consents: the decision in force per purpose; the core purpose is always on. */
+export async function getConsents(userId: string, deps: AccountDeps = {}): Promise<Consents> {
+  const { repository } = resolve(deps);
+  const decisions = await repository.latestConsents(userId);
+  return {
+    policyVersion: PRIVACY_POLICY_VERSION,
+    items: Object.values(CONSENT_PURPOSE).map((purpose) => {
+      const latest = decisions.find((decision) => decision.purpose === purpose);
+      return {
+        purpose,
+        granted: purpose === CONSENT_PURPOSE.core || (latest?.granted ?? false),
+        decidedAt: latest?.decidedAt.toISOString() ?? null,
+      };
+    }),
+  };
+}
+
+/** PUT /me/consents: Persetujuan Data (ONB-08) and the toggles of Data & Privasi (AKN-04). */
+export async function updateConsents(
+  userId: string,
+  input: ConsentsUpdate,
+  deps: AccountDeps = {},
+): Promise<Consents> {
+  const { repository, now } = resolve(deps);
+  await repository.recordConsents(
+    userId,
+    [
+      { purpose: CONSENT_PURPOSE.aiProcessing, granted: input.aiProcessing },
+      { purpose: CONSENT_PURPOSE.weeklySummary, granted: input.weeklySummary },
+    ],
+    now,
+  );
+  return getConsents(userId, deps);
+}
+
+async function buildExport(repository: AccountRepository, userId: string, now: Date) {
+  const rows = await repository.listExportRows(userId);
+  return { fileName: exportFileName(now), csv: transactionsCsv(rows), rowCount: rows.length };
+}
+
+/** GET /me/export: Unduh Datamu, the CSV saved to the device (AKN-04c). */
+export async function exportData(userId: string, deps: AccountDeps = {}) {
+  const { repository, now } = resolve(deps);
+  const { fileName, csv } = await buildExport(repository, userId, now);
+  return { fileName, csv };
+}
+
+/** POST /me/export/email: Unduh Datamu Dulu, the same CSV sent to the account's address (AKN-05). */
+export async function emailExport(userId: string, deps: AccountDeps = {}): Promise<void> {
+  const { repository, send, now } = resolve(deps);
+  const [profile, built] = await Promise.all([
+    profileOf(repository, userId),
+    buildExport(repository, userId, now),
+  ]);
+  try {
+    await send(dataExportEmail({ to: profile.email, name: profile.displayName, ...built }));
+  } catch (err) {
+    logger.error({ err }, 'Data export email failed');
+    throw new ExportEmailFailedError('data export');
+  }
+}
+
+/**
+ * POST /me/deletion: Hapus Permanen (AKN-05). The notice goes first, while the address is still
+ * known; a failed email is logged and never keeps an account someone asked to delete. Deleting an
+ * account that is already gone does nothing, so a retry after a lost answer (AKN-05c) is safe.
+ */
+export async function deleteAccount(userId: string, deps: AccountDeps = {}): Promise<void> {
+  const { repository, send, now } = resolve(deps);
+  const profile = await repository.findProfile(userId);
+  if (profile) {
+    try {
+      await send(accountDeletedEmail({ to: profile.email, name: profile.displayName, now }));
+    } catch (err) {
+      logger.error({ err }, 'Account deletion email failed; deleting anyway');
+    }
+  }
+  await repository.deleteUser(userId);
+}
