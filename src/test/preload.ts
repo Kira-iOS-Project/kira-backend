@@ -21,10 +21,20 @@ export const dbControl = {
   queries: fake.queries,
 };
 
+/** A reserved connection of the pool (the scheduled jobs' advisory lock): same responder, same log. */
+const reservedConnection = {
+  async unsafe(sql: string, params: string[]) {
+    const query = { sql, params };
+    dbControl.queries.push(query);
+    return dbControl.respond(query);
+  },
+  release: () => undefined,
+};
+
 /** The real module opens a pool from DATABASE_URL on import; the unit tier never dials it. */
 void mock.module('../db/client/index.ts', () => ({
   db: fake.db,
-  client: {},
+  client: { reserve: async () => reservedConnection },
 }));
 
 /** ── Resend ──────────────────────────────────────────────────────────────── */
