@@ -60,7 +60,7 @@ describe('listTransactions', () => {
 describe('summarizeTransactions', () => {
   test('adds up the days', async () => {
     const days = [
-      { date: '2026-10-15', expense: 48_000, income: 0 },
+      { date: '2026-10-14', expense: 48_000, income: 0 },
       { date: '2026-10-16', expense: 18_000, income: 1_000_000 },
     ];
     const repository = createTransactionRepositoryMock({
@@ -76,7 +76,7 @@ describe('summarizeTransactions', () => {
     expect(
       await summarizeTransactions(
         'user-1',
-        { from: '2026-10-15', to: '2026-10-16' },
+        { from: '2026-10-14', to: '2026-10-16' },
         { repository },
       ),
     ).toEqual({
@@ -85,7 +85,7 @@ describe('summarizeTransactions', () => {
       days,
     });
     expect(
-      (await summarizeTransactions('user-1', { from: '2026-10-15', to: '2026-10-16' })).days,
+      (await summarizeTransactions('user-1', { from: '2026-10-14', to: '2026-10-16' })).days,
     ).toEqual([]);
   });
 });
