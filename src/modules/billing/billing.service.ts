@@ -102,7 +102,10 @@ export async function listPlans(userId: string, deps: BillingDeps = {}): Promise
   };
 }
 
-/** Bayar (simulasi): the plan is active now, replacing any other, and an invoice is written. */
+/**
+ * Bayar (simulasi): the plan is active now, replacing any other, and an invoice is written; the plan
+ * and period already active come back unchanged.
+ */
 export async function checkout(
   userId: string,
   body: CheckoutBody,

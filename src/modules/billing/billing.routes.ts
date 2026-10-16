@@ -42,7 +42,8 @@ export const checkoutRoute = createRoute({
   path: '/billing/checkout',
   operationId: 'checkout',
   summary: 'Buy a plan (simulated: nothing is charged)',
-  description: 'Activates the plan now, replacing any active one, and writes an invoice.',
+  description:
+    'Activates the plan now, replacing any active one, and writes an invoice. The plan and period already active (and not cancelled) come back unchanged, with no new invoice.',
   request: { body: { ...json(checkoutBodySchema), required: true } },
   responses: {
     200: { ...json(subscriptionSchema), description: 'The new subscription' },
