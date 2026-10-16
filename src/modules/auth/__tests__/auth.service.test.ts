@@ -88,7 +88,9 @@ describe('verifyCode', () => {
     attempts: 0,
     expiresAt: new Date(NOW.getTime() + 60_000),
   };
-  const claimed = (attempts = 1) => async () => ({ codeHash: active.codeHash, attempts });
+  const claimed =
+    (attempts = 1) =>
+    async () => ({ codeHash: active.codeHash, attempts });
   const input = (code: string) => ({ email: 'dinda@email.com', code, ip: '1.2.3.4' });
   const deps = (overrides = {}) => ({
     repository: createAuthRepositoryMock({
@@ -161,7 +163,10 @@ describe('verifyCode', () => {
 
   test('refuses an expired code', async () => {
     await expect(
-      verifyCode(input('381427'), deps({ findActiveCode: async () => ({ ...active, expiresAt: NOW }) })),
+      verifyCode(
+        input('381427'),
+        deps({ findActiveCode: async () => ({ ...active, expiresAt: NOW }) }),
+      ),
     ).rejects.toMatchObject({ code: 'AUTH_CODE_EXPIRED' });
   });
 

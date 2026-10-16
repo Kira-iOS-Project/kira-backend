@@ -1,6 +1,6 @@
 /**
  * What a person records (Catat): the chat log, the transactions it and the other inputs produce,
- * the monthly usage of the AI-backed inputs, and bank-statement imports (CAT-01 to CAT-12).
+ * and bank-statement imports (CAT-01 to CAT-12). The AI-backed inputs' usage is in usage.ts.
  */
 
 import { sql } from 'drizzle-orm';
@@ -15,7 +15,6 @@ import {
   jsonb,
   pgEnum,
   pgTable,
-  primaryKey,
   smallint,
   text,
   uniqueIndex,
@@ -205,30 +204,6 @@ export const transactions = pgTable(
     check(
       'transactions_amount_check',
       sql`${table.amount} between 1 and ${sql.raw(String(MAX_AMOUNT))}`,
-    ),
-  ],
-);
-
-/** The AI-backed inputs used in one quota period (a calendar month, or a paid plan's period). */
-export const usageCounters = pgTable(
-  'usage_counters',
-  {
-    userId: uuid('user_id')
-      .references(() => users.id, { onDelete: 'cascade' })
-      .notNull(),
-    periodStart: date('period_start', { mode: 'string' }).notNull(),
-    aiMessages: integer('ai_messages').default(0).notNull(),
-    receipts: integer('receipts').default(0).notNull(),
-    voiceSeconds: integer('voice_seconds').default(0).notNull(),
-    updatedAt: moment('updated_at')
-      .default(sql`now()`)
-      .notNull(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.userId, table.periodStart] }),
-    check(
-      'usage_counters_counts_check',
-      sql`${table.aiMessages} >= 0 and ${table.receipts} >= 0 and ${table.voiceSeconds} >= 0`,
     ),
   ],
 );

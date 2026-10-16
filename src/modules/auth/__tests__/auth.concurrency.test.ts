@@ -25,15 +25,23 @@ function signInDatabase(right: string) {
     if (sql.startsWith('select count(*)') && sql.includes('"sign_in_attempts"')) {
       return [{ count: sql.includes('"email" =') ? state.checks : 0 }];
     }
-    if (sql.startsWith('insert into "sign_in_attempts"')) return void state.checks++, [];
+    if (sql.startsWith('insert into "sign_in_attempts"')) return (void state.checks++, []);
     if (sql.startsWith('select "created_at" from "auth_codes"')) {
       return state.codes > 0 ? [{ createdAt: NOW.toISOString() }] : [];
     }
-    if (sql.startsWith('select count(*)') && sql.includes('"auth_codes"')) return [{ count: state.codes }];
-    if (sql.startsWith('insert into "auth_codes"')) return void state.codes++, [];
+    if (sql.startsWith('select count(*)') && sql.includes('"auth_codes"'))
+      return [{ count: state.codes }];
+    if (sql.startsWith('insert into "auth_codes"')) return (void state.codes++, []);
     if (sql.startsWith('select "id", "code_hash"')) {
       const expiresAt = new Date(NOW.getTime() + 60_000).toISOString();
-      return [{ id: 'code-1', codeHash: codeHash(EMAIL, right, SECRET), attempts: state.attempts, expiresAt }];
+      return [
+        {
+          id: 'code-1',
+          codeHash: codeHash(EMAIL, right, SECRET),
+          attempts: state.attempts,
+          expiresAt,
+        },
+      ];
     }
     if (sql.startsWith('update "auth_codes" set "attempts"')) {
       if (state.attempts >= MAX_ATTEMPTS) return [];
@@ -79,7 +87,9 @@ describe('finding 1: code checks', () => {
     const roomy = { ...repository, recordCheck: async () => null };
     const deps = { repository: roomy, now: clock, secret: SECRET, makeToken: () => 't' };
 
-    const outcomes = await settle(codes(0, 50).map((code) => verifyCode({ email: EMAIL, code, ip: 'x' }, deps)));
+    const outcomes = await settle(
+      codes(0, 50).map((code) => verifyCode({ email: EMAIL, code, ip: 'x' }, deps)),
+    );
 
     expect(state.attempts).toBe(MAX_ATTEMPTS);
     expect(outcomes.filter((code) => code === 'SIGNED_IN')).toEqual([]);
@@ -113,7 +123,14 @@ describe('finding 6: refresh rotation', () => {
       const { sql, params } = query;
       if (sql.includes('where "sessions"."refresh_token_hash" = $1 limit')) {
         return params[0] === session.current
-          ? [{ sessionId: 's1', userId: 'u1', refreshExpiresAt: '2099-01-01T00:00:00.000Z', revokedAt: null }]
+          ? [
+              {
+                sessionId: 's1',
+                userId: 'u1',
+                refreshExpiresAt: '2099-01-01T00:00:00.000Z',
+                revokedAt: null,
+              },
+            ]
           : [];
       }
       if (sql.startsWith('update "sessions" set "access_token_hash"')) {
@@ -121,7 +138,8 @@ describe('finding 6: refresh rotation', () => {
         session.current = String(params[2]);
         return [{ id: 's1' }];
       }
-      if (sql.startsWith('update "sessions" set "revoked_at"')) return void (session.revoked = true), [];
+      if (sql.startsWith('update "sessions" set "revoked_at"'))
+        return (void (session.revoked = true), []);
       return [];
     };
     const repository = createAuthRepository(createFakeDb(respond).db);
@@ -133,7 +151,10 @@ describe('finding 6: refresh rotation', () => {
       refreshSession('stolen-or-retried', deps),
     ]);
 
-    expect(outcomes.toSorted()).toEqual(['AUTH_REFRESH_INVALID', 'SIGNED_IN']);
+    expect(outcomes.toSorted((left, right) => String(left).localeCompare(String(right)))).toEqual([
+      'AUTH_REFRESH_INVALID',
+      'SIGNED_IN',
+    ]);
     expect(session.revoked).toBe(true);
   });
 });

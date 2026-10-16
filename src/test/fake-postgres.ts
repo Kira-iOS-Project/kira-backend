@@ -28,12 +28,18 @@ type FakeMethods = {
  * locks that make Postgres serialize them, so a test can fire a burst of parallel requests.
  */
 function transactionRunner(serial: boolean) {
-  let tail: Promise<unknown> = Promise.resolve();
-  return <T>(run: () => Promise<T>): Promise<T> => {
+  let tail: Promise<void> = Promise.resolve();
+  return async <T>(run: () => Promise<T>): Promise<T> => {
     if (!serial) return run();
-    const next = tail.then(run, run);
-    tail = next.catch(() => undefined);
-    return next;
+    const previous = tail;
+    const { promise: done, resolve } = Promise.withResolvers<void>();
+    tail = done;
+    await previous;
+    try {
+      return await run();
+    } finally {
+      resolve();
+    }
   };
 }
 

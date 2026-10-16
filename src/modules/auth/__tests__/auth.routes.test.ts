@@ -61,9 +61,17 @@ describe('POST /api/auth/verify', () => {
     const codeHash = stored?.params[1];
     dbControl.respond = (query) => {
       if (query.sql.startsWith('select "id", "code_hash"')) {
-        return [{ id: 'code-1', codeHash, attempts: 0, expiresAt: new Date(Date.now() + 60_000).toISOString() }];
+        return [
+          {
+            id: 'code-1',
+            codeHash,
+            attempts: 0,
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          },
+        ];
       }
-      if (query.sql.startsWith('update "auth_codes" set "attempts"')) return [{ codeHash, attempts: 1 }];
+      if (query.sql.startsWith('update "auth_codes" set "attempts"'))
+        return [{ codeHash, attempts: 1 }];
       if (query.sql.startsWith('insert into "users"')) return [{ id: 'user-1', consentedAt: null }];
       return [];
     };

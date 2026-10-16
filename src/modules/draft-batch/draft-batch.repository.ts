@@ -32,10 +32,10 @@ export type CommitPlan = {
   remainingPayload: MessagePayload;
 };
 
-export type CommitInput = { userId: string; messageId: string; now: Date };
+type CommitInput = { userId: string; messageId: string; now: Date };
 
 /** Builds the save from the reply's payload as locked, or null when there is nothing to save. */
-export type PlanCommit = (locked: MessagePayload) => Promise<CommitPlan | null>;
+type PlanCommit = (locked: MessagePayload) => Promise<CommitPlan | null>;
 
 export type DraftBatchRepository = {
   findDraftsMessage(

@@ -15,7 +15,11 @@ test('Simpan saves the drafts as they are when it locks the reply, not as first 
   const before = createDraftsMessageMock();
   const edited = { ...before.payload, drafts: [createDraftMock({ amount: 50_000 })] };
   const stored = { payload: before.payload };
-  const row = (payload: object) => ({ ...before, payload, createdAt: before.createdAt.toISOString() });
+  const row = (payload: object) => ({
+    ...before,
+    payload,
+    createdAt: before.createdAt.toISOString(),
+  });
   const inserted: FakeQuery[] = [];
 
   const respond = (query: FakeQuery): FakeRow[] => {
@@ -27,7 +31,7 @@ test('Simpan saves the drafts as they are when it locks the reply, not as first 
     }
     if (sql.endsWith('for update')) return [{ payload: stored.payload }];
     if (sql.startsWith('update "chat_messages"')) return [row(stored.payload)];
-    if (sql.startsWith('insert into "transactions"')) return void inserted.push(query), [];
+    if (sql.startsWith('insert into "transactions"')) return (void inserted.push(query), []);
     if (sql.startsWith('insert into "chat_messages"')) {
       return [{ ...row({}), kind: MESSAGE_KIND.remaining }];
     }

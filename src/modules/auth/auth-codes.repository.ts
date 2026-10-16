@@ -9,7 +9,7 @@ import { and, count, desc, eq, gt, gte, isNull, lt, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { authCodes, signInAttempts } from '../../db/schema/schema.ts';
 
-export type ActiveCode = { id: string; codeHash: string; attempts: number; expiresAt: Date };
+type ActiveCode = { id: string; codeHash: string; attempts: number; expiresAt: Date };
 
 /** What a code request is decided on: the latest code and the codes in the window. */
 export type CodeUsage = { latestAt: Date | null; emailCount: number; ipCount: number };
@@ -18,7 +18,7 @@ export type CodeUsage = { latestAt: Date | null; emailCount: number; ipCount: nu
 export type CheckUsage = { emailCount: number; ipCount: number };
 
 /** A refusal reason, or null to go ahead. */
-export type Decide<Usage> = (usage: Usage) => string | null;
+type Decide<Usage> = (usage: Usage) => string | null;
 
 type Transaction = Parameters<Parameters<PostgresJsDatabase['transaction']>[0]>[0];
 
@@ -47,7 +47,9 @@ export type AuthCodeQueries = {
 
 /** Holds the address's and the network's locks until the transaction ends, always in this order. */
 async function lockSignIn(tx: Transaction, email: string, ip: string): Promise<void> {
-  await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`auth:email:${email}`}, 0))`);
+  await tx.execute(
+    sql`select pg_advisory_xact_lock(hashtextextended(${`auth:email:${email}`}, 0))`,
+  );
   await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`auth:ip:${ip}`}, 0))`);
 }
 

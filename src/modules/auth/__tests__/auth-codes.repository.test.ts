@@ -16,7 +16,9 @@ describe('issueCode', () => {
   };
 
   test('locks the address and the network, counts, retires older codes and stores the new one', async () => {
-    const fake = createFakeDb(inOrder([], [], [{ createdAt: NOW.toISOString() }], [{ count: 2 }], [{ count: 7 }]));
+    const fake = createFakeDb(
+      inOrder([], [], [{ createdAt: NOW.toISOString() }], [{ count: 2 }], [{ count: 7 }]),
+    );
     const seen: unknown[] = [];
 
     const refusal = await createAuthRepository(fake.db).issueCode(input, (usage) => {
@@ -70,7 +72,12 @@ describe('recordCheck', () => {
     expect(refusal).toBe('address check limit');
     expect(seen).toEqual([{ emailCount: 0, ipCount: 0 }]);
     expect(fake.queries.some((query) => query.sql.startsWith('insert'))).toBe(false);
-    expect(await createAuthRepository(createFakeDb().db).issueCode({ ...input, codeHash: 'h', expiresAt: NOW, now: NOW }, allow)).toBeNull();
+    expect(
+      await createAuthRepository(createFakeDb().db).issueCode(
+        { ...input, codeHash: 'h', expiresAt: NOW, now: NOW },
+        allow,
+      ),
+    ).toBeNull();
   });
 });
 

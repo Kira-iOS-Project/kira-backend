@@ -79,10 +79,13 @@ describe('createDraftBatchRepository', () => {
     const fake = createFakeDb(inOrder(locked, [row], [], [remaining]));
     const seen: unknown[] = [];
 
-    const result = await createDraftBatchRepository(fake.db).commit(commitInput, async (payload) => {
-      seen.push(payload);
-      return plan;
-    });
+    const result = await createDraftBatchRepository(fake.db).commit(
+      commitInput,
+      async (payload) => {
+        seen.push(payload);
+        return plan;
+      },
+    );
 
     expect(seen).toEqual([message.payload]);
     expect(result?.message).toEqual(message);
