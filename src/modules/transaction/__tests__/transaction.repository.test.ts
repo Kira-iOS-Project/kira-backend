@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { MESSAGE_KIND } from '../../../lib/constants/chat.ts';
 import {
   EXPENSE_CATEGORY,
   TRANSACTION_SOURCE,
@@ -36,15 +37,19 @@ const NEW = {
 };
 
 describe('createTransactionRepository', () => {
-  test('finds a manual entry and its note by client id, only when both exist', async () => {
-    const fake = createFakeDb(inOrder([iso(transaction)], [iso(message)], [iso(transaction)], []));
+  test('finds what a client id left: the entry, its note, or either alone', async () => {
+    const fake = createFakeDb(inOrder([iso(transaction)], [iso(message)], [], [iso(message)]));
     const repository = createTransactionRepository(fake.db);
 
     expect(await repository.findManualByClientId('user-1', CLIENT_ID)).toEqual({
       transaction,
       message,
     });
-    expect(await repository.findManualByClientId('user-1', CLIENT_ID)).toBeNull();
+    expect(await repository.findManualByClientId('user-1', CLIENT_ID)).toEqual({
+      transaction: null,
+      message,
+    });
+    expect(fake.queries[1]?.params).toContain(MESSAGE_KIND.manualSaved);
   });
 
   test('saves a manual entry with its chat note, or nothing on a client id conflict', async () => {

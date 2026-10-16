@@ -106,7 +106,11 @@ export const chatMessages = pgTable(
       table.id.desc().nullsFirst(),
     ),
     index('chat_messages_reply_to_idx').on(table.replyToId),
-    uniqueIndex('chat_messages_user_client_idx').on(table.userId, table.clientId),
+    /** A person's message is stored once per client id; Kira's manual-entry notes keep theirs
+       only to remember the request, under the transactions' own unique index. */
+    uniqueIndex('chat_messages_user_client_idx')
+      .on(table.userId, table.clientId)
+      .where(sql`${table.sender} = ${sql.raw(`'${MESSAGE_SENDER.person}'`)}`),
   ],
 );
 

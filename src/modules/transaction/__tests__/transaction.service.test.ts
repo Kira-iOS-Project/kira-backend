@@ -62,8 +62,9 @@ describe('createManual', () => {
 
   test('answers a retry with the first save, also after losing a race', async () => {
     let lookups = 0;
+    const nothing = { transaction: null, message: null };
     const racing = createTransactionRepositoryMock({
-      findManualByClientId: async () => (lookups++ === 0 ? null : saved),
+      findManualByClientId: async () => (lookups++ === 0 ? nothing : saved),
     });
     const replay = createTransactionRepositoryMock({ findManualByClientId: async () => saved });
 
@@ -77,6 +78,23 @@ describe('createManual', () => {
     await expect(
       createManual('user-1', body, { repository: createTransactionRepositoryMock() }),
     ).rejects.toThrow('The manual entry was neither saved nor found');
+  });
+
+  test('answers 404, never a second save, when a retried entry was deleted', async () => {
+    let created = 0;
+    const repository = createTransactionRepositoryMock({
+      findManualByClientId: async () => ({ transaction: null, message: saved.message }),
+      createManual: async () => {
+        created += 1;
+        return saved;
+      },
+    });
+
+    await expect(createManual('user-1', body, { repository })).rejects.toMatchObject({
+      statusCode: 404,
+      code: 'TRANSACTION_NOT_FOUND',
+    });
+    expect(created).toBe(0);
   });
 });
 

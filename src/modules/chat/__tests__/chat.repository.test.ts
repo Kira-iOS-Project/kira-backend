@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { MESSAGE_KIND } from '../../../lib/constants/chat.ts';
+import { MESSAGE_KIND, MESSAGE_SENDER } from '../../../lib/constants/chat.ts';
 import { CONSENT_PURPOSE } from '../../../lib/constants/consents.ts';
 import { createFakeDb, inOrder } from '../../../test/fake-postgres.ts';
 import { createChatRepository, type IncomingInput } from '../chat.repository.ts';
@@ -55,6 +55,8 @@ describe('createChatRepository', () => {
     expect(await repository.findByClientId('user-1', CLIENT_ID)).toEqual({ person, reply: null });
     expect(await repository.findByClientId('user-1', CLIENT_ID)).toBeNull();
     expect(fake.queries[1]?.sql).toContain('"chat_messages"."reply_to_id" = $');
+    /** Only the person's own message answers a replay, never a Kira note with the same id. */
+    expect(fake.queries[0]?.params).toContain(MESSAGE_SENDER.person);
   });
 
   test('reads the latest AI consent decision, off when there is none', async () => {
@@ -83,7 +85,9 @@ describe('createChatRepository', () => {
     const fake = createFakeDb(inOrder([rowOf(person)], [{ userId: 'user-1' }], [rowOf(reply)]));
 
     expect(await createChatRepository(fake.db).storeIncoming(input)).toEqual({ person, reply });
-    expect(fake.queries[0]?.sql).toContain('on conflict ("user_id","client_id") do nothing');
+    expect(fake.queries[0]?.sql).toContain(
+      `on conflict ("user_id","client_id") where "chat_messages"."sender" = '${MESSAGE_SENDER.person}' do nothing`,
+    );
     expect(fake.queries[1]?.sql).toContain('on conflict ("user_id","period_start") do update');
     expect(fake.queries[1]?.sql).toContain('where "usage_counters"."ai_messages" + $');
   });

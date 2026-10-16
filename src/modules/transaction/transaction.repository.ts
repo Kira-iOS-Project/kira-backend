@@ -44,10 +44,13 @@ export type TransactionPatch = Partial<
   Pick<TransactionRow, 'name' | 'amount' | 'category' | 'type' | 'occurredAt' | 'note'>
 >;
 type ManualSaved = { transaction: TransactionRow; message: MessageRow };
+
+/** What a manual entry's client id left behind: its transaction (unless deleted) and its note. */
+type ManualTrace = { transaction: TransactionRow | null; message: MessageRow | null };
 type DayTotals = { date: string; expense: number; income: number };
 
 export type TransactionRepository = {
-  findManualByClientId(userId: string, clientId: string): Promise<ManualSaved | null>;
+  findManualByClientId(userId: string, clientId: string): Promise<ManualTrace>;
   /** Null when an entry with the same client id was saved first. */
   createManual(input: {
     transaction: NewTransaction;
@@ -134,10 +137,16 @@ export function createTransactionRepository(
         client
           .select(messageColumns)
           .from(chatMessages)
-          .where(and(eq(chatMessages.userId, userId), eq(chatMessages.clientId, clientId)))
+          .where(
+            and(
+              eq(chatMessages.userId, userId),
+              eq(chatMessages.clientId, clientId),
+              eq(chatMessages.kind, MESSAGE_KIND.manualSaved),
+            ),
+          )
           .limit(1),
       ]);
-      return transaction && message ? { transaction, message } : null;
+      return { transaction: transaction ?? null, message: message ?? null };
     },
 
     createManual({ transaction, message, now }) {
