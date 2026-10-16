@@ -26,8 +26,9 @@ export type CatalogGroup = {
   /** The first day of the month the admin was verified. */
   adminVerifiedSince: string;
   rules: [string, string, string];
-  linkCheckedOn: string;
-  adminUnchanged: boolean;
+  /** The last check of the invite and its admin; the sync writes null for a group with no invite. */
+  linkCheckedOn: string | null;
+  adminUnchanged: boolean | null;
   curationRank: number;
 };
 

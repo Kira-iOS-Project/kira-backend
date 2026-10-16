@@ -90,8 +90,9 @@ export async function getGroup(
       verifiedSince: row.adminVerifiedSince.slice(0, 7),
     },
     rules: row.rules,
-    linkCheckedOn: row.linkCheckedOn,
-    adminUnchanged: row.adminUnchanged,
+    /** Nothing about a link is shown while there is none to open. */
+    linkCheckedOn: row.inviteUrl === null ? null : row.linkCheckedOn,
+    adminUnchanged: row.inviteUrl === null ? null : row.adminUnchanged,
     rulesAccepted,
   };
 }
@@ -120,7 +121,10 @@ export async function joinGroup(
     repository.hasAcceptedRules(userId, COMMUNITY_RULES_VERSION),
   ]);
   if (!rulesAccepted) throw new CommunityRulesNotAcceptedError();
-  if (row.inviteUrl === null) throw new CommunityLinkUnavailableError();
+  /** An invite is handed out only with the date it was checked. */
+  if (row.inviteUrl === null || row.linkCheckedOn === null) {
+    throw new CommunityLinkUnavailableError();
+  }
   await repository.recordJoin(userId, row.id);
   return { inviteUrl: row.inviteUrl, platform: row.platform, linkCheckedOn: row.linkCheckedOn };
 }

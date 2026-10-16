@@ -70,6 +70,15 @@ describe('community routes', () => {
     });
   });
 
+  test('GET /community/groups/{id} answers no link check while the group has no invite', async () => {
+    dbControl.respond = world({ group: groupRow({ inviteUrl: null }) });
+
+    const res = await call('GET', GROUP);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ linkCheckedOn: null, adminUnchanged: null });
+  });
+
   test('GET /community/groups/{id} answers 404 for a missing or suspended group', async () => {
     dbControl.respond = world({ group: null });
     expect(await problemOf(await call('GET', GROUP))).toEqual({

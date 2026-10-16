@@ -55,8 +55,10 @@ export const groupDetailSchema = groupSummarySchema
     }),
     /** Aturan Utama. */
     rules: z.array(z.string()).length(3),
-    linkCheckedOn: z.iso.date(),
-    adminUnchanged: z.boolean(),
+    /** When the team last checked the invite; null while the group has no verified invite. */
+    linkCheckedOn: z.iso.date().nullable(),
+    /** The admin is the one verified; null while the group has no verified invite. */
+    adminUnchanged: z.boolean().nullable(),
     /** The person accepted the current Aturan Komunitas Kira. */
     rulesAccepted: z.boolean(),
   })

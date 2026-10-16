@@ -53,9 +53,13 @@ const REASON_LABEL: Record<ReportReason, string> = {
 export async function syncCommunityCatalog(deps: CatalogDeps = {}) {
   const repository = deps.repository ?? communityCatalogRepository;
   const links = deps.links ?? env.COMMUNITY_LINKS_JSON;
-  const groups = CATALOG_GROUPS.map((group) =>
-    Object.assign({}, group, { inviteUrl: inviteOf(group.id, group.platform, links) }),
-  );
+  const groups = CATALOG_GROUPS.map((group) => {
+    const inviteUrl = inviteOf(group.id, group.platform, links);
+    /** A check of a link nobody can open says nothing: no invite, no check date or admin claim. */
+    return inviteUrl === null
+      ? Object.assign({}, group, { inviteUrl, linkCheckedOn: null, adminUnchanged: null })
+      : Object.assign({}, group, { inviteUrl });
+  });
   const products = CATALOG_PRODUCTS.map((product) =>
     Object.assign({}, product, { sellerUrl: links[product.id] ?? null }),
   );

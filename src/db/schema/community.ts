@@ -85,8 +85,9 @@ export const communityGroups = pgTable(
     rules: text('rules').array().notNull(),
     /** The verified invite (COMMUNITY_LINKS_JSON); null while the team checks it. */
     inviteUrl: text('invite_url'),
-    linkCheckedOn: date('link_checked_on', { mode: 'string' }).notNull(),
-    adminUnchanged: boolean('admin_unchanged').notNull(),
+    /** When the invite and its admin were last checked; null, like the next, without an invite. */
+    linkCheckedOn: date('link_checked_on', { mode: 'string' }),
+    adminUnchanged: boolean('admin_unchanged'),
     curationRank: smallint('curation_rank').notNull(),
     /** Set by reports (and, later, the team); never by the catalog sync. */
     status: communityListingStatusEnum('status').default(COMMUNITY_LISTING_STATUS.active).notNull(),

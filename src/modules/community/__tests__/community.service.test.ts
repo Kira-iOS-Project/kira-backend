@@ -65,6 +65,16 @@ describe('getGroup', () => {
     expect(Object.keys(group)).not.toContain('inviteUrl');
   });
 
+  test('says nothing of a link check while the group has no verified invite', async () => {
+    const repository = createCommunityRepositoryMock({
+      findActiveGroup: async () => groupRow({ inviteUrl: null }),
+    });
+
+    const group = await getGroup(USER_ID, GROUP_ID, { repository });
+
+    expect(group).toMatchObject({ linkCheckedOn: null, adminUnchanged: null });
+  });
+
   test('refuses a group that is missing or suspended', async () => {
     const repository = createCommunityRepositoryMock();
     await expect(getGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
@@ -118,17 +128,18 @@ describe('joinGroup', () => {
     expect(recorded).toBe(false);
   });
 
-  test('refuses a group the team has no verified link for yet, and records nothing', async () => {
+  test('refuses a group with no verified, dated link yet, and records nothing', async () => {
     let recorded = false;
-    const repository = createCommunityRepositoryMock({
-      findActiveGroup: async () => groupRow({ inviteUrl: null }),
-      hasAcceptedRules: async () => true,
-      recordJoin: async () => void (recorded = true),
-    });
-
-    await expect(joinGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
-      CommunityLinkUnavailableError,
-    );
+    for (const row of [groupRow({ inviteUrl: null }), groupRow({ linkCheckedOn: null })]) {
+      const repository = createCommunityRepositoryMock({
+        findActiveGroup: async () => row,
+        hasAcceptedRules: async () => true,
+        recordJoin: async () => void (recorded = true),
+      });
+      await expect(joinGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
+        CommunityLinkUnavailableError,
+      );
+    }
     expect(recorded).toBe(false);
   });
 

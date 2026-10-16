@@ -47,6 +47,11 @@ describe('syncCommunityCatalog', () => {
       'Ngobrol Gaji Pertama',
     ]);
     expect(synced[0]?.groups.every((group) => group.inviteUrl === null)).toBe(true);
+    expect(
+      synced[0]?.groups.every(
+        (group) => group.linkCheckedOn === null && group.adminUnchanged === null,
+      ),
+    ).toBe(true);
     expect(synced[0]?.products.every((product) => product.sellerUrl === null)).toBe(true);
   });
 
@@ -68,6 +73,8 @@ describe('syncCommunityCatalog', () => {
       'https://discord.com/invite/RealCode',
       null,
     ]);
+    expect(groups.map((group) => group.linkCheckedOn === null)).toEqual([false, true, false, true]);
+    expect(groups.map((group) => group.adminUnchanged)).toEqual([true, null, true, null]);
     expect(synced[0]?.products[0]?.sellerUrl).toBe('https://seller.example/kelas');
     expect(counts.links).toBe(3);
   });
