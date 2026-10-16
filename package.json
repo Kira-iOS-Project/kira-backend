@@ -33,6 +33,7 @@
     "check:crypto-interop": "if [ -f scripts/check/crypto-interop.ts ]; then bun scripts/check/crypto-interop.ts ; else echo 'check:crypto-interop skipped: setup did not install the payload module'; fi",
     "check:endpoints": "if [ -f scripts/check/endpoints.ts ]; then bun scripts/check/endpoints.ts ; else echo 'check:endpoints skipped: setup did not install the payload module'; fi",
     "check:openapi": "bun scripts/check/openapi.ts",
+    "generate:email-assets": "bun scripts/generate/email-assets.ts",
     "generate:endpoints": "bun scripts/generate/endpoints.ts",
     "spec:export": "bun scripts/generate/openapi.ts"
   },
