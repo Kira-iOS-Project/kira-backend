@@ -22,6 +22,7 @@ import {
   type Profile,
 } from './account.repository.ts';
 import type { Consents, ConsentsUpdate, Me, MeUpdate } from './account.schema.ts';
+import { UnauthenticatedError } from '../auth/index.ts';
 
 type AccountDeps = {
   repository?: AccountRepository;
@@ -51,7 +52,8 @@ function resolve(deps: AccountDeps) {
 /** A signed-in session always has its account: the row and its sessions go together (cascade). */
 async function profileOf(repository: AccountRepository, userId: string): Promise<Profile> {
   const profile = await repository.findProfile(userId);
-  if (!profile) throw new Error('The session has no account');
+  /** The account was deleted while this request was in flight: its session is gone too. */
+  if (!profile) throw new UnauthenticatedError('account deleted');
   return profile;
 }
 

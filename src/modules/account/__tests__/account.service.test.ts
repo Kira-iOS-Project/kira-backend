@@ -110,10 +110,13 @@ describe('getMe', () => {
     expect((await getMe(USER_ID, { repository, now: () => NOW })).debtEmergencyActive).toBe(true);
   });
 
-  test('fails loudly when the session has no account', async () => {
+  test('answers 401 AUTH_UNAUTHENTICATED when the account was deleted mid-request', async () => {
     const repository = createAccountRepositoryMock({ findProfile: async () => null });
 
-    expect(getMe(USER_ID, { repository, now })).rejects.toThrow('The session has no account');
+    await expect(getMe(USER_ID, { repository, now })).rejects.toMatchObject({
+      statusCode: 401,
+      code: 'AUTH_UNAUTHENTICATED',
+    });
   });
 });
 
