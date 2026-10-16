@@ -14,6 +14,7 @@ import { handleAppError, handleNotFound } from './lib/errors/problem.ts';
 import { createRouter } from './lib/server/factory.ts';
 import { requestLogger } from './middlewares/logger.middleware.ts';
 import { authRouter } from './modules/auth/index.ts';
+import { chatRouter } from './modules/chat/index.ts';
 import { metaApp } from './modules/meta/index.ts';
 import { usageRouter } from './modules/usage/index.ts';
 
@@ -59,6 +60,7 @@ app.notFound(handleNotFound);
 app.route('/', metaApp);
 app.route('/api/auth', authRouter);
 app.route('/api/usage', usageRouter);
+app.route('/api/chat', chatRouter);
 
 /** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {

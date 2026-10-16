@@ -5,6 +5,7 @@ import {
   TRANSACTION_SOURCE,
   TRANSACTION_TYPE,
 } from '../../../lib/constants/money.ts';
+import type { MessageRow } from '../../../lib/chat/chat-message.ts';
 import type { CommitInput } from '../draft-batch.repository.ts';
 import { commitDrafts, remainingMoney, UNDO_WINDOW_MS, undoBatch } from '../draft-batch.service.ts';
 import {
@@ -117,7 +118,10 @@ describe('commitDrafts', () => {
   });
 
   test('refuses an unknown message, a message without pending drafts, and a lost race', async () => {
-    const found = (payload = createDraftsMessageMock().payload, kind = MESSAGE_KIND.drafts) =>
+    const found = (
+      payload = createDraftsMessageMock().payload,
+      kind: MessageRow['kind'] = MESSAGE_KIND.drafts,
+    ) =>
       createDraftBatchRepositoryMock({
         findDraftsMessage: async () => ({
           message: createDraftsMessageMock({ payload, kind }),
