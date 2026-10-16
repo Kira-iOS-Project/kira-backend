@@ -87,6 +87,7 @@ export async function getMe(userId: string, deps: AccountDeps = {}): Promise<Me>
     debtAccountCount: debts,
     aiEnabled: grantedOf(decisions, CONSENT_PURPOSE.aiProcessing),
     weeklySummaryEnabled: grantedOf(decisions, CONSENT_PURPOSE.weeklySummary),
+    debtEmergencyActive: profile.debtEmergencyModeUsedAt !== null,
   };
 }
 

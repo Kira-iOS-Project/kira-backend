@@ -52,6 +52,8 @@ export const meSchema = z
     debtAccountCount: z.number().int(),
     aiEnabled: z.boolean(),
     weeklySummaryEnabled: z.boolean(),
+    /** Mode Darurat Utang has been opened (PED-07): the account may apply for Beasiswa Kira. */
+    debtEmergencyActive: z.boolean(),
   })
   .openapi('Me');
 

@@ -55,6 +55,8 @@ const TITLES = {
   SUBSCRIPTION_NOT_CANCELLABLE: 'Subscription Not Cancellable',
   SCHOLARSHIP_NOT_ELIGIBLE: 'Not Eligible',
   SCHOLARSHIP_APPLICATION_NOT_FOUND: 'Application Not Found',
+  CARE_CHECK_IN_NOT_FOUND: 'Check-in Not Found',
+  CARE_SAFETY_PLAN_NOT_FOUND: 'Safety Plan Not Found',
 } as const satisfies Record<ErrorCode, string>;
 
 /** An `HTTPException` comes from middleware that knows only a status (the body limit, the

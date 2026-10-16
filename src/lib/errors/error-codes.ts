@@ -52,6 +52,10 @@ export const ERROR_CODES = [
   'SUBSCRIPTION_NOT_CANCELLABLE',
   'SCHOLARSHIP_NOT_ELIGIBLE',
   'SCHOLARSHIP_APPLICATION_NOT_FOUND',
+
+  /** Kira Peduli: check-ins and the safety plan (PED-05, PED-06, PED-10). */
+  'CARE_CHECK_IN_NOT_FOUND',
+  'CARE_SAFETY_PLAN_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

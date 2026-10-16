@@ -25,6 +25,8 @@ export const INELIGIBLE_REASON = {
   hasPaidPlan: 'has_paid_plan',
   hasScholarship: 'has_scholarship',
   hasOpenApplication: 'has_open_application',
+  /** Beasiswa Kira is for people who have opened Mode Darurat Utang (AKN-09 Syarat). */
+  debtEmergencyNotUsed: 'debt_emergency_not_used',
 } as const;
 
 /** The partial unique index that allows one open (in review or waitlisted) application a person. */

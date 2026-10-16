@@ -65,6 +65,11 @@ const schema = z.object({
      Required in production; elsewhere an unset value becomes a random one per process. */
   AUTH_SECRET: z.string().min(32).optional(),
 
+  /** Layanan Kira Peduli's own line (PED-01, PED-04): the phone and the WhatsApp number, as the
+     person dials them ("0811…"). Until both are set, GET /care/contacts leaves the contact out. */
+  KIRA_CARE_PHONE: z.string().regex(/^\+?[0-9]{3,15}$/).optional(),
+  KIRA_CARE_WHATSAPP: z.string().regex(/^\+?[0-9]{8,15}$/).optional(),
+
   /** Where the public files live, for the images inside emails (`/email/*.png`). */
   PUBLIC_BASE_URL: z.url({ protocol: /^https?$/ }).default('https://api-kira.serenitycode.tech'),
 
