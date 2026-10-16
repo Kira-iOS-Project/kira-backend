@@ -15,15 +15,20 @@ describe('deleteStaleAuthCodes', () => {
           cutoffs.push(before);
           return 4;
         },
+        deleteSignInChecksCreatedBefore: async (before) => {
+          cutoffs.push(before);
+          return 9;
+        },
       },
     });
 
-    expect(result).toEqual({ deleted: 4 });
+    expect(result).toEqual({ deleted: 4, checks: 9 });
+    expect(cutoffs[1]).toEqual(cutoffs[0]);
     expect(cutoffs[0]?.toISOString()).toBe('2026-10-15T05:10:00.000Z');
   });
 
   test('uses the real repository by default', async () => {
-    expect(await deleteStaleAuthCodes(NOW)).toEqual({ deleted: 0 });
+    expect(await deleteStaleAuthCodes(NOW)).toEqual({ deleted: 0, checks: 0 });
   });
 });
 
@@ -34,6 +39,13 @@ describe('createJobsRepository', () => {
     expect(await createJobsRepository(fake.db).deleteAuthCodesCreatedBefore(NOW)).toBe(2);
     expect(fake.queries[0]?.sql).toStartWith('delete from "auth_codes" where');
     expect(fake.queries[0]?.sql).toContain('"auth_codes"."created_at" < $1');
+  });
+
+  test('deletes recorded code checks by creation time', async () => {
+    const fake = createFakeDb(inOrder([{ id: 'a' }]));
+
+    expect(await createJobsRepository(fake.db).deleteSignInChecksCreatedBefore(NOW)).toBe(1);
+    expect(fake.queries[0]?.sql).toStartWith('delete from "sign_in_attempts" where');
   });
 });
 
