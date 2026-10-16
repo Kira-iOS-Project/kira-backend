@@ -29,5 +29,8 @@ export const INELIGIBLE_REASON = {
   debtEmergencyNotUsed: 'debt_emergency_not_used',
 } as const;
 
+/** Ajukan Beasiswa's story, at most, in characters (grapheme clusters). */
+export const SCHOLARSHIP_STORY_MAX = 1000;
+
 /** The partial unique index that allows one open (in review or waitlisted) application a person. */
 export const OPEN_APPLICATION_INDEX = 'scholarship_applications_one_open_idx';

@@ -10,7 +10,9 @@ import {
   APPLICATION_STATUS,
   OPEN_APPLICATION_INDEX,
   SCHOLARSHIP_SITUATION,
+  SCHOLARSHIP_STORY_MAX,
 } from '../../../lib/constants/scholarship.ts';
+import { MAX_UNITS_PER_CHARACTER } from '../../../lib/constants/text.ts';
 import { type FakeResponder, inOrder } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
 import { AUTH_HEADER, signedIn, TEST_USER_ID } from '../../../test/session.ts';
@@ -100,6 +102,26 @@ describe('scholarship routes', () => {
     expect(fits.status).toBe(201);
     expect(over.status).toBe(422);
     expect((await over.json()).code).toBe('VALIDATION_FAILED');
+  });
+
+  test('POST /api/scholarship/applications takes a story the old code-point check refused', async () => {
+    dbControl.respond = signedIn(usedDebtEmergency(inOrder([], [], [], [], [STORED])));
+    const thumbs = '👍🏽'.repeat(600);
+
+    const fits = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+      story: thumbs,
+    });
+    const over = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+      story: 'a'.repeat(SCHOLARSHIP_STORY_MAX + 1),
+    });
+
+    /** 1200 code points: past a char_length check of 1000, within the one the schema now holds. */
+    expect([...thumbs].length).toBeGreaterThan(SCHOLARSHIP_STORY_MAX);
+    expect([...thumbs].length).toBeLessThanOrEqual(SCHOLARSHIP_STORY_MAX * MAX_UNITS_PER_CHARACTER);
+    expect(fits.status).toBe(201);
+    expect(await over.json()).toMatchObject({ status: 422, code: 'VALIDATION_FAILED' });
   });
 
   test('POST /api/scholarship/applications refuses no situation, and a paid plan', async () => {

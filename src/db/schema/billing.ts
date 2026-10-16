@@ -29,7 +29,9 @@ import {
   APPLICATION_STATUS,
   OPEN_APPLICATION_INDEX,
   SCHOLARSHIP_SITUATION,
+  SCHOLARSHIP_STORY_MAX,
 } from '../../lib/constants/scholarship.ts';
+import { MAX_UNITS_PER_CHARACTER } from '../../lib/constants/text.ts';
 import { users } from './accounts.ts';
 import { moment, timestamps } from './columns.ts';
 
@@ -169,7 +171,13 @@ export const scholarshipApplications = pgTable(
         sql`${table.status} = ${sql.raw(`'${APPLICATION_STATUS.accepted}'`)} and ${table.resultEmailSentAt} is null`,
       ),
     check('scholarship_applications_situations_check', sql`cardinality(${table.situations}) >= 1`),
-    /** Ajukan Beasiswa's story field (STORY_MAX_LENGTH in modules/scholarship/scholarship.schema.ts). */
-    check('scholarship_applications_story_check', sql`char_length(${table.story}) <= 1000`),
+    /**
+     * Ajukan Beasiswa's story: the API counts characters (grapheme clusters), which Postgres cannot,
+     * so the database holds the bound in code points that every accepted story stays within.
+     */
+    check(
+      'scholarship_applications_story_check',
+      sql`char_length(${table.story}) <= ${sql.raw(String(SCHOLARSHIP_STORY_MAX * MAX_UNITS_PER_CHARACTER))}`,
+    ),
   ],
 );
