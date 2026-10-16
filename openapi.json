@@ -65,12 +65,14 @@
               "INTERNAL_ERROR",
               "META_HEALTH_UNHEALTHY",
               "AUTH_CODE_RATE_LIMITED",
+              "AUTH_VERIFY_RATE_LIMITED",
               "AUTH_CODE_INVALID",
               "AUTH_CODE_EXPIRED",
               "AUTH_CODE_ATTEMPTS_EXCEEDED",
               "AUTH_UNAUTHENTICATED",
               "AUTH_REFRESH_INVALID",
               "EMAIL_DELIVERY_FAILED",
+              "ACCOUNT_EXPORT_RATE_LIMITED",
               "SCORE_NOT_AVAILABLE",
               "CHAT_AI_DISABLED",
               "CHAT_MESSAGE_NOT_FOUND",
@@ -85,6 +87,7 @@
               "IMPORT_ROW_UNKNOWN",
               "SUBSCRIPTION_NOT_FOUND",
               "SUBSCRIPTION_NOT_CANCELLABLE",
+              "SUBSCRIPTION_NOT_PAID",
               "SCHOLARSHIP_NOT_ELIGIBLE",
               "SCHOLARSHIP_APPLICATION_NOT_FOUND",
               "CARE_CHECK_IN_NOT_FOUND",
@@ -1908,7 +1911,8 @@
           },
           "story": {
             "type": "string",
-            "maxLength": 1000
+            "maxLength": 16000,
+            "description": "At most 1000 characters (grapheme clusters)."
           }
         },
         "required": [
@@ -3768,6 +3772,16 @@
               }
             }
           },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "503": {
             "description": "A dependency is unavailable",
             "content": {
@@ -4397,6 +4411,16 @@
           },
           "404": {
             "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
             "content": {
               "application/problem+json": {
                 "schema": {

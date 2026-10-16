@@ -87,7 +87,9 @@ describe('POST /api/imports/{id}/commit', () => {
   });
 
   test('answers 400 IMPORT_ROW_UNKNOWN for a row that is not in the import', async () => {
-    dbControl.respond = signedIn(inOrder([{ committedAt: null, savedCount: null, skippedCount: null }], []));
+    dbControl.respond = signedIn(
+      inOrder([{ committedAt: null, savedCount: null, skippedCount: null }], []),
+    );
     const res = await post(`/api/imports/${IMPORT_ID}/commit`, {
       rows: [{ id: ROW_ID, category: EXPENSE_CATEGORY.food }],
     });

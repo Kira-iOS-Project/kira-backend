@@ -1,5 +1,4 @@
-import {
-  TooManyRequestsError, ServiceUnavailableError } from '../../lib/errors/errors.ts';
+import { TooManyRequestsError, ServiceUnavailableError } from '../../lib/errors/errors.ts';
 
 /** Resend refused the data export; nothing changed, so asking again is safe. */
 export class ExportEmailFailedError extends ServiceUnavailableError {

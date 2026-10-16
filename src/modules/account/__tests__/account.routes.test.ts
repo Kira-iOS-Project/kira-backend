@@ -34,7 +34,10 @@ const EXPORT_ROW = {
 
 /** The profile for a select on users, the export rows for an unfiltered transactions read. */
 function byTable(query: FakeQuery): FakeRow[] {
-  if (query.sql.startsWith('update "users" set "export_emailed_at"') && query.sql.includes('returning')) {
+  if (
+    query.sql.startsWith('update "users" set "export_emailed_at"') &&
+    query.sql.includes('returning')
+  ) {
     return [{ id: TEST_USER_ID }];
   }
   if (!query.sql.startsWith('select')) return [];
@@ -134,7 +137,9 @@ describe('/api/me/export', () => {
   });
 
   test('answers 429 ACCOUNT_EXPORT_RATE_LIMITED within ten minutes of the last one', async () => {
-    dbControl.respond = signedIn((query) => (query.sql.startsWith('update "users"') ? [] : byTable(query)));
+    dbControl.respond = signedIn((query) =>
+      query.sql.startsWith('update "users"') ? [] : byTable(query),
+    );
 
     const res = await call('POST', '/api/me/export/email');
 

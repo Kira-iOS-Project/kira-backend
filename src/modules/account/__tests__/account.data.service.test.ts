@@ -117,7 +117,10 @@ describe('the data export', () => {
     };
 
     const released: Date[] = [];
-    const exportClaims = { ...claims(), release: async (_userId: string, at: Date) => void released.push(at) };
+    const exportClaims = {
+      ...claims(),
+      release: async (_userId: string, at: Date) => void released.push(at),
+    };
 
     await expect(
       emailExport(USER_ID, { repository: createAccountRepositoryMock(), now, send, exportClaims }),

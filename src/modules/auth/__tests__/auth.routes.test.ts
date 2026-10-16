@@ -91,7 +91,9 @@ describe('auth problem codes', () => {
 
   test('POST /api/auth/code answers 429 AUTH_CODE_RATE_LIMITED inside the resend minute', async () => {
     dbControl.respond = (query) =>
-      query.sql.startsWith('select "created_at" from "auth_codes"') ? [{ createdAt: recent() }] : [];
+      query.sql.startsWith('select "created_at" from "auth_codes"')
+        ? [{ createdAt: recent() }]
+        : [];
 
     const res = await post('/api/auth/code', { email: 'dinda@email.com' });
 

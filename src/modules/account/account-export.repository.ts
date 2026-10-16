@@ -22,7 +22,10 @@ export function createExportEmailClaims(client: PostgresJsDatabase = db): Export
         .update(users)
         .set({ exportEmailedAt: now })
         .where(
-          and(eq(users.id, userId), or(isNull(users.exportEmailedAt), lt(users.exportEmailedAt, since))),
+          and(
+            eq(users.id, userId),
+            or(isNull(users.exportEmailedAt), lt(users.exportEmailedAt, since)),
+          ),
         )
         .returning({ id: users.id });
       return rows.length > 0;

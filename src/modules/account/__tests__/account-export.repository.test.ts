@@ -11,7 +11,9 @@ describe('createExportEmailClaims', () => {
 
     expect(await claims.claim(USER_ID, NOW, since)).toBe(true);
     expect(await claims.claim(USER_ID, NOW, since)).toBe(false);
-    expect(fake.queries[0]?.sql).toContain('"export_emailed_at" is null or "users"."export_emailed_at" < ');
+    expect(fake.queries[0]?.sql).toContain(
+      '"export_emailed_at" is null or "users"."export_emailed_at" < ',
+    );
   });
 
   test('releases only its own claim', async () => {

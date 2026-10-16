@@ -117,7 +117,9 @@ describe('DELETE /api/transactions/batches/{batchId}', () => {
       kind: MESSAGE_KIND.drafts,
       payload: { batchId: TX_ID, committedAt: '2026-01-01T00:00:00.000Z', transactionIds: [TX_ID] },
     });
-    dbControl.respond = signedIn(inOrder([{ ...committed, createdAt: committed.createdAt.toISOString() }]));
+    dbControl.respond = signedIn(
+      inOrder([{ ...committed, createdAt: committed.createdAt.toISOString() }]),
+    );
     const res = await send('DELETE', `/api/transactions/batches/${TX_ID}`);
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe('TRANSACTION_UNDO_EXPIRED');
