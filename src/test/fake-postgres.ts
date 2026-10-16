@@ -28,7 +28,7 @@ function fakeMethods(client: object, respond: () => FakeResponder, log: FakeQuer
     unsafe(sql, params = []) {
       const query = { sql, params };
       log.push(query);
-      const rows = Promise.resolve().then(() => respond()(query));
+      const rows = (async () => respond()(query))();
       return Object.assign(rows, {
         values: async () => (await rows).map((row) => Object.values(row)),
       });

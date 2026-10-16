@@ -4,6 +4,7 @@
  */
 
 import { bodyLimit } from 'hono/body-limit';
+import { serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { requestId } from 'hono/request-id';
@@ -55,8 +56,10 @@ app.notFound(handleNotFound);
 
 /** ── Routes ───────────────────────────────────────────────────────────────
    The health check sits at /, outside the /api budget, so it answers whatever that budget says.
-   Feature modules mount under /api. */
+   Feature modules mount under /api. The images the emails show (src/lib/email/layout.ts) are
+   files under public/email/, served outside /api the same way. */
 app.route('/', metaApp);
+app.get('/email/*', serveStatic({ root: './public' }));
 app.route('/api/auth', authRouter);
 app.route('/api/me', accountRouter);
 
