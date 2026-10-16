@@ -128,6 +128,8 @@ describe('createTransactionRepository', () => {
     });
     expect(await repository.findDetail('user-1', SOURCE_ID)).toBeNull();
     expect(fake.queries[0]?.sql).toContain('left join "chat_messages"');
+    /** The quoted message must be the owner's own, not merely the one the id points at. */
+    expect(fake.queries[0]?.sql).toContain('"chat_messages"."user_id" = "transactions"."user_id"');
   });
 
   test('updates and deletes, reporting a missing row', async () => {

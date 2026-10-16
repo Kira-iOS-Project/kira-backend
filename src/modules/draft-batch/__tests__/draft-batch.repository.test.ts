@@ -23,6 +23,7 @@ describe('createDraftBatchRepository', () => {
     });
     expect(await repository.findDraftsMessage('user-1', MESSAGE_ID)).toBeNull();
     expect(fake.queries[0]?.sql).toContain('left join "chat_messages" "source"');
+    expect(fake.queries[0]?.sql).toContain('"source"."user_id" = "chat_messages"."user_id"');
   });
 
   test('reads the payday and the health-check income, with defaults', async () => {

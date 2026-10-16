@@ -204,7 +204,13 @@ export function createTransactionRepository(
           sourceCreatedAt: chatMessages.createdAt,
         })
         .from(transactions)
-        .leftJoin(chatMessages, eq(chatMessages.id, transactions.sourceMessageId))
+        .leftJoin(
+          chatMessages,
+          and(
+            eq(chatMessages.id, transactions.sourceMessageId),
+            eq(chatMessages.userId, transactions.userId),
+          ),
+        )
         .where(mine(userId, id))
         .limit(1);
       return row ?? null;

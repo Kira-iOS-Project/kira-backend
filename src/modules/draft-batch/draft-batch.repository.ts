@@ -89,7 +89,10 @@ export function createDraftBatchRepository(client: PostgresJsDatabase = db): Dra
       const [row] = await client
         .select({ ...messageColumns, sourceKind: source.kind })
         .from(chatMessages)
-        .leftJoin(source, eq(source.id, chatMessages.replyToId))
+        .leftJoin(
+          source,
+          and(eq(source.id, chatMessages.replyToId), eq(source.userId, chatMessages.userId)),
+        )
         .where(and(eq(chatMessages.userId, userId), eq(chatMessages.id, id)))
         .limit(1);
       if (!row) return null;
