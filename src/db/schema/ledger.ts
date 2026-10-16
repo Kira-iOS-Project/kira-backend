@@ -5,8 +5,10 @@
 
 import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   bigint,
   boolean,
+  check,
   date,
   index,
   integer,
@@ -19,7 +21,6 @@ import {
   uniqueIndex,
   uuid,
   varchar,
-  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import {
   DRAFT_PARSER,
@@ -29,6 +30,7 @@ import {
   MESSAGE_SENDER,
 } from '../../lib/constants/chat.ts';
 import { enumValues } from '../../lib/constants/enum-values.ts';
+import { MAX_AMOUNT } from '../../lib/money/money.schema.ts';
 import {
   EXPENSE_CATEGORY,
   INCOME_CATEGORY,
@@ -131,7 +133,11 @@ export const bankImports = pgTable(
     skippedCount: integer('skipped_count'),
     createdAt: moment('created_at').defaultNow().notNull(),
   },
-  (table) => [index('bank_imports_user_idx').on(table.userId)],
+  (table) => [
+    index('bank_imports_user_idx').on(table.userId),
+    check('bank_imports_file_size_check', sql`${table.fileSize} between 1 and 10000000`),
+    check('bank_imports_dates_check', sql`${table.dateTo} >= ${table.dateFrom}`),
+  ],
 );
 
 export const bankImportRows = pgTable(
@@ -150,7 +156,13 @@ export const bankImportRows = pgTable(
     /** Same date and amount as a transaction already recorded (CAT-12 "Mungkin Dobel"). */
     isDuplicate: boolean('is_duplicate').notNull(),
   },
-  (table) => [index('bank_import_rows_import_idx').on(table.importId, table.rowIndex)],
+  (table) => [
+    index('bank_import_rows_import_idx').on(table.importId, table.rowIndex),
+    check(
+      'bank_import_rows_amount_check',
+      sql`${table.amount} between 1 and ${sql.raw(String(MAX_AMOUNT))}`,
+    ),
+  ],
 );
 
 export const transactions = pgTable(
@@ -190,6 +202,10 @@ export const transactions = pgTable(
     index('transactions_batch_idx').on(table.batchId),
     index('transactions_import_idx').on(table.importId),
     uniqueIndex('transactions_user_client_idx').on(table.userId, table.clientId),
+    check(
+      'transactions_amount_check',
+      sql`${table.amount} between 1 and ${sql.raw(String(MAX_AMOUNT))}`,
+    ),
   ],
 );
 
@@ -208,5 +224,11 @@ export const usageCounters = pgTable(
       .default(sql`now()`)
       .notNull(),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.periodStart] })],
+  (table) => [
+    primaryKey({ columns: [table.userId, table.periodStart] }),
+    check(
+      'usage_counters_counts_check',
+      sql`${table.aiMessages} >= 0 and ${table.receipts} >= 0 and ${table.voiceSeconds} >= 0`,
+    ),
+  ],
 );

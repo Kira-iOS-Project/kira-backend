@@ -3,8 +3,10 @@
  * open and the consents they give (ONB-05 to ONB-08, AKN-04).
  */
 
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   index,
   pgEnum,
   pgTable,
@@ -40,7 +42,10 @@ export const users = pgTable(
     debtEmergencyModeUsedAt: moment('debt_emergency_mode_used_at'),
     ...timestamps,
   },
-  (table) => [uniqueIndex('users_email_idx').on(table.email)],
+  (table) => [
+    uniqueIndex('users_email_idx').on(table.email),
+    check('users_payday_day_check', sql`${table.paydayDay} between 1 and 31`),
+  ],
 );
 
 export const authCodes = pgTable(
@@ -60,6 +65,8 @@ export const authCodes = pgTable(
   (table) => [
     index('auth_codes_email_created_idx').on(table.email, table.createdAt.desc().nullsFirst()),
     index('auth_codes_ip_created_idx').on(table.requestIp, table.createdAt.desc().nullsFirst()),
+    index('auth_codes_created_idx').on(table.createdAt),
+    check('auth_codes_attempts_check', sql`${table.attempts} >= 0`),
   ],
 );
 
@@ -102,8 +109,14 @@ export const signInAttempts = pgTable(
     createdAt: moment('created_at').defaultNow().notNull(),
   },
   (table) => [
-    index('sign_in_attempts_email_created_idx').on(table.email, table.createdAt.desc().nullsFirst()),
-    index('sign_in_attempts_ip_created_idx').on(table.requestIp, table.createdAt.desc().nullsFirst()),
+    index('sign_in_attempts_email_created_idx').on(
+      table.email,
+      table.createdAt.desc().nullsFirst(),
+    ),
+    index('sign_in_attempts_ip_created_idx').on(
+      table.requestIp,
+      table.createdAt.desc().nullsFirst(),
+    ),
     index('sign_in_attempts_created_idx').on(table.createdAt),
   ],
 );
