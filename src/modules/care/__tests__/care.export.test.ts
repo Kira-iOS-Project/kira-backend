@@ -42,15 +42,33 @@ describe('careExportSections', () => {
       'Kira Peduli · Mode Darurat Utang',
       'Kira Peduli · Rencana Keselamatanku',
     ]);
-    expect(sections[0]?.rows[1]).toEqual([
-      NOW.toISOString(),
-      NOW.toISOString(),
-      CHECK_IN_STATUS.scheduled,
-      '',
+    expect(sections.map((section) => section.header)).toEqual([
+      [
+        'Tanggal',
+        'Jam',
+        'Tanggal Check-in',
+        'Jam Check-in',
+        'Status',
+        'Tanggal Dilihat',
+        'Jam Dilihat',
+      ],
+      ['Tanggal Aktif', 'Jam Aktif'],
+      ['Bagian', 'Isi'],
     ]);
-    expect(sections[1]?.rows).toEqual([[NOW.toISOString()]]);
-    expect(sections[2]?.rows).toContainEqual(['orang_terdekat', 'Rina 081234567890']);
-    expect(sections[2]?.rows).toContainEqual(['tempat_aman', 'Rumah ibu']);
+    /** 05.41 UTC is 12.41 WIB; the states read as the words people see. */
+    expect(sections[0]?.rows).toEqual([
+      ['2026-10-17', '12.41', '2026-10-17', '12.41', 'Sudah Dilihat', '2026-10-17', '12.41'],
+      ['2026-10-17', '12.41', '2026-10-17', '12.41', 'Terjadwal', '', ''],
+    ]);
+    expect(sections[1]?.rows).toEqual([['2026-10-17', '12.41']]);
+    expect(sections[2]?.rows).toContainEqual(['Orang Terdekat', 'Rina 081234567890']);
+    expect(sections[2]?.rows).toContainEqual(['Tenaga Profesional', 'Healing119 119']);
+    expect(sections[2]?.rows).toContainEqual(['Tempat Aman', 'Rumah ibu']);
+    expect(sections[2]?.rows.slice(-2)).toEqual([
+      ['Tanggal Diperbarui', '2026-10-17'],
+      ['Jam Diperbarui', '12.41'],
+    ]);
+    expect(JSON.stringify(sections)).not.toContain(CHECK_IN_STATUS.scheduled);
     expect(JSON.stringify(sections)).not.toContain('signal');
   });
 

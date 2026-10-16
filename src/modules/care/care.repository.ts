@@ -14,11 +14,12 @@ import {
   users,
 } from '../../db/schema/schema.ts';
 import { CHECK_IN_STATUS } from '../../lib/constants/care.ts';
+import { EXPORT_ROW_LIMIT } from '../../lib/constants/export.ts';
 import type { CareSignalBody, Debt } from './care.schema.ts';
 
 type CheckInRow = { id: string; dueAt: Date };
 type CheckInHistoryRow = CheckInRow & {
-  status: string;
+  status: (typeof CHECK_IN_STATUS)[keyof typeof CHECK_IN_STATUS];
   seenAt: Date | null;
   createdAt: Date;
 };
@@ -26,8 +27,6 @@ export type SealedPlanRow = { sealed: string; updatedAt: Date };
 
 /** The most debts one list carries: far more than a health check lets a person add. */
 const DEBT_LIST_LIMIT = 50;
-/** The most check-ins one export carries. */
-const CHECK_IN_EXPORT_LIMIT = 1_000;
 
 export type CareRepository = {
   recordSignal(userId: string, signal: CareSignalBody): Promise<void>;
@@ -133,7 +132,7 @@ export function createCareRepository(client: PostgresJsDatabase = db): CareRepos
         .from(careCheckIns)
         .where(eq(careCheckIns.userId, userId))
         .orderBy(asc(careCheckIns.createdAt))
-        .limit(CHECK_IN_EXPORT_LIMIT);
+        .limit(EXPORT_ROW_LIMIT);
     },
 
     async activateDebtEmergency(userId, now) {

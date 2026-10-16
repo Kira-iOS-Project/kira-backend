@@ -5,7 +5,7 @@ import {
   TRANSACTION_SOURCE,
   TRANSACTION_TYPE,
 } from '../../../lib/constants/money.ts';
-import { exportFileName, sectionsCsv, transactionsCsv, wibTime } from '../account.csv.ts';
+import { exportFileName, sectionsCsv, transactionsCsv } from '../account.csv.ts';
 import { NOW } from './helpers.ts';
 
 describe('transactionsCsv', () => {
@@ -74,9 +74,8 @@ describe('sectionsCsv', () => {
 });
 
 describe('names and times', () => {
-  test('dates the file by the WIB day and writes the WIB clock', () => {
+  test('dates the file by the WIB day', () => {
     expect(exportFileName(new Date('2026-10-16T17:30:00.000Z'))).toBe('kira-data-2026-10-17.csv');
-    expect(wibTime(NOW)).toBe('12.41');
   });
 });
 

@@ -163,7 +163,8 @@ describe('/api/me/export', () => {
 
     expect(saved.status).toBe(200);
     expect(downloaded).toContain('Kira Peduli · Rencana Keselamatanku');
-    expect(downloaded).toContain('Rumah ibu');
+    expect(downloaded).toContain('Bagian,Isi\r\nTanda Peringatan,Susah tidur');
+    expect(downloaded).toContain('Tempat Aman,Rumah ibu');
     expect(emailed.status).toBe(202);
     expect(emailedCsv).toContain('Nasi Padang,25000,Chat');
     expect(emailedCsv).not.toContain('Rencana Keselamatanku');

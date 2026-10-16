@@ -7,7 +7,7 @@ import { env } from '../../env.ts';
 import { COMMUNITY_PLATFORM, COMMUNITY_REPORT_REASON } from '../../lib/constants/community.ts';
 import type { ExportSection } from '../../lib/export/export-section.ts';
 import { logger } from '../../lib/server/logger.ts';
-import { wibDate } from '../../lib/time/wib.ts';
+import { wibDate, wibTime } from '../../lib/time/wib.ts';
 import { CATALOG_CATEGORIES, CATALOG_GROUPS } from './community-groups.catalog.ts';
 import { CATALOG_PRODUCTS } from './community-products.catalog.ts';
 import { communityCatalogRepository } from './community-catalog.repository.ts';
@@ -84,19 +84,20 @@ export async function communityExportSections(
   const sections: ExportSection[] = [
     {
       title: 'Komunitas · Aturan yang Disetujui',
-      header: ['Tanggal', 'Versi Aturan'],
-      rows: consents.map((row) => [wibDate(row.acceptedAt), row.version]),
+      header: ['Tanggal', 'Jam', 'Versi Aturan'],
+      rows: consents.map((row) => [wibDate(row.acceptedAt), wibTime(row.acceptedAt), row.version]),
     },
     {
       title: 'Komunitas · Grup yang Dibuka',
-      header: ['Tanggal', 'Grup'],
-      rows: joins.map((row) => [wibDate(row.openedAt), row.groupName]),
+      header: ['Tanggal', 'Jam', 'Grup'],
+      rows: joins.map((row) => [wibDate(row.openedAt), wibTime(row.openedAt), row.groupName]),
     },
     {
       title: 'Komunitas · Laporan Grup',
-      header: ['Tanggal', 'Grup', 'Alasan', 'Cerita'],
+      header: ['Tanggal', 'Jam', 'Grup', 'Alasan', 'Cerita'],
       rows: reports.map((row) => [
         wibDate(row.createdAt),
+        wibTime(row.createdAt),
         row.groupName,
         REASON_LABEL[row.reason],
         row.story ?? '',

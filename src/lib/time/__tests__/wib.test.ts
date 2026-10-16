@@ -8,12 +8,20 @@ import {
   paydayPeriod,
   wibDate,
   wibStartOfDay,
+  wibTime,
 } from '../wib.ts';
 
 describe('wibDate', () => {
   test('is already the next day in Jakarta at 17:00 UTC', () => {
     expect(wibDate(new Date('2026-10-15T16:59:59Z'))).toBe('2026-10-15');
     expect(wibDate(new Date('2026-10-15T17:00:00Z'))).toBe('2026-10-16');
+  });
+});
+
+describe('wibTime', () => {
+  test('writes the WIB clock as the app does', () => {
+    expect(wibTime(new Date('2026-10-17T05:41:00.000Z'))).toBe('12.41');
+    expect(wibTime(new Date('2026-10-16T17:05:00.000Z'))).toBe('00.05');
   });
 });
 

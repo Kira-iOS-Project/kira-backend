@@ -10,7 +10,7 @@ import {
   TRANSACTION_SOURCE,
   TRANSACTION_TYPE,
 } from '../../lib/constants/money.ts';
-import { wibDate } from '../../lib/time/wib.ts';
+import { wibDate, wibTime } from '../../lib/time/wib.ts';
 import type { ExportSection } from '../../lib/export/export-section.ts';
 import type { ExportRow } from './account.repository.ts';
 
@@ -49,13 +49,6 @@ const SOURCE_LABEL: Record<ExportRow['source'], string> = {
   [TRANSACTION_SOURCE.receipt]: 'Struk',
   [TRANSACTION_SOURCE.bankImport]: 'Impor',
 };
-
-const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
-
-/** "12.41", the WIB clock time the app writes. */
-export function wibTime(instant: Date): string {
-  return new Date(instant.getTime() + WIB_OFFSET_MS).toISOString().slice(11, 16).replace(':', '.');
-}
 
 /**
  * One RFC 4180 field. A text that a spreadsheet would run as a formula (=, +, -, @) is opened with

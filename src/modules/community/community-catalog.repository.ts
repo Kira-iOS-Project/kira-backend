@@ -14,7 +14,8 @@ import {
   communityReports,
   communityRulesConsents,
 } from '../../db/schema/schema.ts';
-import { COMMUNITY_CATALOG_LOCK, COMMUNITY_LIST_LIMIT } from '../../lib/constants/community.ts';
+import { COMMUNITY_CATALOG_LOCK } from '../../lib/constants/community.ts';
+import { EXPORT_ROW_LIMIT } from '../../lib/constants/export.ts';
 import type { CatalogCategory, CatalogGroup } from './community-groups.catalog.ts';
 import type { CatalogProduct } from './community-products.catalog.ts';
 import type { ReportReason } from './community.schema.ts';
@@ -89,14 +90,14 @@ export function createCommunityCatalogRepository(
           .from(communityRulesConsents)
           .where(eq(communityRulesConsents.userId, userId))
           .orderBy(asc(communityRulesConsents.acceptedAt))
-          .limit(COMMUNITY_LIST_LIMIT),
+          .limit(EXPORT_ROW_LIMIT),
         client
           .select({ groupName: communityGroups.name, openedAt: communityGroupJoins.openedAt })
           .from(communityGroupJoins)
           .innerJoin(communityGroups, eq(communityGroups.id, communityGroupJoins.groupId))
           .where(eq(communityGroupJoins.userId, userId))
           .orderBy(desc(communityGroupJoins.openedAt))
-          .limit(COMMUNITY_LIST_LIMIT),
+          .limit(EXPORT_ROW_LIMIT),
         client
           .select({
             groupName: communityGroups.name,
@@ -108,7 +109,7 @@ export function createCommunityCatalogRepository(
           .innerJoin(communityGroups, eq(communityGroups.id, communityReports.groupId))
           .where(eq(communityReports.userId, userId))
           .orderBy(desc(communityReports.createdAt))
-          .limit(COMMUNITY_LIST_LIMIT),
+          .limit(EXPORT_ROW_LIMIT),
       ]);
       return { consents, joins, reports };
     },

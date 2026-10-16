@@ -3,14 +3,27 @@
  * and, in the download only (`ExportScope`), the safety plan opened for its own person. Crisis
  * signals are never exported.
  * Each section is `{ title, header, rows }`, which the account module writes after the
- * transactions; the words are Indonesian like the rest of the export.
+ * transactions, worded like them: Title Case Indonesian headers, WIB dates and clock times, and
+ * the labels people read instead of stored values.
  */
 
+import { CHECK_IN_STATUS_LABEL } from '../../lib/constants/care.ts';
 import type { ExportScope, ExportSection } from '../../lib/export/export-section.ts';
+import { wibDate, wibTime } from '../../lib/time/wib.ts';
 import { type CareRepository, careRepository } from './care.repository.ts';
 import { exportKey, readablePlan } from './care.safety-plan.service.ts';
 
 type ExportDeps = { repository?: CareRepository; key?: () => Promise<CryptoKey> };
+
+/** An instant as the export's two columns, Tanggal and Jam; none is two empty cells. */
+function dateAndTime(instant: Date | null): [string, string] {
+  return instant ? [wibDate(instant), wibTime(instant)] : ['', ''];
+}
+
+/** A person of the plan as one cell: the name, then the number. */
+function contact(person: { name: string; phone: string }): string {
+  return `${person.name} ${person.phone}`.trim();
+}
 
 /** The sections with something in them, in a fixed order. */
 export async function careExportSections(
@@ -29,40 +42,44 @@ export async function careExportSections(
   if (checkIns.length > 0) {
     sections.push({
       title: 'Kira Peduli · Check-in',
-      header: ['dijadwalkan', 'waktu', 'status', 'dilihat'],
+      header: [
+        'Tanggal',
+        'Jam',
+        'Tanggal Check-in',
+        'Jam Check-in',
+        'Status',
+        'Tanggal Dilihat',
+        'Jam Dilihat',
+      ],
       rows: checkIns.map((row) => [
-        row.createdAt.toISOString(),
-        row.dueAt.toISOString(),
-        row.status,
-        row.seenAt?.toISOString() ?? '',
+        ...dateAndTime(row.createdAt),
+        ...dateAndTime(row.dueAt),
+        CHECK_IN_STATUS_LABEL[row.status],
+        ...dateAndTime(row.seenAt),
       ]),
     });
   }
   if (activatedAt) {
     sections.push({
       title: 'Kira Peduli · Mode Darurat Utang',
-      header: ['aktif_sejak'],
-      rows: [[activatedAt.toISOString()]],
+      header: ['Tanggal Aktif', 'Jam Aktif'],
+      rows: [dateAndTime(activatedAt)],
     });
   }
   const opened = plan ? await readablePlan(plan, await (deps.key ?? exportKey)()) : null;
-  if (opened) {
+  if (plan && opened) {
+    const [updatedOn, updatedAt] = dateAndTime(plan.updatedAt);
     sections.push({
       title: 'Kira Peduli · Rencana Keselamatanku',
-      header: ['bagian', 'isi'],
+      header: ['Bagian', 'Isi'],
       rows: [
-        ['tanda_peringatan', opened.warningSigns],
-        ['yang_menenangkan', opened.calmingThings],
-        ...opened.people.map((person) => [
-          'orang_terdekat',
-          `${person.name} ${person.phone}`.trim(),
-        ]),
-        ...opened.professionals.map((person) => [
-          'tenaga_profesional',
-          `${person.name} ${person.phone}`.trim(),
-        ]),
-        ['tempat_aman', opened.safePlace],
-        ['diperbarui', opened.updatedAt],
+        ['Tanda Peringatan', opened.warningSigns],
+        ['Yang Menenangkan', opened.calmingThings],
+        ...opened.people.map((person) => ['Orang Terdekat', contact(person)]),
+        ...opened.professionals.map((person) => ['Tenaga Profesional', contact(person)]),
+        ['Tempat Aman', opened.safePlace],
+        ['Tanggal Diperbarui', updatedOn],
+        ['Jam Diperbarui', updatedAt],
       ],
     });
   }

@@ -10,6 +10,7 @@ import {
   COMMUNITY_REPORT_REASON,
   COMMUNITY_RULES_VERSION,
 } from '../../../lib/constants/community.ts';
+import { EXPORT_ROW_LIMIT } from '../../../lib/constants/export.ts';
 import { createFakeDb, inOrder } from '../../../test/fake-postgres.ts';
 import { CATALOG_GROUPS } from '../community-groups.catalog.ts';
 import { CATALOG_PRODUCTS } from '../community-products.catalog.ts';
@@ -126,6 +127,8 @@ describe('the catalog repository', () => {
     expect(rows.joins).toEqual([{ groupName: 'Lunas Bareng Jakarta', openedAt: NOW }]);
     expect(rows.reports).toEqual([]);
     expect(fake.queries.every((query) => query.params.includes(USER_ID))).toBe(true);
+    /** Each block holds to the export's bound, not the curated lists' short one. */
+    expect(fake.queries.every((query) => query.params.includes(EXPORT_ROW_LIMIT))).toBe(true);
   });
 });
 
@@ -157,20 +160,20 @@ describe('communityExportSections', () => {
     expect(sections).toEqual([
       {
         title: 'Komunitas · Aturan yang Disetujui',
-        header: ['Tanggal', 'Versi Aturan'],
-        rows: [['2026-10-17', COMMUNITY_RULES_VERSION]],
+        header: ['Tanggal', 'Jam', 'Versi Aturan'],
+        rows: [['2026-10-17', '10.00', COMMUNITY_RULES_VERSION]],
       },
       {
         title: 'Komunitas · Grup yang Dibuka',
-        header: ['Tanggal', 'Grup'],
-        rows: [['2026-10-17', 'Lunas Bareng Jakarta']],
+        header: ['Tanggal', 'Jam', 'Grup'],
+        rows: [['2026-10-17', '10.00', 'Lunas Bareng Jakarta']],
       },
       {
         title: 'Komunitas · Laporan Grup',
-        header: ['Tanggal', 'Grup', 'Alasan', 'Cerita'],
+        header: ['Tanggal', 'Jam', 'Grup', 'Alasan', 'Cerita'],
         rows: [
-          ['2026-10-17', 'Kripto Aman 101', 'Penipuan atau Minta Transfer', ''],
-          ['2026-10-17', 'Kripto Aman 101', 'Lainnya', 'Spam'],
+          ['2026-10-17', '10.00', 'Kripto Aman 101', 'Penipuan atau Minta Transfer', ''],
+          ['2026-10-17', '10.00', 'Kripto Aman 101', 'Lainnya', 'Spam'],
         ],
       },
     ]);

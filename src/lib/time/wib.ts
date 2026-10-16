@@ -13,6 +13,11 @@ export function wibDate(instant: Date): string {
   return new Date(instant.getTime() + WIB_OFFSET_MS).toISOString().slice(0, 10);
 }
 
+/** "12.41", the WIB clock time the app writes. */
+export function wibTime(instant: Date): string {
+  return new Date(instant.getTime() + WIB_OFFSET_MS).toISOString().slice(11, 16).replace(':', '.');
+}
+
 /** The instant a WIB calendar date begins. */
 export function wibStartOfDay(date: string): Date {
   return new Date(Date.parse(`${date}T00:00:00Z`) - WIB_OFFSET_MS);
