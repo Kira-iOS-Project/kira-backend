@@ -12,7 +12,11 @@ import {
 import { addMonthsToInstant } from '../../lib/time/instant.ts';
 import { addDays, wibDate } from '../../lib/time/wib.ts';
 import { quotaPeriod, usageOf } from '../../lib/usage/plan-usage.ts';
-import { SubscriptionNotCancellableError, SubscriptionNotFoundError } from './billing.errors.ts';
+import {
+  SubscriptionNotCancellableError,
+  SubscriptionNotFoundError,
+  SubscriptionNotPaidError,
+} from './billing.errors.ts';
 import {
   type BillingRepository,
   billingRepository,
@@ -151,6 +155,7 @@ export async function changePaymentMethod(
 ): Promise<SubscriptionResponse> {
   const { repository, now } = resolve(deps);
   const active = await activeOrThrow(repository, userId);
+  if (active.source === SUBSCRIPTION_SOURCE.scholarship) throw new SubscriptionNotPaidError();
   const row = (await repository.changePaymentMethod(active.id, paymentMethod)) ?? active;
   return present(row, userId, repository, now);
 }

@@ -1,4 +1,5 @@
 import { z } from '@hono/zod-openapi';
+import { characterCount } from '../../lib/text/characters.ts';
 import { enumValues } from '../../lib/constants/enum-values.ts';
 import {
   APPLICATION_STATUS,
@@ -8,6 +9,8 @@ import {
 
 const situationSchema = z.enum(enumValues(SCHOLARSHIP_SITUATION));
 const STORY_MAX_LENGTH = 1000;
+/** A bound on the UTF-16 units before counting: no visible character needs more. */
+const MAX_UNITS_PER_CHARACTER = 16;
 
 export const applicationSchema = z
   .object({
@@ -40,7 +43,13 @@ export const applyBodySchema = z
   .object({
     situations: z.array(situationSchema).min(1),
     /** Read by the review team only. */
-    story: z.string().max(STORY_MAX_LENGTH).optional(),
+    /** At most 1000 characters as a person counts them (iOS's String.count), not UTF-16 units. */
+    story: z
+      .string()
+      .max(STORY_MAX_LENGTH * MAX_UNITS_PER_CHARACTER)
+      .refine((story) => characterCount(story) <= STORY_MAX_LENGTH, 'too_long')
+      .openapi({ description: 'At most 1000 characters (grapheme clusters).' })
+      .optional(),
   })
   .openapi('ScholarshipApplicationRequest');
 

@@ -110,6 +110,19 @@ describe('billing routes', () => {
     expect((await res.json()).code).toBe('SUBSCRIPTION_NOT_CANCELLABLE');
   });
 
+  test('PUT /api/subscription/payment-method refuses a grant with a 409', async () => {
+    dbControl.respond = signedIn(
+      inOrder([{ ...SUBSCRIPTION, source: SUBSCRIPTION_SOURCE.scholarship }]),
+    );
+
+    const res = await call('PUT', '/api/subscription/payment-method', {
+      paymentMethod: PAYMENT_METHOD.qris,
+    });
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe('SUBSCRIPTION_NOT_PAID');
+  });
+
   test('POST /api/subscription/cancel cancels at period end', async () => {
     dbControl.respond = signedIn(
       inOrder([SUBSCRIPTION], [{ ...SUBSCRIPTION, cancelAtPeriodEnd: true }], []),

@@ -55,6 +55,7 @@ const TITLES = {
   IMPORT_ROW_UNKNOWN: 'Unknown Import Row',
   SUBSCRIPTION_NOT_FOUND: 'No Subscription',
   SUBSCRIPTION_NOT_CANCELLABLE: 'Subscription Not Cancellable',
+  SUBSCRIPTION_NOT_PAID: 'Subscription Has No Payment',
   SCHOLARSHIP_NOT_ELIGIBLE: 'Not Eligible',
   SCHOLARSHIP_APPLICATION_NOT_FOUND: 'Application Not Found',
   CARE_CHECK_IN_NOT_FOUND: 'Check-in Not Found',
