@@ -32,6 +32,14 @@ const EXPORT_ROW = {
   note: null,
 };
 
+const SAFETY_PLAN = {
+  warningSigns: 'Susah tidur',
+  calmingThings: 'Jalan pagi',
+  people: [],
+  professionals: [],
+  safePlace: 'Rumah ibu',
+};
+
 /** The profile for a select on users, the export rows for an unfiltered transactions read. */
 function byTable(query: FakeQuery): FakeRow[] {
   if (
@@ -134,6 +142,35 @@ describe('/api/me/export', () => {
 
     expect(res.status).toBe(202);
     expect(emailControl.sent[0]?.attachments).toHaveLength(1);
+  });
+
+  test('downloads the safety plan, and never emails it', async () => {
+    /** The plan is stored through its own route, so it is sealed under the app's own key. */
+    let sealed = '';
+    dbControl.respond = signedIn((query) => {
+      if (query.sql.startsWith('insert into "care_safety_plans"')) sealed = String(query.params[1]);
+      if (query.sql.includes('"care_safety_plans"')) {
+        return [{ sealed, updatedAt: EXPORT_ROW.occurredAt }];
+      }
+      return byTable(query);
+    });
+    const saved = await call('PUT', '/api/care/safety-plan', SAFETY_PLAN);
+
+    const downloaded = await (await call('GET', '/api/me/export')).text();
+    const emailed = await call('POST', '/api/me/export/email');
+    const attachment = emailControl.sent[0]?.attachments?.[0]?.content ?? '';
+    const emailedCsv = Buffer.from(attachment, 'base64').toString('utf8');
+
+    expect(saved.status).toBe(200);
+    expect(downloaded).toContain('Kira Peduli · Rencana Keselamatanku');
+    expect(downloaded).toContain('Rumah ibu');
+    expect(emailed.status).toBe(202);
+    expect(emailedCsv).toContain('Nasi Padang,25000,Chat');
+    expect(emailedCsv).not.toContain('Rencana Keselamatanku');
+    expect(emailedCsv).not.toContain('Rumah ibu');
+    expect(
+      dbControl.queries.filter((q) => q.sql.includes('from "care_safety_plans"')),
+    ).toHaveLength(1);
   });
 
   test('answers 429 ACCOUNT_EXPORT_RATE_LIMITED within ten minutes of the last one', async () => {

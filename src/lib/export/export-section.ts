@@ -9,3 +9,10 @@ export type ExportSection = {
   header: string[];
   rows: string[][];
 };
+
+/**
+ * What a module may put in the export it is asked for. The safety plan (Rencana Keselamatanku) is
+ * only in the file saved to the device (GET /me/export), never in the emailed copy: an inbox is
+ * read on other devices and by other people.
+ */
+export type ExportScope = { safetyPlan: boolean };

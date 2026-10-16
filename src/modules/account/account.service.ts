@@ -6,7 +6,7 @@
 import { CONSENT_PURPOSE, PRIVACY_POLICY_VERSION } from '../../lib/constants/consents.ts';
 import { EXPENSE_CATEGORY, INCOME_CATEGORY, TRANSACTION_TYPE } from '../../lib/constants/money.ts';
 import { type EmailMessage, sendEmail } from '../../lib/email/resend.ts';
-import type { ExportSection } from '../../lib/export/export-section.ts';
+import type { ExportScope, ExportSection } from '../../lib/export/export-section.ts';
 import { logger } from '../../lib/server/logger.ts';
 import { paydayPeriod, wibDate } from '../../lib/time/wib.ts';
 import { activePlanOf, quotaPeriod, usageOf } from '../../lib/usage/plan-usage.ts';
@@ -29,7 +29,7 @@ type AccountDeps = {
   repository?: AccountRepository;
   send?: (message: EmailMessage) => Promise<void>;
   now?: () => Date;
-  exportSections?: (userId: string) => Promise<ExportSection[]>;
+  exportSections?: (userId: string, scope: ExportScope) => Promise<ExportSection[]>;
   exportClaims?: ExportEmailClaims;
 };
 
@@ -37,9 +37,15 @@ type AccountDeps = {
 export const EXPORT_EMAIL_COOLDOWN_MS = 10 * 60_000;
 
 /** Every other module's blocks of Unduh Datamu, after the transactions in this order. */
-async function moduleExportSections(userId: string): Promise<ExportSection[]> {
-  return (await Promise.all([communityExportSections(userId), careExportSections(userId)])).flat();
+async function moduleExportSections(userId: string, scope: ExportScope): Promise<ExportSection[]> {
+  return (
+    await Promise.all([communityExportSections(userId), careExportSections(userId, scope)])
+  ).flat();
 }
+
+/** The download carries the safety plan; the emailed copy never does (ExportScope). */
+const DOWNLOAD_SCOPE: ExportScope = { safetyPlan: true };
+const EMAIL_SCOPE: ExportScope = { safetyPlan: false };
 
 function resolve(deps: AccountDeps) {
   return {
@@ -156,10 +162,10 @@ export async function updateConsents(
   return getConsents(userId, deps);
 }
 
-async function buildExport(deps: ReturnType<typeof resolve>, userId: string) {
+async function buildExport(deps: ReturnType<typeof resolve>, userId: string, scope: ExportScope) {
   const [rows, sections] = await Promise.all([
     deps.repository.listExportRows(userId),
-    deps.exportSections(userId),
+    deps.exportSections(userId, scope),
   ]);
   const csv = transactionsCsv(rows) + sectionsCsv(sections);
   return { fileName: exportFileName(deps.now), csv, rowCount: rows.length };
@@ -167,11 +173,14 @@ async function buildExport(deps: ReturnType<typeof resolve>, userId: string) {
 
 /** GET /me/export: Unduh Datamu, the CSV saved to the device (AKN-04c). */
 export async function exportData(userId: string, deps: AccountDeps = {}) {
-  const { fileName, csv } = await buildExport(resolve(deps), userId);
+  const { fileName, csv } = await buildExport(resolve(deps), userId, DOWNLOAD_SCOPE);
   return { fileName, csv };
 }
 
-/** POST /me/export/email: Unduh Datamu Dulu, the same CSV sent to the account's address (AKN-05). */
+/**
+ * POST /me/export/email: Unduh Datamu Dulu, the CSV sent to the account's address (AKN-05): the
+ * download's, without the safety plan.
+ */
 export async function emailExport(userId: string, deps: AccountDeps = {}): Promise<void> {
   const resolved = resolve(deps);
   const { repository, send, now } = resolved;
@@ -180,7 +189,7 @@ export async function emailExport(userId: string, deps: AccountDeps = {}): Promi
   if (!(await claims.claim(userId, now, since))) throw new ExportEmailRateLimitedError();
   const [profile, built] = await Promise.all([
     profileOf(repository, userId),
-    buildExport(resolved, userId),
+    buildExport(resolved, userId, EMAIL_SCOPE),
   ]);
   try {
     await send(dataExportEmail({ to: profile.email, name: profile.displayName, ...built }));

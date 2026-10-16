@@ -11,11 +11,13 @@ import {
   USER_ID,
 } from './helpers.ts';
 
+const DOWNLOAD = { safetyPlan: true };
+
 describe('careExportSections', () => {
   test('nothing to export gives no section', async () => {
-    expect(await careExportSections(USER_ID, { repository: createCareRepositoryMock() })).toEqual(
-      [],
-    );
+    expect(
+      await careExportSections(USER_ID, DOWNLOAD, { repository: createCareRepositoryMock() }),
+    ).toEqual([]);
   });
 
   test('exports check-ins, the debt emergency time and the opened plan, never signals', async () => {
@@ -30,7 +32,10 @@ describe('careExportSections', () => {
       findSafetyPlan: async () => ({ sealed, updatedAt: NOW }),
     });
 
-    const sections = await careExportSections(USER_ID, { repository, key: async () => key });
+    const sections = await careExportSections(USER_ID, DOWNLOAD, {
+      repository,
+      key: async () => key,
+    });
 
     expect(sections.map((section) => section.title)).toEqual([
       'Kira Peduli · Check-in',
@@ -49,10 +54,26 @@ describe('careExportSections', () => {
     expect(JSON.stringify(sections)).not.toContain('signal');
   });
 
+  test('never reads the plan for the emailed export', async () => {
+    let read = false;
+    const repository = createCareRepositoryMock({
+      findDebtEmergency: async () => NOW,
+      findSafetyPlan: async () => {
+        read = true;
+        return { sealed: 'v1.a.b', updatedAt: NOW };
+      },
+    });
+
+    const sections = await careExportSections(USER_ID, { safetyPlan: false }, { repository });
+
+    expect(sections.map((section) => section.title)).toEqual(['Kira Peduli · Mode Darurat Utang']);
+    expect(read).toBe(false);
+  });
+
   test('leaves out a plan that cannot be opened', async () => {
     const repository = createCareRepositoryMock({
       findSafetyPlan: async () => ({ sealed: 'v1.a.b', updatedAt: NOW }),
     });
-    expect(await careExportSections(USER_ID, { repository, key: testKey })).toEqual([]);
+    expect(await careExportSections(USER_ID, DOWNLOAD, { repository, key: testKey })).toEqual([]);
   });
 });
