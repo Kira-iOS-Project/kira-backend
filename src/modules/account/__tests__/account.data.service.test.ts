@@ -94,6 +94,27 @@ describe('the data export', () => {
     expect(csv).toContain('Nasi Padang,25000');
   });
 
+  test('writes the other modules’ blocks after the transactions', async () => {
+    const repository = createAccountRepositoryMock({ listExportRows: async () => [EXPORT_ROW] });
+    const exportSections = async (userId: string) => [
+      {
+        title: `Komunitas · ${userId}`,
+        header: ['Tanggal', 'Grup'],
+        rows: [['2026-10-16', 'A, B']],
+      },
+    ];
+
+    const { csv } = await exportData(USER_ID, { repository, now, exportSections });
+
+    expect(csv.split('\r\n').slice(-5)).toEqual([
+      '',
+      `Komunitas · ${USER_ID}`,
+      'Tanggal,Grup',
+      '2026-10-16,"A, B"',
+      '',
+    ]);
+  });
+
   test('emails the CSV as an attachment to the account address', async () => {
     const sent: EmailMessage[] = [];
     const repository = createAccountRepositoryMock({ listExportRows: async () => [EXPORT_ROW] });

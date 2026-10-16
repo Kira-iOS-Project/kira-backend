@@ -7,7 +7,16 @@
   {
     "name": "profile",
     "home": "src/lib/constants/profile.ts",
-    "allow": []
+    "allow": [
+      {
+        "path": "src/lib/constants/community.ts",
+        "reason": "'debt_free' there is the Bebas Hutang community category, a word of its own vocabulary that happens to equal the focus value."
+      },
+      {
+        "path": "src/modules/community/",
+        "reason": "'paylater' there names the illustration a community group shows, an artwork name of the app, not a debt kind."
+      }
+    ]
   },
   {
     "name": "consents",
@@ -50,7 +59,12 @@
   {
     "name": "plans",
     "home": "src/lib/constants/plans.ts",
-    "allow": []
+    "allow": [
+      {
+        "path": "src/lib/constants/community.ts",
+        "reason": "'active' there is a curated group's or product's listing status, not a subscription status."
+      }
+    ]
   },
   {
     "name": "scholarship",
@@ -61,5 +75,19 @@
     "name": "home",
     "home": "src/lib/constants/home.ts",
     "allow": []
+  },
+  {
+    "name": "community",
+    "home": "src/lib/constants/community.ts",
+    "allow": [
+      {
+        "path": "src/lib/constants/profile.ts",
+        "reason": "'debt_free' there is the person's focus (Bebas Hutang on the health check), its own vocabulary that happens to equal the community category."
+      },
+      {
+        "path": "src/lib/constants/plans.ts",
+        "reason": "'active' there is a subscription status, not a curated listing status."
+      }
+    ]
   }
 ]

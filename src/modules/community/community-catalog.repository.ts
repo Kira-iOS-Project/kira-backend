@@ -20,7 +20,7 @@ import type { CatalogProduct } from './community-products.catalog.ts';
 import type { ReportReason } from './community.schema.ts';
 
 /** A person's community rows, newest first, as Unduh Datamu lists them. */
-export type CommunityExportRows = {
+type CommunityExportRows = {
   consents: { version: string; acceptedAt: Date }[];
   joins: { groupName: string; openedAt: Date }[];
   reports: { groupName: string; reason: ReportReason; story: string | null; createdAt: Date }[];

@@ -45,6 +45,34 @@ describe('transactionsCsv', () => {
   });
 });
 
+describe('sectionsCsv', () => {
+  test('writes each block after a blank line, escaped like the transactions', () => {
+    const csv = sectionsCsv([
+      {
+        title: 'Komunitas · Laporan Grup',
+        header: ['Tanggal', 'Cerita'],
+        rows: [['2026-10-16', '=1+1']],
+      },
+      { title: 'Kosong', header: ['Tanggal'], rows: [] },
+    ]);
+
+    expect(csv.split('\r\n')).toEqual([
+      '',
+      'Komunitas · Laporan Grup',
+      'Tanggal,Cerita',
+      "2026-10-16,'=1+1",
+      '',
+      'Kosong',
+      'Tanggal',
+      '',
+    ]);
+  });
+
+  test('no block is nothing at all', () => {
+    expect(sectionsCsv([])).toBe('');
+  });
+});
+
 describe('names and times', () => {
   test('dates the file by the WIB day and writes the WIB clock', () => {
     expect(exportFileName(new Date('2026-10-16T17:30:00.000Z'))).toBe('kira-data-2026-10-17.csv');

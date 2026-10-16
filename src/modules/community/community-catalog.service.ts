@@ -53,14 +53,12 @@ const REASON_LABEL: Record<ReportReason, string> = {
 export async function syncCommunityCatalog(deps: CatalogDeps = {}) {
   const repository = deps.repository ?? communityCatalogRepository;
   const links = deps.links ?? env.COMMUNITY_LINKS_JSON;
-  const groups = CATALOG_GROUPS.map((group) => ({
-    ...group,
-    inviteUrl: inviteOf(group.id, group.platform, links),
-  }));
-  const products = CATALOG_PRODUCTS.map((product) => ({
-    ...product,
-    sellerUrl: links[product.id] ?? null,
-  }));
+  const groups = CATALOG_GROUPS.map((group) =>
+    Object.assign({}, group, { inviteUrl: inviteOf(group.id, group.platform, links) }),
+  );
+  const products = CATALOG_PRODUCTS.map((product) =>
+    Object.assign({}, product, { sellerUrl: links[product.id] ?? null }),
+  );
   await repository.syncCatalog({ categories: CATALOG_CATEGORIES, groups, products });
   return {
     categories: CATALOG_CATEGORIES.length,
