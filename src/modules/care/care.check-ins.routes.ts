@@ -18,7 +18,8 @@ export const scheduleCheckInRoute = createRoute({
   path: '/care/check-ins',
   operationId: 'scheduleCheckIn',
   summary: 'Schedule a check-in shown in Catat after 24, 48 or 72 hours',
-  description: 'Replaces any check-in still pending. Nothing is pushed: the app shows it when opened.',
+  description:
+    'Replaces any check-in still pending. Nothing is pushed: the app shows it when opened.',
   request: { body: { ...json(scheduleCheckInBodySchema), required: true } },
   responses: {
     201: { ...json(checkInSchema), description: 'The scheduled check-in' },

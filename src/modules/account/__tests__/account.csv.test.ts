@@ -5,7 +5,7 @@ import {
   TRANSACTION_SOURCE,
   TRANSACTION_TYPE,
 } from '../../../lib/constants/money.ts';
-import { exportFileName, transactionsCsv, wibTime } from '../account.csv.ts';
+import { exportFileName, sectionsCsv, transactionsCsv, wibTime } from '../account.csv.ts';
 import { NOW } from './helpers.ts';
 
 describe('transactionsCsv', () => {
@@ -49,5 +49,28 @@ describe('names and times', () => {
   test('dates the file by the WIB day and writes the WIB clock', () => {
     expect(exportFileName(new Date('2026-10-16T17:30:00.000Z'))).toBe('kira-data-2026-10-17.csv');
     expect(wibTime(NOW)).toBe('12.41');
+  });
+});
+
+describe('sectionsCsv', () => {
+  test('writes each block after a blank line: its title, its header, then its escaped rows', () => {
+    const csv = sectionsCsv([
+      {
+        title: 'Kira Peduli · Mode Darurat Utang',
+        header: ['aktif_sejak'],
+        rows: [['2026-10-17']],
+      },
+      {
+        title: 'Kira Peduli · Rencana Keselamatanku',
+        header: ['bagian', 'isi'],
+        rows: [['tempat_aman', 'Rumah, ibu']],
+      },
+    ]);
+
+    expect(csv).toBe(
+      '\r\nKira Peduli · Mode Darurat Utang\r\naktif_sejak\r\n2026-10-17\r\n' +
+        '\r\nKira Peduli · Rencana Keselamatanku\r\nbagian,isi\r\ntempat_aman,"Rumah, ibu"\r\n',
+    );
+    expect(sectionsCsv([])).toBe('');
   });
 });

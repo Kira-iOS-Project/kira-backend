@@ -28,7 +28,9 @@ function toCheckIn(row: { id: string; dueAt: Date }): CheckIn {
 
 /** The crisis contacts, with Layanan Kira Peduli once its line is configured. */
 export function listContacts(deps: CareDeps = {}): CareContacts {
-  return careContacts(deps.kiraLine ?? { phone: env.KIRA_CARE_PHONE, whatsapp: env.KIRA_CARE_WHATSAPP });
+  return careContacts(
+    deps.kiraLine ?? { phone: env.KIRA_CARE_PHONE, whatsapp: env.KIRA_CARE_WHATSAPP },
+  );
 }
 
 /** Stores that a signal happened: its level, source and time, never the words. */
@@ -43,15 +45,21 @@ export async function scheduleCheckIn(
   deps: CareDeps = {},
 ): Promise<CheckIn> {
   const { repository, now } = resolve(deps);
-  return toCheckIn(await repository.scheduleCheckIn(userId, new Date(now.getTime() + afterHours * HOUR_MS)));
+  return toCheckIn(
+    await repository.scheduleCheckIn(userId, new Date(now.getTime() + afterHours * HOUR_MS)),
+  );
 }
 
 export async function cancelCheckIn(userId: string, id: string, deps: CareDeps = {}) {
-  if (!(await resolve(deps).repository.cancelCheckIn(userId, id))) throw new CareCheckInNotFoundError();
+  if (!(await resolve(deps).repository.cancelCheckIn(userId, id)))
+    throw new CareCheckInNotFoundError();
 }
 
 /** The check-in to show when the app opens, or null. */
-export async function dueCheckIn(userId: string, deps: CareDeps = {}): Promise<{ checkIn: CheckIn | null }> {
+export async function dueCheckIn(
+  userId: string,
+  deps: CareDeps = {},
+): Promise<{ checkIn: CheckIn | null }> {
   const { repository, now } = resolve(deps);
   const row = await repository.findDueCheckIn(userId, now);
   return { checkIn: row ? toCheckIn(row) : null };

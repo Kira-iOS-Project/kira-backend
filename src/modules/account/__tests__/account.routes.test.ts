@@ -35,6 +35,7 @@ const EXPORT_ROW = {
 /** The profile for a select on users, the export rows for an unfiltered transactions read. */
 function byTable(query: FakeQuery): FakeRow[] {
   if (!query.sql.startsWith('select')) return [];
+  if (query.sql.startsWith('select "debt_emergency_mode_used_at"')) return [];
   if (query.sql.includes('from "users"')) return [createProfile()];
   if (query.sql.includes('from "transactions"') && query.params.length === 2) return [EXPORT_ROW];
   return [];
@@ -61,6 +62,17 @@ describe('GET and PATCH /api/me', () => {
 
     expect(res.status).toBe(200);
     expect(me).toMatchObject({ id: TEST_USER_ID, displayName: 'Dinda', consented: false });
+    expect(me.debtEmergencyActive).toBe(false);
+  });
+
+  test('says Mode Darurat Utang is active once it has been opened', async () => {
+    dbControl.respond = signedIn((query) =>
+      query.sql.startsWith('select') && query.sql.includes('from "users"')
+        ? [createProfile({ debtEmergencyModeUsedAt: new Date('2026-10-16T05:41:00.000Z') })]
+        : byTable(query),
+    );
+
+    expect((await (await call('GET', '/api/me')).json()).debtEmergencyActive).toBe(true);
   });
 
   test('changes the focus and answers the account', async () => {

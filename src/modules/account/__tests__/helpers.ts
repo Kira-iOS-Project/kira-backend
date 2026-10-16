@@ -18,6 +18,7 @@ export function createProfile(overrides: Partial<Profile> = {}): Profile {
     paydayEndOfMonth: false,
     hideBalances: false,
     consentedAt: null,
+    debtEmergencyModeUsedAt: null,
     ...overrides,
   };
 }

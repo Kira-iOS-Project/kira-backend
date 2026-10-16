@@ -11,9 +11,9 @@ import {
   OPEN_APPLICATION_INDEX,
   SCHOLARSHIP_SITUATION,
 } from '../../../lib/constants/scholarship.ts';
-import { inOrder } from '../../../test/fake-postgres.ts';
+import { type FakeResponder, inOrder } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
-import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
+import { AUTH_HEADER, signedIn, TEST_USER_ID } from '../../../test/session.ts';
 
 beforeEach(() => resetExternalMocks());
 
@@ -23,6 +23,14 @@ function call(method: string, path: string, body?: unknown) {
     headers: { 'Content-Type': 'application/json', ...AUTH_HEADER },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
+}
+
+/** Answers the Mode Darurat Utang lookup as opened, and hands every other statement on. */
+function usedDebtEmergency(next: FakeResponder = () => []): FakeResponder {
+  return (query) =>
+    query.sql.includes('"debt_emergency_mode_used_at" is not null')
+      ? [{ id: TEST_USER_ID }]
+      : next(query);
 }
 
 const STORED = {
@@ -40,7 +48,7 @@ describe('scholarship routes', () => {
   });
 
   test('GET /api/scholarship answers eligibility and quota', async () => {
-    dbControl.respond = signedIn();
+    dbControl.respond = signedIn(usedDebtEmergency());
 
     const res = await call('GET', '/api/scholarship');
 
@@ -54,7 +62,7 @@ describe('scholarship routes', () => {
   });
 
   test('POST /api/scholarship/applications answers 201 on the waiting list', async () => {
-    dbControl.respond = signedIn(inOrder([], [], [], [], [], [STORED]));
+    dbControl.respond = signedIn(usedDebtEmergency(inOrder([], [], [], [], [STORED])));
 
     const res = await call('POST', '/api/scholarship/applications', {
       situations: [SCHOLARSHIP_SITUATION.chasedByLender],
@@ -63,6 +71,17 @@ describe('scholarship routes', () => {
 
     expect(res.status).toBe(201);
     expect(body).toMatchObject({ status: APPLICATION_STATUS.waitlisted, decideBy: '2026-10-21' });
+  });
+
+  test('POST /api/scholarship/applications answers 409 before Mode Darurat Utang is opened', async () => {
+    dbControl.respond = signedIn();
+
+    const res = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+    });
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe('SCHOLARSHIP_NOT_ELIGIBLE');
   });
 
   test('POST /api/scholarship/applications refuses no situation, and a paid plan', async () => {

@@ -13,7 +13,7 @@ import {
 import { enumValues } from '../../lib/constants/enum-values.ts';
 import { DEBT_KIND } from '../../lib/constants/profile.ts';
 
-export const careContactSchema = z
+const careContactSchema = z
   .object({
     key: z.enum(enumValues(CARE_CONTACT_KEY)),
     name: z.string(),
@@ -65,7 +65,7 @@ export const debtEmergencySchema = z
   .object({ activatedAt: z.iso.datetime() })
   .openapi('DebtEmergency');
 
-export const debtSchema = z
+const debtSchema = z
   .object({
     id: z.uuid(),
     name: z.string(),

@@ -15,6 +15,11 @@
     "allow": []
   },
   {
+    "name": "care",
+    "home": "src/lib/constants/care.ts",
+    "allow": []
+  },
+  {
     "name": "score",
     "home": "src/lib/constants/score.ts",
     "allow": [
