@@ -118,8 +118,9 @@ describe('scholarship routes', () => {
     });
 
     /** 1200 code points: past a char_length check of 1000, within the one the schema now holds. */
-    expect([...thumbs].length).toBeGreaterThan(SCHOLARSHIP_STORY_MAX);
-    expect([...thumbs].length).toBeLessThanOrEqual(SCHOLARSHIP_STORY_MAX * MAX_UNITS_PER_CHARACTER);
+    const codePoints = Array.from(thumbs).length;
+    expect(codePoints).toBeGreaterThan(SCHOLARSHIP_STORY_MAX);
+    expect(codePoints).toBeLessThanOrEqual(SCHOLARSHIP_STORY_MAX * MAX_UNITS_PER_CHARACTER);
     expect(fits.status).toBe(201);
     expect(await over.json()).toMatchObject({ status: 422, code: 'VALIDATION_FAILED' });
   });
