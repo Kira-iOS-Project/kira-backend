@@ -39,7 +39,7 @@ describe('products', () => {
       affiliate: true,
       investmentRisk: false,
     });
-    expect(product.sellerUrl).toBe('https://lynk.id/rakaaditya/kelas-budgeting-gaji-pertama');
+    expect(product.sellerUrl).toBe('https://seller.example/kelas-budgeting-gaji-pertama');
     await expect(
       getProduct(PRODUCT_ID, { repository: createCommunityRepositoryMock() }),
     ).rejects.toThrow(CommunityProductNotFoundError);

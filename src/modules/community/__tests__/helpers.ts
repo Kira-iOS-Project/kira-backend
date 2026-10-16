@@ -37,7 +37,7 @@ export function groupRow(overrides: Partial<GroupRow> = {}): GroupRow {
     adminInitials: 'RA',
     adminVerifiedSince: '2026-03-01',
     rules: ['Tanpa Ajakan Gagal Bayar', 'Tanpa Jual-Beli Data atau Joki', 'Jaga Privasi'],
-    inviteUrl: 'https://chat.whatsapp.com/J6w5MMRXueBRbTmGiDOI4Z',
+    inviteUrl: 'https://invite.example/lunas-bareng-jakarta',
     linkCheckedOn: '2026-10-12',
     adminUnchanged: true,
     ...overrides,
@@ -61,7 +61,7 @@ export function productRow(overrides: Partial<ProductRow> = {}): ProductRow {
     contents: ['Membagi gaji ke pos kebutuhan'],
     affiliate: true,
     investmentRisk: false,
-    sellerUrl: 'https://lynk.id/rakaaditya/kelas-budgeting-gaji-pertama',
+    sellerUrl: 'https://seller.example/kelas-budgeting-gaji-pertama',
     ...overrides,
   };
 }

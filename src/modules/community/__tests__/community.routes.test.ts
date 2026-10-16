@@ -112,7 +112,7 @@ describe('community routes', () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
-      inviteUrl: 'https://chat.whatsapp.com/J6w5MMRXueBRbTmGiDOI4Z',
+      inviteUrl: 'https://invite.example/lunas-bareng-jakarta',
       platform: COMMUNITY_PLATFORM.whatsapp,
       linkCheckedOn: '2026-10-12',
     });

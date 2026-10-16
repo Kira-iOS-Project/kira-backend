@@ -32,9 +32,21 @@ async function codeOf(res: Response) {
 const at = NOW.toISOString();
 
 describe('care routes', () => {
-  test('refuse a request without a session', async () => {
-    for (const path of ['/api/care/contacts', '/api/care/safety-plan', '/api/debts']) {
-      expect((await app.request(path)).status).toBe(401);
+  test('refuse a request without a session, on every route', async () => {
+    const routes: [string, string][] = [
+      ['GET', '/api/care/contacts'],
+      ['POST', '/api/care/signals'],
+      ['PUT', '/api/care/debt-emergency'],
+      ['GET', '/api/debts'],
+      ['GET', '/api/care/safety-plan'],
+      ['PUT', '/api/care/safety-plan'],
+      ['POST', '/api/care/check-ins'],
+      ['DELETE', `/api/care/check-ins/${CHECK_IN_ID}`],
+      ['GET', '/api/care/check-ins/due'],
+      ['POST', `/api/care/check-ins/${CHECK_IN_ID}/seen`],
+    ];
+    for (const [method, path] of routes) {
+      expect((await app.request(path, { method })).status).toBe(401);
     }
   });
 

@@ -108,7 +108,7 @@ describe('joinGroup', () => {
     const join = await joinGroup(USER_ID, GROUP_ID, { repository });
 
     expect(join).toEqual({
-      inviteUrl: 'https://chat.whatsapp.com/J6w5MMRXueBRbTmGiDOI4Z',
+      inviteUrl: 'https://invite.example/lunas-bareng-jakarta',
       platform: COMMUNITY_PLATFORM.whatsapp,
       linkCheckedOn: '2026-10-12',
     });
