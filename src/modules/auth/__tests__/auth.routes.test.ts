@@ -15,7 +15,7 @@ function post(path: string, body?: unknown, headers: Record<string, string> = {}
   return app.request(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
 }
 
@@ -105,7 +105,7 @@ describe('POST /api/auth/refresh', () => {
     const res = await post('/api/auth/refresh', { refreshToken: 'live' });
 
     expect(res.status).toBe(200);
-    expect(Object.keys(await res.json()).sort()).toEqual([
+    expect(Object.keys(await res.json()).toSorted()).toEqual([
       'accessExpiresInSeconds',
       'accessToken',
       'refreshToken',
