@@ -14,6 +14,7 @@ import {
 } from '../../../lib/constants/community.ts';
 import {
   CommunityGroupNotFoundError,
+  CommunityLinkUnavailableError,
   CommunityProductNotFoundError,
   CommunityReportDuplicateError,
   CommunityRulesNotAcceptedError,
@@ -83,7 +84,7 @@ describe('getGroup', () => {
 
   test('refuses a group that is missing or suspended', async () => {
     const repository = createCommunityRepositoryMock();
-    expect(getGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
+    await expect(getGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
       CommunityGroupNotFoundError,
     );
   });
@@ -128,16 +129,29 @@ describe('joinGroup', () => {
       recordJoin: async () => void (recorded = true),
     });
 
-    expect(joinGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
+    await expect(joinGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
       CommunityRulesNotAcceptedError,
     );
-    await Promise.resolve();
+    expect(recorded).toBe(false);
+  });
+
+  test('refuses a group the team has no verified link for yet, and records nothing', async () => {
+    let recorded = false;
+    const repository = createCommunityRepositoryMock({
+      findActiveGroup: async () => groupRow({ inviteUrl: null }),
+      hasAcceptedRules: async () => true,
+      recordJoin: async () => void (recorded = true),
+    });
+
+    await expect(joinGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
+      CommunityLinkUnavailableError,
+    );
     expect(recorded).toBe(false);
   });
 
   test('refuses a missing group', async () => {
     const repository = createCommunityRepositoryMock({ hasAcceptedRules: async () => true });
-    expect(joinGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
+    await expect(joinGroup(USER_ID, GROUP_ID, { repository })).rejects.toThrow(
       CommunityGroupNotFoundError,
     );
   });
@@ -197,10 +211,10 @@ describe('reportGroup', () => {
     const missing = capture({ kind: 'missing' }).repository;
     const body = { reason: COMMUNITY_REPORT_REASON.inappropriate };
 
-    expect(reportGroup(USER_ID, GROUP_ID, body, { repository: duplicate })).rejects.toThrow(
+    await expect(reportGroup(USER_ID, GROUP_ID, body, { repository: duplicate })).rejects.toThrow(
       CommunityReportDuplicateError,
     );
-    expect(reportGroup(USER_ID, GROUP_ID, body, { repository: missing })).rejects.toThrow(
+    await expect(reportGroup(USER_ID, GROUP_ID, body, { repository: missing })).rejects.toThrow(
       CommunityGroupNotFoundError,
     );
   });
@@ -237,8 +251,8 @@ describe('products', () => {
       investmentRisk: false,
     });
     expect(product.sellerUrl).toBe('https://lynk.id/rakaaditya/kelas-budgeting-gaji-pertama');
-    expect(getProduct(PRODUCT_ID, { repository: createCommunityRepositoryMock() })).rejects.toThrow(
-      CommunityProductNotFoundError,
-    );
+    await expect(
+      getProduct(PRODUCT_ID, { repository: createCommunityRepositoryMock() }),
+    ).rejects.toThrow(CommunityProductNotFoundError);
   });
 });

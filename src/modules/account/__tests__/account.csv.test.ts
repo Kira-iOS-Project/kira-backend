@@ -5,7 +5,7 @@ import {
   TRANSACTION_SOURCE,
   TRANSACTION_TYPE,
 } from '../../../lib/constants/money.ts';
-import { exportFileName, transactionsCsv, wibTime } from '../account.csv.ts';
+import { exportFileName, sectionsCsv, transactionsCsv, wibTime } from '../account.csv.ts';
 import { NOW } from './helpers.ts';
 
 describe('transactionsCsv', () => {
@@ -42,6 +42,34 @@ describe('transactionsCsv', () => {
 
   test('an empty history is the header alone', () => {
     expect(transactionsCsv([])).toBe('﻿Tanggal,Jam,Jenis,Kategori,Nama,Nominal,Sumber,Catatan\r\n');
+  });
+});
+
+describe('sectionsCsv', () => {
+  test('writes each block after a blank line, escaped like the transactions', () => {
+    const csv = sectionsCsv([
+      {
+        title: 'Komunitas · Laporan Grup',
+        header: ['Tanggal', 'Cerita'],
+        rows: [['2026-10-16', '=1+1']],
+      },
+      { title: 'Kosong', header: ['Tanggal'], rows: [] },
+    ]);
+
+    expect(csv.split('\r\n')).toEqual([
+      '',
+      'Komunitas · Laporan Grup',
+      'Tanggal,Cerita',
+      "2026-10-16,'=1+1",
+      '',
+      'Kosong',
+      'Tanggal',
+      '',
+    ]);
+  });
+
+  test('no block is nothing at all', () => {
+    expect(sectionsCsv([])).toBe('');
   });
 });
 
