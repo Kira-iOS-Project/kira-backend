@@ -92,9 +92,13 @@ async function stateOf(repository: ScholarshipRepository, userId: string, now: D
     quotaOf(repository, now),
     repository.hasUsedDebtEmergencyMode(userId),
   ]);
+  /** An accepted application whose grant has ended is history: the person may apply again. */
+  const ended =
+    application?.status === APPLICATION_STATUS.accepted &&
+    source !== SUBSCRIPTION_SOURCE.scholarship;
   return {
     reason: ineligibleReason(source, application, usedDebtEmergency),
-    application,
+    application: ended ? null : application,
     quota,
     usedDebtEmergency,
   };
