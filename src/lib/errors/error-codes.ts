@@ -19,6 +19,39 @@ export const ERROR_CODES = [
   'INTERNAL_ERROR',
 
   'META_HEALTH_UNHEALTHY',
+
+  /** Sign-in with an email and a one-time code (ONB-05 to ONB-07b, ONB-15). */
+  'AUTH_CODE_RATE_LIMITED',
+  'AUTH_CODE_INVALID',
+  'AUTH_CODE_EXPIRED',
+  'AUTH_CODE_ATTEMPTS_EXCEEDED',
+  'AUTH_UNAUTHENTICATED',
+  'AUTH_REFRESH_INVALID',
+
+  /** Transactional email through Resend. */
+  'EMAIL_DELIVERY_FAILED',
+
+  /** The Kira Score before the health check has been answered. */
+  'SCORE_NOT_AVAILABLE',
+
+  /** Catat: chat, receipts, voice, manual entries and the transaction history. */
+  'CHAT_AI_DISABLED',
+  'CHAT_MESSAGE_NOT_FOUND',
+  'CHAT_DRAFTS_NOT_PENDING',
+  'PLAN_FEATURE_UNAVAILABLE',
+  'RECEIPT_TOTAL_MISMATCH',
+  'TRANSACTION_NOT_FOUND',
+  'TRANSACTION_BATCH_NOT_FOUND',
+  'TRANSACTION_UNDO_EXPIRED',
+  'IMPORT_NOT_FOUND',
+  'IMPORT_RANGE_TOO_LONG',
+  'IMPORT_ROW_UNKNOWN',
+
+  /** Plans, the simulated billing and Beasiswa Kira. */
+  'SUBSCRIPTION_NOT_FOUND',
+  'SUBSCRIPTION_NOT_CANCELLABLE',
+  'SCHOLARSHIP_NOT_ELIGIBLE',
+  'SCHOLARSHIP_APPLICATION_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

@@ -5,6 +5,8 @@ import {
   ForbiddenError,
   NotFoundError,
   ServiceUnavailableError,
+  TooManyRequestsError,
+  UnauthorizedError,
   ValidationError,
 } from '../errors.ts';
 
@@ -36,6 +38,8 @@ describe('DomainError subclasses', () => {
     [ForbiddenError, 403],
     [ConflictError, 409],
     [ServiceUnavailableError, 503],
+    [UnauthorizedError, 401],
+    [TooManyRequestsError, 429],
   ] as const)('%p carries status %i and its own name', (ErrorClass, status) => {
     const err = new ErrorClass('Refused.', undefined, 'HTTP_ERROR');
 

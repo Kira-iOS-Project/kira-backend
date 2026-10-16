@@ -5,6 +5,12 @@
     "version": "0.1.0"
   },
   "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
     "schemas": {
       "Health": {
         "type": "object",
@@ -57,7 +63,30 @@
               "REQUEST_TIMEOUT",
               "HTTP_ERROR",
               "INTERNAL_ERROR",
-              "META_HEALTH_UNHEALTHY"
+              "META_HEALTH_UNHEALTHY",
+              "AUTH_CODE_RATE_LIMITED",
+              "AUTH_CODE_INVALID",
+              "AUTH_CODE_EXPIRED",
+              "AUTH_CODE_ATTEMPTS_EXCEEDED",
+              "AUTH_UNAUTHENTICATED",
+              "AUTH_REFRESH_INVALID",
+              "EMAIL_DELIVERY_FAILED",
+              "SCORE_NOT_AVAILABLE",
+              "CHAT_AI_DISABLED",
+              "CHAT_MESSAGE_NOT_FOUND",
+              "CHAT_DRAFTS_NOT_PENDING",
+              "PLAN_FEATURE_UNAVAILABLE",
+              "RECEIPT_TOTAL_MISMATCH",
+              "TRANSACTION_NOT_FOUND",
+              "TRANSACTION_BATCH_NOT_FOUND",
+              "TRANSACTION_UNDO_EXPIRED",
+              "IMPORT_NOT_FOUND",
+              "IMPORT_RANGE_TOO_LONG",
+              "IMPORT_ROW_UNKNOWN",
+              "SUBSCRIPTION_NOT_FOUND",
+              "SUBSCRIPTION_NOT_CANCELLABLE",
+              "SCHOLARSHIP_NOT_ELIGIBLE",
+              "SCHOLARSHIP_APPLICATION_NOT_FOUND"
             ]
           },
           "requestId": {
@@ -77,6 +106,2771 @@
           "detail",
           "instance",
           "code"
+        ]
+      },
+      "CodeRequested": {
+        "type": "object",
+        "properties": {
+          "expiresInSeconds": {
+            "type": "integer"
+          },
+          "resendAfterSeconds": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expiresInSeconds",
+          "resendAfterSeconds"
+        ]
+      },
+      "CodeRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "format": "email",
+            "example": "dinda@email.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "SignedIn": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SessionTokens"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "needsOnboarding": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "needsOnboarding"
+            ]
+          }
+        ]
+      },
+      "SessionTokens": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "accessExpiresInSeconds": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "accessExpiresInSeconds"
+        ]
+      },
+      "CodeVerification": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "format": "email",
+            "example": "dinda@email.com"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$",
+            "example": "381427"
+          }
+        },
+        "required": [
+          "email",
+          "code"
+        ]
+      },
+      "SessionRefresh": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "Me": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "focus": {
+            "type": "string",
+            "enum": [
+              "track_spending",
+              "debt_free"
+            ]
+          },
+          "payday": {
+            "type": "object",
+            "properties": {
+              "day": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 31,
+                "default": null
+              },
+              "endOfMonth": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "endOfMonth"
+            ]
+          },
+          "hideBalances": {
+            "type": "boolean"
+          },
+          "consented": {
+            "type": "boolean"
+          },
+          "healthCheckCompleted": {
+            "type": "boolean"
+          },
+          "plan": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "enum": [
+                  "free",
+                  "young",
+                  "plus"
+                ]
+              },
+              "source": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "purchase",
+                  "scholarship",
+                  null
+                ]
+              },
+              "renewsOn": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "example": "2026-10-16"
+              }
+            },
+            "required": [
+              "id",
+              "source",
+              "renewsOn"
+            ]
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          },
+          "period": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "example": "2026-10-16"
+              },
+              "end": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "example": "2026-10-16"
+              },
+              "nextPayday": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "example": "2026-10-16"
+              },
+              "daysUntilPayday": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "start",
+              "end",
+              "nextPayday",
+              "daysUntilPayday"
+            ]
+          },
+          "lastCategories": {
+            "type": "object",
+            "properties": {
+              "expense": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "food",
+                  "coffee",
+                  "transport",
+                  "shopping",
+                  "bills",
+                  "paylater_instalment",
+                  "savings_deposit",
+                  "insurance",
+                  "entertainment",
+                  "health",
+                  "education",
+                  "household",
+                  "other_expense",
+                  null
+                ]
+              },
+              "income": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "salary",
+                  "bonus",
+                  "business",
+                  "other_income",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "expense",
+              "income"
+            ]
+          },
+          "debtAccountCount": {
+            "type": "integer"
+          },
+          "aiEnabled": {
+            "type": "boolean"
+          },
+          "weeklySummaryEnabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "focus",
+          "payday",
+          "hideBalances",
+          "consented",
+          "healthCheckCompleted",
+          "plan",
+          "usage",
+          "period",
+          "lastCategories",
+          "debtAccountCount",
+          "aiEnabled",
+          "weeklySummaryEnabled"
+        ]
+      },
+      "Usage": {
+        "type": "object",
+        "properties": {
+          "aiMessages": {
+            "$ref": "#/components/schemas/UsageMeter"
+          },
+          "receipts": {
+            "$ref": "#/components/schemas/UsageMeter"
+          },
+          "voiceSeconds": {
+            "$ref": "#/components/schemas/UsageMeter"
+          },
+          "resetsOn": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "aiMessages",
+          "receipts",
+          "voiceSeconds",
+          "resetsOn"
+        ]
+      },
+      "UsageMeter": {
+        "type": "object",
+        "properties": {
+          "used": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "used",
+          "limit"
+        ]
+      },
+      "MeUpdate": {
+        "type": "object",
+        "properties": {
+          "focus": {
+            "type": "string",
+            "enum": [
+              "track_spending",
+              "debt_free"
+            ]
+          },
+          "hideBalances": {
+            "type": "boolean"
+          },
+          "payday": {
+            "type": "object",
+            "properties": {
+              "day": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 31,
+                "default": null
+              },
+              "endOfMonth": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "endOfMonth"
+            ]
+          }
+        }
+      },
+      "Consents": {
+        "type": "object",
+        "properties": {
+          "policyVersion": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "purpose": {
+                  "type": "string",
+                  "enum": [
+                    "core",
+                    "ai_processing",
+                    "weekly_summary"
+                  ]
+                },
+                "granted": {
+                  "type": "boolean"
+                },
+                "decidedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "purpose",
+                "granted",
+                "decidedAt"
+              ]
+            }
+          }
+        },
+        "required": [
+          "policyVersion",
+          "items"
+        ]
+      },
+      "ConsentsUpdate": {
+        "type": "object",
+        "properties": {
+          "aiProcessing": {
+            "type": "boolean"
+          },
+          "weeklySummary": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "aiProcessing",
+          "weeklySummary"
+        ]
+      },
+      "AccountDeletion": {
+        "type": "object",
+        "properties": {
+          "confirmation": {
+            "type": "string",
+            "maxLength": 20,
+            "example": "HAPUS"
+          }
+        },
+        "required": [
+          "confirmation"
+        ]
+      },
+      "ScoreReport": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "integer"
+          },
+          "band": {
+            "type": "string",
+            "enum": [
+              "vulnerable",
+              "coping",
+              "healthy"
+            ]
+          },
+          "delta": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "isInitial": {
+            "type": "boolean"
+          },
+          "computedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nextCheckOn": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-25"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "group": {
+                  "type": "string",
+                  "enum": [
+                    "save_group",
+                    "debt_group",
+                    "protect_group"
+                  ]
+                },
+                "points": {
+                  "type": "integer"
+                },
+                "band": {
+                  "type": "string",
+                  "enum": [
+                    "vulnerable",
+                    "coping",
+                    "healthy"
+                  ]
+                }
+              },
+              "required": [
+                "group",
+                "points",
+                "band"
+              ]
+            }
+          },
+          "indicators": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Indicator"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step"
+            },
+            "maxItems": 3
+          },
+          "cappedByConsumerDebt": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "score",
+          "band",
+          "delta",
+          "isInitial",
+          "computedAt",
+          "nextCheckOn",
+          "groups",
+          "indicators",
+          "steps",
+          "cappedByConsumerDebt"
+        ]
+      },
+      "Indicator": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "emergency_fund",
+              "savings_ratio",
+              "instalment_ratio",
+              "consumer_debt",
+              "debt_to_asset",
+              "protection_cover"
+            ]
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "save_group",
+              "debt_group",
+              "protect_group"
+            ]
+          },
+          "points": {
+            "type": "integer"
+          },
+          "band": {
+            "type": "string",
+            "enum": [
+              "vulnerable",
+              "coping",
+              "healthy"
+            ]
+          },
+          "measure": {
+            "$ref": "#/components/schemas/IndicatorMeasure"
+          }
+        },
+        "required": [
+          "key",
+          "group",
+          "points",
+          "band",
+          "measure"
+        ]
+      },
+      "IndicatorMeasure": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "ratio": {
+                "type": "number"
+              },
+              "liquid": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "essential": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "targetMultiple": {
+                "type": "number"
+              },
+              "targetAmount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "ratio",
+              "liquid",
+              "essential",
+              "targetMultiple",
+              "targetAmount"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "percent": {
+                "type": "integer"
+              },
+              "monthlySavings": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "income": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "percent",
+              "monthlySavings",
+              "income"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "percent": {
+                "type": "integer"
+              },
+              "monthlyInstalments": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "income": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "percent",
+              "monthlyInstalments",
+              "income"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "platforms": {
+                "type": "integer"
+              },
+              "anyLate": {
+                "type": "boolean"
+              },
+              "anyOverdue": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "platforms",
+              "anyLate",
+              "anyOverdue"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "percent": {
+                "type": "integer"
+              },
+              "totalDebt": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "totalAssets": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "percent",
+              "totalDebt",
+              "totalAssets"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "health": {
+                "type": "boolean"
+              },
+              "income": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "health",
+              "income"
+            ]
+          }
+        ]
+      },
+      "Step": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pay_off_debt",
+              "seek_relief",
+              "build_emergency_fund",
+              "add_protection",
+              "raise_savings",
+              "lower_instalments",
+              "lower_debt_to_asset"
+            ]
+          },
+          "estimatedGain": {
+            "type": "integer"
+          },
+          "debtName": {
+            "type": "string"
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "currentAmount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "targetAmount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "targetMultiple": {
+            "type": "number"
+          },
+          "targetPercent": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "estimatedGain"
+        ]
+      },
+      "HealthCheck": {
+        "type": "object",
+        "properties": {
+          "netMonthlyIncome": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": null
+          },
+          "payday": {
+            "$ref": "#/components/schemas/Payday"
+          },
+          "essentialMonthlyExpenses": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": null
+          },
+          "debts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HealthCheckDebt"
+            },
+            "maxItems": 20
+          },
+          "emergencyFund": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": null
+          },
+          "monthlySavings": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": null
+          },
+          "otherAssets": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": null
+          },
+          "propertyAssets": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": null
+          },
+          "dependents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "maritalStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "single",
+              "married",
+              null
+            ],
+            "default": null
+          },
+          "protections": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "bpjs_health",
+                "bpjs_employment",
+                "life_insurance",
+                "private_health"
+              ]
+            },
+            "maxItems": 4
+          }
+        },
+        "required": [
+          "payday",
+          "debts",
+          "dependents",
+          "protections"
+        ]
+      },
+      "Payday": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 31,
+            "default": null
+          },
+          "endOfMonth": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "endOfMonth"
+        ]
+      },
+      "HealthCheckDebt": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "paylater",
+              "online_loan",
+              "credit_card",
+              "vehicle",
+              "mortgage",
+              "family_loan"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "monthlyInstalment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "remainingTenorMonths": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 600,
+            "default": null
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "remaining",
+          "monthlyInstalment"
+        ]
+      },
+      "IndicatorDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Indicator"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "ladder": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "points": {
+                      "type": "integer"
+                    },
+                    "lower": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "upper": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "amountLower": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "amountUpper": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "isCurrent": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "points",
+                    "lower",
+                    "upper",
+                    "amountLower",
+                    "amountUpper",
+                    "isCurrent"
+                  ]
+                }
+              },
+              "nextRung": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "points": {
+                    "type": "integer"
+                  },
+                  "amountNeeded": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "scoreFrom": {
+                    "type": "integer"
+                  },
+                  "scoreTo": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "points",
+                  "amountNeeded",
+                  "scoreFrom",
+                  "scoreTo"
+                ]
+              },
+              "milestones": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "label"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "ladder",
+              "nextRung",
+              "milestones"
+            ]
+          }
+        ]
+      },
+      "Home": {
+        "type": "object",
+        "properties": {
+          "variant": {
+            "type": "string",
+            "enum": [
+              "first_steps",
+              "overview",
+              "debt_plan"
+            ]
+          },
+          "today": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-16"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "hideBalances": {
+            "type": "boolean"
+          },
+          "period": {
+            "$ref": "#/components/schemas/PaydayPeriod"
+          },
+          "money": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "income": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "spent": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "remaining": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "perDay": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "spentPercent": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "income",
+              "spent",
+              "remaining",
+              "perDay",
+              "spentPercent"
+            ]
+          },
+          "step": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Step"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "stepPosition": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "index": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "index",
+              "total"
+            ]
+          },
+          "score": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "score": {
+                "type": "integer"
+              },
+              "band": {
+                "type": "string",
+                "enum": [
+                  "vulnerable",
+                  "coping",
+                  "healthy"
+                ]
+              },
+              "delta": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "isInitial": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "score",
+              "band",
+              "delta",
+              "isInitial"
+            ]
+          },
+          "weeklySummary": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "from": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-16"
+              },
+              "to": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-16"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          },
+          "checklist": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "healthCheck": {
+                "type": "boolean"
+              },
+              "firstTransaction": {
+                "type": "boolean"
+              },
+              "walletAdded": {
+                "type": "boolean"
+              },
+              "paydaySet": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "healthCheck",
+              "firstTransaction",
+              "walletAdded",
+              "paydaySet"
+            ]
+          },
+          "debtPlan": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "paidOff": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "remaining": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "percent": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "paidOff",
+              "total",
+              "remaining",
+              "percent"
+            ]
+          },
+          "microTarget": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "one_week",
+                  "one_month"
+                ]
+              },
+              "current": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "target": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "current",
+              "target"
+            ]
+          }
+        },
+        "required": [
+          "variant",
+          "today",
+          "displayName",
+          "hideBalances",
+          "period",
+          "money",
+          "step",
+          "stepPosition",
+          "score",
+          "weeklySummary",
+          "checklist",
+          "debtPlan",
+          "microTarget"
+        ]
+      },
+      "PaydayPeriod": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-16"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-16"
+          },
+          "nextPayday": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-16"
+          },
+          "daysUntilPayday": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "nextPayday",
+          "daysUntilPayday"
+        ]
+      },
+      "Plans": {
+        "type": "object",
+        "properties": {
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Plan"
+            }
+          },
+          "current": {
+            "type": "object",
+            "properties": {
+              "plan": {
+                "type": "string",
+                "enum": [
+                  "free",
+                  "young",
+                  "plus"
+                ]
+              },
+              "period": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "monthly",
+                  "yearly",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "plan",
+              "period"
+            ]
+          }
+        },
+        "required": [
+          "plans",
+          "current"
+        ]
+      },
+      "Plan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "free",
+              "young",
+              "plus"
+            ]
+          },
+          "monthlyPrice": {
+            "type": "integer"
+          },
+          "yearlyPrice": {
+            "type": "integer"
+          },
+          "yearlySaving": {
+            "type": "integer"
+          },
+          "aiMessages": {
+            "type": "integer"
+          },
+          "receipts": {
+            "type": "integer"
+          },
+          "voiceSeconds": {
+            "type": "integer"
+          },
+          "voiceAndImport": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "monthlyPrice",
+          "yearlyPrice",
+          "yearlySaving",
+          "aiMessages",
+          "receipts",
+          "voiceSeconds",
+          "voiceAndImport"
+        ]
+      },
+      "Subscription": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plan": {
+            "type": "string",
+            "enum": [
+              "free",
+              "young",
+              "plus"
+            ]
+          },
+          "period": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "yearly"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "purchase",
+              "scholarship"
+            ]
+          },
+          "price": {
+            "type": "integer"
+          },
+          "paymentMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "qris",
+              "app_store",
+              null
+            ]
+          },
+          "currentPeriodStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "renewsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "reminderOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "cancelAtPeriodEnd": {
+            "type": "boolean"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        },
+        "required": [
+          "id",
+          "plan",
+          "period",
+          "source",
+          "price",
+          "paymentMethod",
+          "currentPeriodStart",
+          "renewsOn",
+          "reminderOn",
+          "cancelAtPeriodEnd",
+          "usage"
+        ]
+      },
+      "Checkout": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "string",
+            "enum": [
+              "young",
+              "plus"
+            ]
+          },
+          "period": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "yearly"
+            ]
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "qris",
+              "app_store"
+            ]
+          }
+        },
+        "required": [
+          "plan",
+          "period",
+          "paymentMethod"
+        ]
+      },
+      "PaymentMethodChange": {
+        "type": "object",
+        "properties": {
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "qris",
+              "app_store"
+            ]
+          }
+        },
+        "required": [
+          "paymentMethod"
+        ]
+      },
+      "Invoices": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Invoice"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "Invoice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plan": {
+            "type": "string",
+            "enum": [
+              "free",
+              "young",
+              "plus"
+            ]
+          },
+          "period": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "yearly"
+            ]
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "qris",
+              "app_store"
+            ]
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "plan",
+          "period",
+          "amount",
+          "paymentMethod",
+          "periodStart",
+          "createdAt"
+        ]
+      },
+      "Gift": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "months": {
+            "type": "integer"
+          },
+          "amount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "months",
+          "amount"
+        ]
+      },
+      "GiftRequest": {
+        "type": "object",
+        "properties": {
+          "months": {
+            "type": "integer",
+            "enum": [
+              1,
+              3,
+              6
+            ]
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "qris",
+              "app_store"
+            ]
+          }
+        },
+        "required": [
+          "months",
+          "paymentMethod"
+        ]
+      },
+      "Scholarship": {
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean"
+          },
+          "ineligibleReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "has_paid_plan",
+              "has_scholarship",
+              "has_open_application",
+              null
+            ]
+          },
+          "quota": {
+            "type": "object",
+            "properties": {
+              "remaining": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "remaining",
+              "total"
+            ]
+          },
+          "application": {
+            "$ref": "#/components/schemas/ScholarshipApplication"
+          }
+        },
+        "required": [
+          "eligible",
+          "ineligibleReason",
+          "quota",
+          "application"
+        ]
+      },
+      "ScholarshipApplication": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in_review",
+              "waitlisted",
+              "accepted",
+              "withdrawn"
+            ]
+          },
+          "situations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "instalments_piling_up",
+                "chased_by_lender",
+                "income_stopped",
+                "medical_costs",
+                "other_hardship"
+              ]
+            }
+          },
+          "story": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decideBy": {
+            "type": "string",
+            "format": "date"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "grantStart": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "grantEnd": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "extensionFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "situations",
+          "story",
+          "submittedAt",
+          "decideBy",
+          "decidedAt",
+          "grantStart",
+          "grantEnd",
+          "extensionFrom"
+        ]
+      },
+      "ScholarshipApplicationRequest": {
+        "type": "object",
+        "properties": {
+          "situations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "instalments_piling_up",
+                "chased_by_lender",
+                "income_stopped",
+                "medical_costs",
+                "other_hardship"
+              ]
+            },
+            "minItems": 1
+          },
+          "story": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "situations"
+        ]
+      },
+      "ChatMessagePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "ChatMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sender": {
+            "type": "string",
+            "enum": [
+              "person",
+              "kira"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "person_text",
+              "person_receipt",
+              "drafts",
+              "manual_saved",
+              "remaining",
+              "no_drafts"
+            ]
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "replyToId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "drafts": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DraftItem"
+            }
+          },
+          "draftStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "pending",
+              "committed",
+              "discarded",
+              null
+            ]
+          },
+          "parser": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "on_device_model",
+              "slang_rules",
+              null
+            ]
+          },
+          "inputMethod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "keyboard",
+              "voice",
+              null
+            ]
+          },
+          "batchId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "transactionIds": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "committedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "itemCount": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "remaining": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "perDay": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sender",
+          "kind",
+          "body",
+          "createdAt",
+          "replyToId",
+          "drafts",
+          "draftStatus",
+          "parser",
+          "inputMethod",
+          "batchId",
+          "transactionIds",
+          "committedAt",
+          "itemCount",
+          "remaining",
+          "perDay"
+        ]
+      },
+      "DraftItem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "category": {
+            "$ref": "#/components/schemas/TransactionCategory"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "spanStart": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 10000,
+            "default": null
+          },
+          "spanEnd": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 10000,
+            "default": null
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "type",
+          "name",
+          "amount",
+          "category",
+          "occurredAt",
+          "id"
+        ]
+      },
+      "TransactionType": {
+        "type": "string",
+        "enum": [
+          "expense",
+          "income"
+        ]
+      },
+      "TransactionCategory": {
+        "type": "string",
+        "enum": [
+          "food",
+          "coffee",
+          "transport",
+          "shopping",
+          "bills",
+          "paylater_instalment",
+          "savings_deposit",
+          "insurance",
+          "entertainment",
+          "health",
+          "education",
+          "household",
+          "other_expense",
+          "salary",
+          "bonus",
+          "business",
+          "other_income"
+        ]
+      },
+      "ChatMessageSent": {
+        "type": "object",
+        "properties": {
+          "person": {
+            "$ref": "#/components/schemas/ChatMessage"
+          },
+          "reply": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChatMessage"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "quotaExhausted": {
+            "type": "boolean"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        },
+        "required": [
+          "person",
+          "reply",
+          "quotaExhausted",
+          "usage"
+        ]
+      },
+      "ChatMessageInput": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "inputMethod": {
+            "type": "string",
+            "enum": [
+              "keyboard",
+              "voice"
+            ]
+          },
+          "voiceSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 600
+          },
+          "parser": {
+            "type": "string",
+            "enum": [
+              "on_device_model",
+              "slang_rules"
+            ]
+          },
+          "drafts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DraftInput"
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "clientId",
+          "text",
+          "inputMethod",
+          "parser",
+          "drafts"
+        ]
+      },
+      "DraftInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "category": {
+            "$ref": "#/components/schemas/TransactionCategory"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "spanStart": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 10000,
+            "default": null
+          },
+          "spanEnd": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 10000,
+            "default": null
+          }
+        },
+        "required": [
+          "type",
+          "name",
+          "amount",
+          "category",
+          "occurredAt"
+        ]
+      },
+      "ReceiptInput": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storeName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "amount": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000000000000
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "amount",
+                "category"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 50
+          }
+        },
+        "required": [
+          "clientId",
+          "storeName",
+          "occurredAt",
+          "total",
+          "items"
+        ]
+      },
+      "DraftsUpdate": {
+        "type": "object",
+        "properties": {
+          "drafts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DraftEdit"
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "drafts"
+        ]
+      },
+      "DraftEdit": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "category": {
+            "$ref": "#/components/schemas/TransactionCategory"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "spanStart": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 10000,
+            "default": null
+          },
+          "spanEnd": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 10000,
+            "default": null
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "type",
+          "name",
+          "amount",
+          "category",
+          "occurredAt",
+          "id"
+        ]
+      },
+      "DraftsCommitted": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/ChatMessage"
+          },
+          "remaining": {
+            "$ref": "#/components/schemas/ChatMessage"
+          }
+        },
+        "required": [
+          "message",
+          "remaining"
+        ]
+      },
+      "ManualTransactionSaved": {
+        "type": "object",
+        "properties": {
+          "transaction": {
+            "$ref": "#/components/schemas/Transaction"
+          },
+          "message": {
+            "$ref": "#/components/schemas/ChatMessage"
+          }
+        },
+        "required": [
+          "transaction",
+          "message"
+        ]
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "category": {
+            "$ref": "#/components/schemas/TransactionCategory"
+          },
+          "name": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "chat",
+              "manual",
+              "receipt",
+              "bank_import"
+            ]
+          },
+          "sourceMessageId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "amount",
+          "category",
+          "name",
+          "occurredAt",
+          "note",
+          "source",
+          "sourceMessageId"
+        ]
+      },
+      "ManualTransactionInput": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "category": {
+            "$ref": "#/components/schemas/TransactionCategory"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 280
+          }
+        },
+        "required": [
+          "clientId",
+          "type",
+          "amount",
+          "category",
+          "name",
+          "occurredAt"
+        ]
+      },
+      "TransactionPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transaction"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "TransactionSummary": {
+        "type": "object",
+        "properties": {
+          "expense": {
+            "type": "integer"
+          },
+          "income": {
+            "type": "integer"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "expense": {
+                  "type": "integer"
+                },
+                "income": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "date",
+                "expense",
+                "income"
+              ]
+            }
+          }
+        },
+        "required": [
+          "expense",
+          "income",
+          "days"
+        ]
+      },
+      "TransactionDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Transaction"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sourceMessage": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "body": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "spanStart": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "spanEnd": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "body",
+                  "createdAt",
+                  "spanStart",
+                  "spanEnd"
+                ]
+              }
+            },
+            "required": [
+              "sourceMessage"
+            ]
+          }
+        ]
+      },
+      "TransactionUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "category": {
+            "$ref": "#/components/schemas/TransactionCategory"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 280
+          }
+        }
+      },
+      "BankImport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "dateFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "dateTo": {
+            "type": "string",
+            "format": "date"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankImportRow"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "rowCount",
+          "dateFrom",
+          "dateTo",
+          "rows"
+        ]
+      },
+      "BankImportRow": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "category": {
+            "$ref": "#/components/schemas/TransactionCategory"
+          },
+          "isDuplicate": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "description",
+          "amount",
+          "type",
+          "category",
+          "isDuplicate"
+        ]
+      },
+      "BankImportInput": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "fileSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "amount": {
+                  "type": "integer",
+                  "minimum": -10000000000000,
+                  "maximum": 10000000000000
+                },
+                "category": {
+                  "$ref": "#/components/schemas/TransactionCategory"
+                }
+              },
+              "required": [
+                "date",
+                "description",
+                "amount",
+                "category"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 3000
+          }
+        },
+        "required": [
+          "fileName",
+          "fileSize",
+          "rows"
+        ]
+      },
+      "BankImportResult": {
+        "type": "object",
+        "properties": {
+          "savedCount": {
+            "type": "integer"
+          },
+          "skippedCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "savedCount",
+          "skippedCount"
+        ]
+      },
+      "BankImportCommit": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "category": {
+                  "$ref": "#/components/schemas/TransactionCategory"
+                }
+              },
+              "required": [
+                "id",
+                "category"
+              ]
+            },
+            "maxItems": 3000
+          }
+        },
+        "required": [
+          "rows"
         ]
       }
     },
@@ -104,6 +2898,2346 @@
           },
           "503": {
             "description": "A dependency is unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/code": {
+      "post": {
+        "operationId": "requestSignInCode",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Email a sign-in code",
+        "description": "Sends a six-digit code to the address through Resend, retiring any earlier one. Answers the same whether or not the address has an account.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The code is on its way",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeRequested"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/verify": {
+      "post": {
+        "operationId": "verifySignInCode",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Sign in with the code",
+        "description": "Checks the code and opens a session, creating the account on a first sign-in.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeVerification"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignedIn"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A business rule refused the request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "operationId": "refreshSession",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Trade a refresh token for a new pair",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionRefresh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A new token pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionTokens"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/sign-out": {
+      "post": {
+        "operationId": "signOut",
+        "tags": [
+          "Auth"
+        ],
+        "summary": "End this session",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Signed out"
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getMe",
+        "summary": "The signed-in account",
+        "description": "Identity, settings, plan and quota usage, payday period and consent flags (Profil).",
+        "responses": {
+          "200": {
+            "description": "The account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateMe",
+        "summary": "Change the focus, hidden balances or payday",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The account after the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/consents": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getConsents",
+        "summary": "The consents in force",
+        "responses": {
+          "200": {
+            "description": "One decision per purpose",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consents"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateConsents",
+        "summary": "Record consent decisions",
+        "description": "Appends one row per purpose under the current privacy policy. The first call also records the core purpose and finishes onboarding.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentsUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The consents in force",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consents"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/export": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "exportData",
+        "summary": "Download every transaction as CSV",
+        "responses": {
+          "200": {
+            "description": "kira-data-YYYY-MM-DD.csv, as an attachment",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/export/email": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "emailDataExport",
+        "summary": "Email the CSV export to the account address",
+        "responses": {
+          "202": {
+            "description": "The email is on its way"
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/deletion": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteAccount",
+        "summary": "Delete the account and all its data",
+        "description": "The confirmation must read HAPUS (any case). Sends the deletion notice, then removes the account, its sessions, its subscription and every record.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountDeletion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health-check": {
+      "put": {
+        "tags": [
+          "Score"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "saveHealthCheck",
+        "summary": "Save the health check",
+        "description": "Stores the six quiz steps, replaces the debt accounts, sets the payday and returns the first Kira Score.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HealthCheck"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The Kira Score of these answers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/score": {
+      "get": {
+        "tags": [
+          "Score"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getScore",
+        "summary": "The Kira Score",
+        "description": "Six indicators, three groups, the band and up to three priority steps.",
+        "responses": {
+          "200": {
+            "description": "The current Kira Score",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/score/indicators/{key}": {
+      "get": {
+        "tags": [
+          "Score"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getScoreIndicator",
+        "summary": "One indicator in detail",
+        "description": "Its scoring ladder in rupiah, the next rung and the milestones of its ribbon.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "emergency_fund",
+                "savings_ratio",
+                "instalment_ratio",
+                "consumer_debt",
+                "debt_to_asset",
+                "protection_cover"
+              ]
+            },
+            "required": true,
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The indicator",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndicatorDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/home": {
+      "get": {
+        "operationId": "getHome",
+        "tags": [
+          "Home"
+        ],
+        "summary": "Beranda",
+        "description": "The layout to show (first steps, overview or debt plan) and its numbers: money left this payday period, the next step, the Kira Score, the checklist, the debt plan and the micro target.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Beranda",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Home"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plans": {
+      "get": {
+        "tags": [
+          "Billing"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listPlans",
+        "summary": "The plans, their prices and quotas, and the current one",
+        "responses": {
+          "200": {
+            "description": "Paket Kira",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plans"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/billing/checkout": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "checkout",
+        "summary": "Buy a plan (simulated: nothing is charged)",
+        "description": "Activates the plan now, replacing any active one, and writes an invoice.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Checkout"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The new subscription",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/subscription": {
+      "get": {
+        "tags": [
+          "Billing"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getSubscription",
+        "summary": "The active subscription and this quota period’s usage",
+        "responses": {
+          "200": {
+            "description": "Langganan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/subscription/cancel": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "cancelSubscription",
+        "summary": "Cancel at the end of the current period",
+        "responses": {
+          "200": {
+            "description": "Cancelled at period end",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/subscription/payment-method": {
+      "put": {
+        "tags": [
+          "Billing"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "changePaymentMethod",
+        "summary": "Choose how the subscription is paid",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentMethodChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated subscription",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/billing/invoices": {
+      "get": {
+        "tags": [
+          "Billing"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listInvoices",
+        "summary": "The latest 50 invoices, newest first",
+        "responses": {
+          "200": {
+            "description": "Riwayat Tagihan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoices"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/billing/gifts": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "giftMonths",
+        "summary": "Traktir Kira: buy months of Kira Plus for Beasiswa Kira (simulated)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GiftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The gift",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Gift"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scholarship": {
+      "get": {
+        "tags": [
+          "Scholarship"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getScholarship",
+        "summary": "Eligibility, this month’s quota and the current application",
+        "responses": {
+          "200": {
+            "description": "Beasiswa Kira",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Scholarship"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scholarship/applications": {
+      "post": {
+        "tags": [
+          "Scholarship"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "applyForScholarship",
+        "summary": "Apply for Beasiswa Kira (review is simulated)",
+        "description": "In review, or waitlisted when this month’s quota is used up.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScholarshipApplicationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The application",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScholarshipApplication"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/scholarship/applications/current": {
+      "delete": {
+        "tags": [
+          "Scholarship"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "withdrawScholarshipApplication",
+        "summary": "Withdraw the open application",
+        "responses": {
+          "204": {
+            "description": "Withdrawn"
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usage": {
+      "get": {
+        "operationId": "getUsage",
+        "tags": [
+          "Catat"
+        ],
+        "summary": "This period’s quota usage",
+        "description": "AI messages, receipts and voice seconds used against the plan, and the date they reset.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/messages": {
+      "get": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listChatMessages",
+        "summary": "Read the Catat chat",
+        "description": "A page of older messages by `before`, or a window centred on `around`.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "before",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "around",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 30
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages, oldest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessagePage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "sendChatMessage",
+        "summary": "Send a message with the drafts read on the device",
+        "description": "Spends one AI message (and voice seconds). When the quota is spent the message is kept and `reply` is null.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stored, with Kira’s reply",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageSent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/receipts": {
+      "post": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "sendReceipt",
+        "summary": "Send a receipt read on the device",
+        "description": "Spends one receipt; the items must add up to the total.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stored, with Kira’s reply",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageSent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A business rule refused the request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/messages/{id}/drafts": {
+      "put": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateChatDrafts",
+        "summary": "Replace a reply’s drafts before saving",
+        "description": "An empty list discards the drafts.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftsUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated reply",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/messages/{id}/commit": {
+      "post": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "commitChatDrafts",
+        "summary": "Save a reply’s drafts as transactions",
+        "description": "Answers with the saved reply and Kira’s engine-computed remaining-money message.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftsCommitted"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transactions": {
+      "post": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createTransaction",
+        "summary": "Save a manual entry (Catat Manual)",
+        "description": "Spends no quota and adds Kira’s note to the chat. Idempotent on `clientId`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualTransactionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualTransactionSaved"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listTransactions",
+        "summary": "Riwayat Transaksi, newest first",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/TransactionType"
+            },
+            "required": false,
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/TransactionCategory"
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 30
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transactions/summary": {
+      "get": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "summarizeTransactions",
+        "summary": "Totals out and in for a range of days",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": true,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": true,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The totals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transactions/batches/{batchId}": {
+      "delete": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "undoTransactionBatch",
+        "summary": "Urungkan a chat save",
+        "description": "Within 30 seconds of the save: deletes its transactions and puts the drafts back.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "batchId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The reply with its drafts pending again",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transactions/{id}": {
+      "get": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getTransaction",
+        "summary": "Detail Transaksi",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The transaction and its source",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateTransaction",
+        "summary": "Edit a transaction",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The edited transaction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteTransaction",
+        "summary": "Delete a transaction",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports": {
+      "post": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createBankImport",
+        "summary": "Keep a parsed bank statement for review (Kira Plus)",
+        "description": "At most three months per file; rows already recorded are flagged `isDuplicate`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankImportInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The rows to review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankImport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A business rule refused the request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/commit": {
+      "post": {
+        "tags": [
+          "Catat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "commitBankImport",
+        "summary": "Save the reviewed rows",
+        "description": "Atomic and idempotent: a second commit answers the first one’s counts.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankImportCommit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved and skipped counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankImportResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A business rule refused the request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {

@@ -27,13 +27,13 @@ session, and after that it stops trusting any rule in the file.
 | Section | Status | What that means here |
 |---|---|---|
 | §A Protocol | Enforced | Applies as written. Commits are `type: description`. |
-| §B Layer boundaries | Enforced | One module, `meta`, built to the full shape: routes, handler, service, repository. The oxlint import rules bind every new one; the service and handler overrides sit after the cross-module one, which used to replace them. |
+| §B Layer boundaries | Enforced | Eight modules (`meta`, `auth`, `account`, `score`, `home`, `billing`, `scholarship`, `jobs`), each routes → handler → service → repository; `jobs` has no routes, only the scheduled-job list. `home` reads `score` through its `index.ts`. The oxlint import rules bind every one; the service and handler overrides sit after the cross-module one, which used to replace them. |
 | §C Error contract | Enforced | `src/lib/errors/` is the whole contract; base `https://api-kira.serenitycode.tech/problems/`; `check:openapi` holds the spec side. |
-| §D Database | Enforced | No table yet (`src/db/schema/schema.ts` holds only the `timestamps` bundle). Migrations run at boot. |
-| §E Testing | Enforced | Unit tier at 100% per file. No integration test yet; `src/test/config.ts` is ready for the first. |
-| §F Security | Partial | Rules 22, 23 and 25 bind. Rule 24 is N/A: no Redis and no rate limiter (see below). No auth yet: every route is public, and only `/health` exists. |
+| §D Database | Enforced | Seventeen tables in four domain files under `src/db/schema/` (SSOT.md § Database), with their indexes and CHECK constraints mirroring the zod rules, in one generated migration. Migrations run at boot. |
+| §E Testing | Enforced | Unit tier at 100% per file, against the fake Postgres client (`src/test/fake-postgres.ts`) and the shared doubles in `src/test/preload.ts`. No integration test yet; `src/test/config.ts` is ready for the first. |
+| §F Security | Enforced | Rules 22 to 25 bind. Auth is email + one-time code with opaque bearer tokens (SSOT.md § Authentication); every route but `/health`, `/email/*` and `/api/auth/{code,verify,refresh}` sits behind `requireSession`. Rule 24 is satisfied by the auth module's Postgres-counted code limits. |
 | §G Code quality | Enforced | Applies as written, Rules 43 (`src/lib/constants/`), 49 (`check:comments`) and 50 (English identifiers) included. |
-| §H Query & performance | Enforced | Binds from the first query; no query exists yet beyond the health check's `SELECT 1`. |
+| §H Query & performance | Enforced | Applies as written: explicit columns, a `.limit()` on every list, keyset cursors, batched writes, and an index for every filtered column in the schema. No table is near 100k rows yet, so Rule 33 has not been exercised. |
 | §I Runtime hardening | Enforced | Pool, CORS allowlist (empty by default: the iOS app needs none), request id, body limit, timeout and secure headers are in place. |
 
 Three conventions that make this table work:
@@ -51,15 +51,38 @@ section it unblocks, turns a list of deviations into a plan.
 
 Tracked follow-up work, in the order it should happen:
 
-1. Authentication (email and a one-time code, per the product design), with a rate limit on the
-   sign-in routes before they ship. There is no Redis, by the owner's decision: a single replica
-   keeps the limit in memory or in Postgres, and Rule 24 is rewritten for that shape when it
-   lands — unblocks §F
-2. The first domain tables, each with its indexes in the same change — exercises §D and §H
+1. Catat (chat, transactions, usage, bank imports) merges from `work/b3-catat`. Until then
+   `error-codes.test.ts` fails on its eleven codes, which nothing on this branch raises — completes
+   §C
+2. The first `*.integration.test.ts`, against the dev database through the tunnel: the health-check
+   save transaction and the import commit are the first candidates — exercises §E Rule 20
+3. A rehearsed restore of the daily backup — §D
+4. If the API ever runs a second replica: move the code limits' counting and the scheduler's single
+   runner to a shape that holds across processes (an advisory lock), and set `JOBS_ENABLED=false`
+   on all but one — §F Rule 24, §I
 
 Finally, record any **known behaviour that looks like a bug and is not**. Something like a health
 endpoint reporting a failed dependency inside a 200 response is the kind of thing that gets
 "fixed" by someone who does not know it was deliberate — one sentence here prevents that.
+
+Known behaviour, deliberate:
+
+- `POST /api/auth/code` answers 202 for any address, account or not, so it never tells anyone who
+  has an account.
+- `GET /api/score`, `GET /api/score/indicators/{key}` and `GET /api/home` may write: the first read
+  in a payday period stores that period's score snapshot. That is the payday re-check, with no job.
+- `POST /api/me/deletion` deletes the account even when its notice email fails (the failure is
+  logged). A data-export email that fails answers 503, because nothing was done.
+- Checkout, gifts and the Beasiswa Kira review are simulations: no money moves, and the hourly job
+  "renews" a paid plan by writing an invoice row.
+- Without `RESEND_API_KEY` outside production, emails are logged instead of sent; the sign-in code
+  appears in the log.
+- Urungkan takes the whole batch back: a transaction of the batch edited after Simpan (within the
+  30 s window) is deleted with the rest, and its draft returns with the values it was saved with.
+- The data export (`GET /api/me/export` and its email) holds at most 50 000 transactions
+  (`EXPORT_ROW_LIMIT`), newest first. Years of typical use stay far below it.
+- Someone else can spend an address's code tries and checks (10 per 15 minutes) by guessing at it.
+  That briefly blocks its owner's sign-in; it never lets the guesser in.
 
 ---
 
@@ -88,7 +111,8 @@ endpoint reporting a failed dependency inside a 200 response is the kind of thin
 | Errors | `<module>.errors.ts` | Module-specific `DomainError` subclasses. |
 | Index | `index.ts` | Barrel — the ONLY file another module or `app.ts` may import from. |
 
-`src/modules/meta/` is the reference module, built to the full shape: copy it. A
+`src/modules/meta/` is the reference module, built to the full shape: copy it (`src/modules/auth/`
+is the fullest worked example: a middleware, an email, a transaction-heavy repository). A
 module that predates these rules and skips a layer is a deviation to record in Compliance Status,
 not a pattern to copy: **a new module gets a service, and a repository when it touches the database.**
 
@@ -225,9 +249,10 @@ to the OpenAPI spec the moment its service throws anything. Enforcement: advisor
 OpenAPI-vs-service-throws diff exists yet — flag in review).
 
 **Rule 14 — A new HTTP status needs a new base class in `src/lib/errors/errors.ts`,** not a one-off
-inline error shape. The five bases (`NotFoundError`, `ValidationError`, `ForbiddenError`,
-`ConflictError`, `ServiceUnavailableError`) cover 404/400/403/409/503; extend `DomainError`
-directly for anything else. Enforcement: advisory.
+inline error shape. The seven bases (`ValidationError`, `UnauthorizedError`, `ForbiddenError`,
+`NotFoundError`, `ConflictError`, `TooManyRequestsError`, `ServiceUnavailableError`) cover
+400/401/403/404/409/429/503; extend `DomainError` directly for anything else. Enforcement:
+advisory.
 
 ---
 
@@ -298,12 +323,19 @@ validates and re-exports environment variables. Enforcement: advisory.
 `.oxlintrc.json` `no-console: error` (exempted only in `src/env.ts` and `src/db/client/migrate.ts`,
 which run before the logger can exist).
 
-**Rule 24 — In `rate-limit.middleware.ts`, `await next()` must never sit inside the Redis
-try/catch.** Only the Redis bookkeeping is allowed to fail open; the request's own
-allow/deny decision must be resolved before `next()` runs, exactly once. See
-`.claude/anti-patterns/rate-limit-double-next.md`. Enforcement: advisory / `agent-be-hono:reviewer`.
-**N/A here:** this repo runs no Redis, by the owner's decision. Whatever store a future limiter
-uses, the same shape holds: decide allow or deny first, then call `next()` exactly once.
+**Rule 24 — A rate limit decides allow or deny first, exactly once, before any work it guards.**
+The kit's form of this rule is about Redis (`await next()` never inside the Redis try/catch; see
+`.claude/anti-patterns/rate-limit-double-next.md`). This repo runs no Redis, by the owner's decision,
+so its limits are counted in Postgres. The limiters today are the sign-in code requests and checks
+(`src/modules/auth/auth.limits.ts`, values in SSOT.md § Authentication). Each decision runs inside
+the transaction that writes, under advisory locks on the address and the network
+(`auth-codes.repository.ts`), so parallel requests cannot all pass a count read before any of them
+wrote; over a limit they answer 429 `AUTH_CODE_RATE_LIMITED` before a code is stored, an email sent
+or a code compared, and a code's 5 tries are claimed one by one with a conditional `UPDATE`. A
+future limiter, middleware or not, keeps that shape: decide first, atomically with the write, then
+call `next()` (or do the work) exactly once, and never fail open on a counting error. Enforcement:
+advisory / `agent-be-hono:reviewer`; the parallel-burst tests in
+`src/modules/auth/__tests__/auth.concurrency.test.ts`.
 
 **Rule 25 — No `.env` file or secret is ever committed.** Enforcement: a staged gitleaks scan in
 pre-commit (`scripts/check/gates.list`), then the quality gate's secret scan (gitleaks) +

@@ -53,12 +53,38 @@ const schema = z.object({
 
   /** Kept under Docker's 10 s stop grace period, so the process exits on its own terms. */
   SHUTDOWN_FORCE_EXIT_MS: z.coerce.number().int().positive().default(8_000),
+
+  /** Transactional email through Resend (the sign-in code, the renewal reminder, the Beasiswa
+     Kira result, the account-deletion notice and the data export). Required in production; in
+     development an unset key writes the email to the log instead of sending it. EMAIL_FROM names a
+     sender on a domain verified in Resend. */
+  RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(3).default('Kira <noreply@serenitycode.tech>'),
+
+  /** Signs the stored one-time codes (an HMAC, so a leaked table does not give the codes away).
+     Required in production; elsewhere an unset value becomes a random one per process. */
+  AUTH_SECRET: z.string().min(32).optional(),
+
+  /** Where the public files live, for the images inside emails (`/email/*.png`). */
+  PUBLIC_BASE_URL: z.url({ protocol: /^https?$/ }).default('https://api-kira.serenitycode.tech'),
+
+  /** The in-process scheduler (renewal reminders, subscription periods, Beasiswa Kira reviews).
+     One replica runs it; off only to run a second process beside the first. */
+  JOBS_ENABLED: flag('true'),
 });
 
 const parsed = schema
   .refine((value) => value.NODE_ENV !== 'production' || value.DATABASE_URL !== undefined, {
     message: 'DATABASE_URL is required in production',
     path: ['DATABASE_URL'],
+  })
+  .refine((value) => value.NODE_ENV !== 'production' || value.RESEND_API_KEY !== undefined, {
+    message: 'RESEND_API_KEY is required in production',
+    path: ['RESEND_API_KEY'],
+  })
+  .refine((value) => value.NODE_ENV !== 'production' || value.AUTH_SECRET !== undefined, {
+    message: 'AUTH_SECRET is required in production',
+    path: ['AUTH_SECRET'],
   })
   .safeParse(process.env);
 
@@ -67,10 +93,11 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-const { DOCS_ENABLED, ...values } = parsed.data;
+const { DOCS_ENABLED, AUTH_SECRET, ...values } = parsed.data;
 
 export const env = {
   ...values,
   DOCS_ENABLED:
     DOCS_ENABLED === undefined ? values.NODE_ENV !== 'production' : DOCS_ENABLED === 'true',
+  AUTH_SECRET: AUTH_SECRET ?? crypto.randomUUID() + crypto.randomUUID(),
 };

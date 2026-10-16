@@ -4,6 +4,7 @@
  */
 
 import { bodyLimit } from 'hono/body-limit';
+import { serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { requestId } from 'hono/request-id';
@@ -13,7 +14,17 @@ import { env } from './env.ts';
 import { handleAppError, handleNotFound } from './lib/errors/problem.ts';
 import { createRouter } from './lib/server/factory.ts';
 import { requestLogger } from './middlewares/logger.middleware.ts';
+import { accountRouter } from './modules/account/index.ts';
+import { authRouter } from './modules/auth/index.ts';
+import { bankImportRouter } from './modules/bank-import/index.ts';
+import { billingRouter } from './modules/billing/index.ts';
+import { chatRouter } from './modules/chat/index.ts';
+import { homeRouter } from './modules/home/index.ts';
 import { metaApp } from './modules/meta/index.ts';
+import { scholarshipRouter } from './modules/scholarship/index.ts';
+import { healthCheckRouter, scoreRouter } from './modules/score/index.ts';
+import { transactionRouter } from './modules/transaction/index.ts';
+import { usageRouter } from './modules/usage/index.ts';
 
 export const app = createRouter();
 
@@ -53,5 +64,24 @@ app.notFound(handleNotFound);
 
 /** ── Routes ───────────────────────────────────────────────────────────────
    The health check sits at /, outside the /api budget, so it answers whatever that budget says.
-   Feature modules mount under /api. */
+   Feature modules mount under /api. The images the emails show (src/lib/email/layout.ts) are
+   files under public/email/, served outside /api the same way. */
 app.route('/', metaApp);
+app.get('/email/*', serveStatic({ root: './public' }));
+app.route('/api/auth', authRouter);
+app.route('/api/me', accountRouter);
+app.route('/api/health-check', healthCheckRouter);
+app.route('/api/score', scoreRouter);
+app.route('/api/home', homeRouter);
+app.route('/api', billingRouter);
+app.route('/api', scholarshipRouter);
+app.route('/api/usage', usageRouter);
+app.route('/api/chat', chatRouter);
+app.route('/api/transactions', transactionRouter);
+app.route('/api/imports', bankImportRouter);
+
+/** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
+app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+});

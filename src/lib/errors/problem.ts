@@ -32,6 +32,29 @@ const TITLES = {
   HTTP_ERROR: 'Request Refused',
   INTERNAL_ERROR: 'Internal Server Error',
   META_HEALTH_UNHEALTHY: 'Service Unhealthy',
+  AUTH_CODE_RATE_LIMITED: 'Too Many Code Requests',
+  AUTH_CODE_INVALID: 'Invalid Code',
+  AUTH_CODE_EXPIRED: 'Code Expired',
+  AUTH_CODE_ATTEMPTS_EXCEEDED: 'Too Many Attempts',
+  AUTH_UNAUTHENTICATED: 'Not Signed In',
+  AUTH_REFRESH_INVALID: 'Session Ended',
+  EMAIL_DELIVERY_FAILED: 'Email Not Sent',
+  SCORE_NOT_AVAILABLE: 'Score Not Available',
+  CHAT_AI_DISABLED: 'Kira AI Is Off',
+  CHAT_MESSAGE_NOT_FOUND: 'Message Not Found',
+  CHAT_DRAFTS_NOT_PENDING: 'Drafts Already Settled',
+  PLAN_FEATURE_UNAVAILABLE: 'Not in Your Plan',
+  RECEIPT_TOTAL_MISMATCH: 'Receipt Total Mismatch',
+  TRANSACTION_NOT_FOUND: 'Transaction Not Found',
+  TRANSACTION_BATCH_NOT_FOUND: 'Batch Not Found',
+  TRANSACTION_UNDO_EXPIRED: 'Undo Window Passed',
+  IMPORT_NOT_FOUND: 'Import Not Found',
+  IMPORT_RANGE_TOO_LONG: 'Import Range Too Long',
+  IMPORT_ROW_UNKNOWN: 'Unknown Import Row',
+  SUBSCRIPTION_NOT_FOUND: 'No Subscription',
+  SUBSCRIPTION_NOT_CANCELLABLE: 'Subscription Not Cancellable',
+  SCHOLARSHIP_NOT_ELIGIBLE: 'Not Eligible',
+  SCHOLARSHIP_APPLICATION_NOT_FOUND: 'Application Not Found',
 } as const satisfies Record<ErrorCode, string>;
 
 /** An `HTTPException` comes from middleware that knows only a status (the body limit, the
@@ -160,11 +183,13 @@ const problemSchema = z
 
 const DESCRIPTIONS: Readonly<Record<number, string>> = {
   400: 'A business rule refused the request',
+  401: 'No valid session',
   403: 'Action not allowed',
   404: 'Resource not found',
   409: 'Resource conflict',
   413: 'Request body exceeds the size limit',
   422: 'Request schema validation failed',
+  429: 'Too many requests',
   503: 'A dependency is unavailable',
   504: 'The request exceeded its time budget',
 };
