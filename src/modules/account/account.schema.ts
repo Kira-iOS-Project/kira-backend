@@ -18,7 +18,7 @@ const instant = z.iso.datetime();
 /** Inline rather than a named component: the health check (Score) sends the same shape. */
 const paydaySchema = z.object({
   /** A day of the month, or null while it has not been answered. */
-  day: z.number().int().min(1).max(31).nullable(),
+  day: z.number().int().min(1).max(31).nullable().default(null),
   endOfMonth: z.boolean(),
 });
 

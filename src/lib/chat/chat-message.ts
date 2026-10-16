@@ -31,8 +31,8 @@ const draftFields = z.object({
   category: transactionCategorySchema,
   occurredAt: z.iso.datetime({ offset: true }),
   /** The characters of the source text this item was read from, for the highlighted quote. */
-  spanStart: z.number().int().min(0).max(10_000).nullable(),
-  spanEnd: z.number().int().min(0).max(10_000).nullable(),
+  spanStart: z.number().int().min(0).max(10_000).nullable().default(null),
+  spanEnd: z.number().int().min(0).max(10_000).nullable().default(null),
 });
 
 const fitsType = (draft: z.infer<typeof draftFields>) =>

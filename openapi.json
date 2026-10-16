@@ -235,14 +235,14 @@
                   "null"
                 ],
                 "minimum": 1,
-                "maximum": 31
+                "maximum": 31,
+                "default": null
               },
               "endOfMonth": {
                 "type": "boolean"
               }
             },
             "required": [
-              "day",
               "endOfMonth"
             ]
           },
@@ -457,14 +457,14 @@
                   "null"
                 ],
                 "minimum": 1,
-                "maximum": 31
+                "maximum": 31,
+                "default": null
               },
               "endOfMonth": {
                 "type": "boolean"
               }
             },
             "required": [
-              "day",
               "endOfMonth"
             ]
           }
@@ -877,7 +877,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 9007199254740991
+            "maximum": 9007199254740991,
+            "default": null
           },
           "payday": {
             "$ref": "#/components/schemas/Payday"
@@ -888,7 +889,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 9007199254740991
+            "maximum": 9007199254740991,
+            "default": null
           },
           "debts": {
             "type": "array",
@@ -903,7 +905,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 9007199254740991
+            "maximum": 9007199254740991,
+            "default": null
           },
           "monthlySavings": {
             "type": [
@@ -911,7 +914,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 9007199254740991
+            "maximum": 9007199254740991,
+            "default": null
           },
           "otherAssets": {
             "type": [
@@ -919,7 +923,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 9007199254740991
+            "maximum": 9007199254740991,
+            "default": null
           },
           "propertyAssets": {
             "type": [
@@ -927,7 +932,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 9007199254740991
+            "maximum": 9007199254740991,
+            "default": null
           },
           "dependents": {
             "type": "integer",
@@ -943,7 +949,8 @@
               "single",
               "married",
               null
-            ]
+            ],
+            "default": null
           },
           "protections": {
             "type": "array",
@@ -960,16 +967,9 @@
           }
         },
         "required": [
-          "netMonthlyIncome",
           "payday",
-          "essentialMonthlyExpenses",
           "debts",
-          "emergencyFund",
-          "monthlySavings",
-          "otherAssets",
-          "propertyAssets",
           "dependents",
-          "maritalStatus",
           "protections"
         ]
       },
@@ -982,14 +982,14 @@
               "null"
             ],
             "minimum": 1,
-            "maximum": 31
+            "maximum": 31,
+            "default": null
           },
           "endOfMonth": {
             "type": "boolean"
           }
         },
         "required": [
-          "day",
           "endOfMonth"
         ]
       },
@@ -1028,15 +1028,15 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 600
+            "maximum": 600,
+            "default": null
           }
         },
         "required": [
           "kind",
           "name",
           "remaining",
-          "monthlyInstalment",
-          "remainingTenorMonths"
+          "monthlyInstalment"
         ]
       },
       "IndicatorDetail": {
@@ -2105,7 +2105,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 10000
+            "maximum": 10000,
+            "default": null
           },
           "spanEnd": {
             "type": [
@@ -2113,7 +2114,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 10000
+            "maximum": 10000,
+            "default": null
           },
           "id": {
             "type": "string",
@@ -2126,8 +2128,6 @@
           "amount",
           "category",
           "occurredAt",
-          "spanStart",
-          "spanEnd",
           "id"
         ]
       },
@@ -2269,7 +2269,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 10000
+            "maximum": 10000,
+            "default": null
           },
           "spanEnd": {
             "type": [
@@ -2277,7 +2278,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 10000
+            "maximum": 10000,
+            "default": null
           }
         },
         "required": [
@@ -2285,9 +2287,7 @@
           "name",
           "amount",
           "category",
-          "occurredAt",
-          "spanStart",
-          "spanEnd"
+          "occurredAt"
         ]
       },
       "ReceiptInput": {
@@ -2407,7 +2407,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 10000
+            "maximum": 10000,
+            "default": null
           },
           "spanEnd": {
             "type": [
@@ -2415,7 +2416,8 @@
               "null"
             ],
             "minimum": 0,
-            "maximum": 10000
+            "maximum": 10000,
+            "default": null
           },
           "id": {
             "type": "string",
@@ -2428,8 +2430,6 @@
           "amount",
           "category",
           "occurredAt",
-          "spanStart",
-          "spanEnd",
           "id"
         ]
       },

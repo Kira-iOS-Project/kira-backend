@@ -4,11 +4,15 @@ import { DEBT_KIND, MARITAL_STATUS, PROTECTION } from '../../lib/constants/profi
 import { INDICATOR, INDICATOR_GROUP, SCORE_BAND, STEP_KIND } from '../../lib/constants/score.ts';
 
 const rupiah = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
-const optionalRupiah = rupiah.nullable();
+/** A skipped answer: the app leaves the key out, which reads as null. */
+const optionalRupiah = rupiah.nullable().default(null);
 const date = z.iso.date().openapi({ example: '2026-10-25' });
 
 const paydaySchema = z
-  .object({ day: z.number().int().min(1).max(31).nullable(), endOfMonth: z.boolean() })
+  .object({
+    day: z.number().int().min(1).max(31).nullable().default(null),
+    endOfMonth: z.boolean(),
+  })
   .openapi('Payday');
 
 const debtSchema = z
@@ -17,7 +21,7 @@ const debtSchema = z
     name: z.string().trim().min(1).max(60),
     remaining: rupiah,
     monthlyInstalment: rupiah,
-    remainingTenorMonths: z.number().int().min(0).max(600).nullable(),
+    remainingTenorMonths: z.number().int().min(0).max(600).nullable().default(null),
   })
   .openapi('HealthCheckDebt');
 
@@ -34,7 +38,7 @@ export const healthCheckBodySchema = z
     propertyAssets: optionalRupiah,
     /** 3 stands for "3 Orang atau Lebih". */
     dependents: z.number().int().min(0).max(3),
-    maritalStatus: z.enum(enumValues(MARITAL_STATUS)).nullable(),
+    maritalStatus: z.enum(enumValues(MARITAL_STATUS)).nullable().default(null),
     protections: z.array(z.enum(enumValues(PROTECTION))).max(4),
   })
   .openapi('HealthCheck');
