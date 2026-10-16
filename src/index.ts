@@ -12,6 +12,7 @@ import { logger } from './lib/server/logger.ts';
 import { mountApiDocs } from './lib/server/openapi.ts';
 import { createScheduler } from './lib/server/scheduler.ts';
 import { createShutdown } from './lib/server/shutdown.ts';
+import { syncCommunityCatalog } from './modules/community/index.ts';
 import { scheduledJobs } from './modules/jobs/index.ts';
 
 if (env.DATABASE_URL === undefined) {
@@ -22,6 +23,9 @@ if (env.DATABASE_URL === undefined) {
 /** The schema the code expects exists before the first request: a failed migration stops the
    boot, and the platform keeps the previous container serving. */
 logger.info({ migrations: await runMigrations(env.DATABASE_URL) }, 'Migrations checked');
+
+/** The groups and products the Kira team curates, written from the code (no admin UI yet). */
+logger.info({ community: await syncCommunityCatalog() }, 'Community catalog synced');
 
 mountApiDocs(app, env.DOCS_ENABLED);
 

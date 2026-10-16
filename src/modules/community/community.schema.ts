@@ -117,7 +117,8 @@ export const productDetailSchema = productSummarySchema
     affiliate: z.boolean(),
     /** An investment product: the extra risk warning shows. */
     investmentRisk: z.boolean(),
-    sellerUrl: z.url(),
+    /** Null while the team checks the seller's page: Buka Halaman Penjual is off. */
+    sellerUrl: z.url().nullable(),
   })
   .openapi('CommunityProduct');
 

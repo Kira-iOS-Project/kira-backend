@@ -6,10 +6,12 @@
 import { CONSENT_PURPOSE, PRIVACY_POLICY_VERSION } from '../../lib/constants/consents.ts';
 import { EXPENSE_CATEGORY, INCOME_CATEGORY, TRANSACTION_TYPE } from '../../lib/constants/money.ts';
 import { type EmailMessage, sendEmail } from '../../lib/email/resend.ts';
+import type { ExportSection } from '../../lib/export/export-section.ts';
 import { logger } from '../../lib/server/logger.ts';
 import { paydayPeriod, wibDate } from '../../lib/time/wib.ts';
 import { activePlanOf, quotaPeriod, usageOf } from '../../lib/usage/plan-usage.ts';
-import { exportFileName, transactionsCsv } from './account.csv.ts';
+import { communityExportSections } from '../community/index.ts';
+import { exportFileName, sectionsCsv, transactionsCsv } from './account.csv.ts';
 import { accountDeletedEmail, dataExportEmail } from './account.email.ts';
 import { ExportEmailFailedError } from './account.errors.ts';
 import {
@@ -24,13 +26,21 @@ type AccountDeps = {
   repository?: AccountRepository;
   send?: (message: EmailMessage) => Promise<void>;
   now?: () => Date;
+  exportSections?: (userId: string) => Promise<ExportSection[]>;
 };
+
+/** Every other module's blocks of Unduh Datamu, after the transactions in this order. */
+async function moduleExportSections(userId: string): Promise<ExportSection[]> {
+  const parts = await Promise.all([communityExportSections(userId)]);
+  return parts.flat();
+}
 
 function resolve(deps: AccountDeps) {
   return {
     repository: deps.repository ?? accountRepository,
     send: deps.send ?? sendEmail,
     now: deps.now?.() ?? new Date(),
+    exportSections: deps.exportSections ?? moduleExportSections,
   };
 }
 
@@ -139,24 +149,28 @@ export async function updateConsents(
   return getConsents(userId, deps);
 }
 
-async function buildExport(repository: AccountRepository, userId: string, now: Date) {
-  const rows = await repository.listExportRows(userId);
-  return { fileName: exportFileName(now), csv: transactionsCsv(rows), rowCount: rows.length };
+async function buildExport(deps: ReturnType<typeof resolve>, userId: string) {
+  const [rows, sections] = await Promise.all([
+    deps.repository.listExportRows(userId),
+    deps.exportSections(userId),
+  ]);
+  const csv = transactionsCsv(rows) + sectionsCsv(sections);
+  return { fileName: exportFileName(deps.now), csv, rowCount: rows.length };
 }
 
 /** GET /me/export: Unduh Datamu, the CSV saved to the device (AKN-04c). */
 export async function exportData(userId: string, deps: AccountDeps = {}) {
-  const { repository, now } = resolve(deps);
-  const { fileName, csv } = await buildExport(repository, userId, now);
+  const { fileName, csv } = await buildExport(resolve(deps), userId);
   return { fileName, csv };
 }
 
 /** POST /me/export/email: Unduh Datamu Dulu, the same CSV sent to the account's address (AKN-05). */
 export async function emailExport(userId: string, deps: AccountDeps = {}): Promise<void> {
-  const { repository, send, now } = resolve(deps);
+  const resolved = resolve(deps);
+  const { repository, send } = resolved;
   const [profile, built] = await Promise.all([
     profileOf(repository, userId),
-    buildExport(repository, userId, now),
+    buildExport(resolved, userId),
   ]);
   try {
     await send(dataExportEmail({ to: profile.email, name: profile.displayName, ...built }));

@@ -76,6 +76,23 @@ const schema = z.object({
   /** The in-process scheduler (renewal reminders, subscription periods, Beasiswa Kira reviews).
      One replica runs it; off only to run a second process beside the first. */
   JOBS_ENABLED: flag('true'),
+
+  /** The verified links of the curated community groups and Etalase products (KOM-02, KOM-07): a
+     JSON object from a group's or a product's id to its https link, set by the curation team and
+     written at boot. Without one, a group answers Gabung Grup with COMMUNITY_LINK_UNAVAILABLE and
+     a product has no seller page. */
+  COMMUNITY_LINKS_JSON: z
+    .string()
+    .default('{}')
+    .transform((value, context) => {
+      try {
+        return JSON.parse(value) as unknown;
+      } catch {
+        context.addIssue({ code: 'custom', message: 'COMMUNITY_LINKS_JSON must be a JSON object' });
+        return z.NEVER;
+      }
+    })
+    .pipe(z.record(z.uuid(), z.url({ protocol: /^https$/ }))),
 });
 
 const parsed = schema

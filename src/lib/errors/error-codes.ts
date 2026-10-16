@@ -55,6 +55,7 @@ export const ERROR_CODES = [
 
   /** Terhubung: community groups, their rules and reports, and Etalase. */
   'COMMUNITY_GROUP_NOT_FOUND',
+  'COMMUNITY_LINK_UNAVAILABLE',
   'COMMUNITY_PRODUCT_NOT_FOUND',
   'COMMUNITY_REPORT_DUPLICATE',
   'COMMUNITY_RULES_NOT_ACCEPTED',
