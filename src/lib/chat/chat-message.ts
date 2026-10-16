@@ -73,6 +73,7 @@ export const chatMessageSchema = z
 
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
 export type DraftInput = z.infer<typeof draftInputSchema>;
+export type DraftItem = z.infer<typeof draftItemSchema>;
 
 /** The columns of a `chat_messages` row a message is built from. */
 export type MessageRow = {
