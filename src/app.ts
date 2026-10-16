@@ -16,6 +16,7 @@ import { requestLogger } from './middlewares/logger.middleware.ts';
 import { authRouter } from './modules/auth/index.ts';
 import { chatRouter } from './modules/chat/index.ts';
 import { metaApp } from './modules/meta/index.ts';
+import { transactionRouter } from './modules/transaction/index.ts';
 import { usageRouter } from './modules/usage/index.ts';
 
 export const app = createRouter();
@@ -61,6 +62,7 @@ app.route('/', metaApp);
 app.route('/api/auth', authRouter);
 app.route('/api/usage', usageRouter);
 app.route('/api/chat', chatRouter);
+app.route('/api/transactions', transactionRouter);
 
 /** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */
 app.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
