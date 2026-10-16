@@ -83,7 +83,7 @@ export type CommunityRepository = {
   recordJoin(userId: string, groupId: string): Promise<void>;
   /**
    * Files the report unless the person has one open on the group, then takes the group down when
-   * `threshold` different people reported it since `since`.
+   * `threshold` different people have an open report on it since `since`.
    */
   fileReport(input: {
     userId: string;
@@ -179,11 +179,19 @@ export function createCommunityRepository(client: PostgresJsDatabase = db): Comm
           .insert(communityReports)
           .values({ groupId, userId, reason, story })
           .returning({ id: communityReports.id });
+        /**
+         * Only open reports count: a group the team reviewed and restored is not taken down again
+         * by the reports it already answered.
+         */
         const [recent] = await tx
           .select({ reporters: countDistinct(communityReports.userId) })
           .from(communityReports)
           .where(
-            and(eq(communityReports.groupId, groupId), gte(communityReports.createdAt, since)),
+            and(
+              eq(communityReports.groupId, groupId),
+              gte(communityReports.createdAt, since),
+              eq(communityReports.status, COMMUNITY_REPORT_STATUS.open),
+            ),
           );
         const suspended = (recent?.reporters ?? 0) >= threshold;
         if (suspended) {
