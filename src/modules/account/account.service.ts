@@ -14,7 +14,8 @@ import { careExportSections } from '../care/index.ts';
 import { communityExportSections } from '../community/index.ts';
 import { exportFileName, sectionsCsv, transactionsCsv } from './account.csv.ts';
 import { accountDeletedEmail, dataExportEmail } from './account.email.ts';
-import { ExportEmailFailedError } from './account.errors.ts';
+import { type ExportEmailClaims, exportEmailClaims } from './account-export.repository.ts';
+import { ExportEmailFailedError, ExportEmailRateLimitedError } from './account.errors.ts';
 import {
   type AccountRepository,
   accountRepository,
@@ -22,13 +23,18 @@ import {
   type Profile,
 } from './account.repository.ts';
 import type { Consents, ConsentsUpdate, Me, MeUpdate } from './account.schema.ts';
+import { UnauthenticatedError } from '../auth/index.ts';
 
 type AccountDeps = {
   repository?: AccountRepository;
   send?: (message: EmailMessage) => Promise<void>;
   now?: () => Date;
   exportSections?: (userId: string) => Promise<ExportSection[]>;
+  exportClaims?: ExportEmailClaims;
 };
+
+/** One emailed export every ten minutes. */
+export const EXPORT_EMAIL_COOLDOWN_MS = 10 * 60_000;
 
 /** Every other module's blocks of Unduh Datamu, after the transactions in this order. */
 async function moduleExportSections(userId: string): Promise<ExportSection[]> {
@@ -47,7 +53,8 @@ function resolve(deps: AccountDeps) {
 /** A signed-in session always has its account: the row and its sessions go together (cascade). */
 async function profileOf(repository: AccountRepository, userId: string): Promise<Profile> {
   const profile = await repository.findProfile(userId);
-  if (!profile) throw new Error('The session has no account');
+  /** The account was deleted while this request was in flight: its session is gone too. */
+  if (!profile) throw new UnauthenticatedError('account deleted');
   return profile;
 }
 
@@ -167,7 +174,10 @@ export async function exportData(userId: string, deps: AccountDeps = {}) {
 /** POST /me/export/email: Unduh Datamu Dulu, the same CSV sent to the account's address (AKN-05). */
 export async function emailExport(userId: string, deps: AccountDeps = {}): Promise<void> {
   const resolved = resolve(deps);
-  const { repository, send } = resolved;
+  const { repository, send, now } = resolved;
+  const claims = deps.exportClaims ?? exportEmailClaims;
+  const since = new Date(now.getTime() - EXPORT_EMAIL_COOLDOWN_MS);
+  if (!(await claims.claim(userId, now, since))) throw new ExportEmailRateLimitedError();
   const [profile, built] = await Promise.all([
     profileOf(repository, userId),
     buildExport(resolved, userId),
@@ -176,24 +186,28 @@ export async function emailExport(userId: string, deps: AccountDeps = {}): Promi
     await send(dataExportEmail({ to: profile.email, name: profile.displayName, ...built }));
   } catch (err) {
     logger.error({ err }, 'Data export email failed');
+    await claims.release(userId, now);
     throw new ExportEmailFailedError('data export');
   }
 }
 
 /**
- * POST /me/deletion: Hapus Permanen (AKN-05). The notice goes first, while the address is still
- * known; a failed email is logged and never keeps an account someone asked to delete. Deleting an
- * account that is already gone does nothing, so a retry after a lost answer (AKN-05c) is safe.
+ * POST /me/deletion: Hapus Permanen (AKN-05). The address is read first, the account is deleted,
+ * and the notice goes out after the answer without being awaited: a slow email can no longer turn
+ * a deletion that happened into a timeout the app reads as "Datamu masih utuh", and a failed one is
+ * logged. Deleting an account that is already gone does nothing, so a retry (AKN-05c) is safe.
  */
 export async function deleteAccount(userId: string, deps: AccountDeps = {}): Promise<void> {
   const { repository, send, now } = resolve(deps);
   const profile = await repository.findProfile(userId);
-  if (profile) {
-    try {
-      await send(accountDeletedEmail({ to: profile.email, name: profile.displayName, now }));
-    } catch (err) {
-      logger.error({ err }, 'Account deletion email failed; deleting anyway');
-    }
-  }
   await repository.deleteUser(userId);
+  if (!profile) return;
+  const notice = accountDeletedEmail({ to: profile.email, name: profile.displayName, now });
+  void (async () => {
+    try {
+      await send(notice);
+    } catch (err) {
+      logger.error({ err }, 'Account deletion email failed after the deletion');
+    }
+  })();
 }

@@ -84,6 +84,24 @@ describe('scholarship routes', () => {
     expect((await res.json()).code).toBe('SCHOLARSHIP_DEBT_EMERGENCY_REQUIRED');
   });
 
+  test('POST /api/scholarship/applications counts the story in characters, as the app does', async () => {
+    dbControl.respond = signedIn(usedDebtEmergency(inOrder([], [], [], [], [STORED])));
+    const family = '👨‍👩‍👧';
+
+    const fits = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+      story: family.repeat(1000),
+    });
+    const over = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+      story: family.repeat(1001),
+    });
+
+    expect(fits.status).toBe(201);
+    expect(over.status).toBe(422);
+    expect((await over.json()).code).toBe('VALIDATION_FAILED');
+  });
+
   test('POST /api/scholarship/applications refuses no situation, and a paid plan', async () => {
     dbControl.respond = signedIn(inOrder([{ source: SUBSCRIPTION_SOURCE.purchase }]));
 

@@ -40,6 +40,8 @@ export const users = pgTable(
     consentedAt: moment('consented_at'),
     /** Set by Mode Darurat Utang (PED-07) when it lands; Beasiswa Kira reads it. */
     debtEmergencyModeUsedAt: moment('debt_emergency_mode_used_at'),
+    /** The last Unduh Datamu Dulu email: one may go every ten minutes (AKN-05). */
+    exportEmailedAt: moment('export_emailed_at'),
     ...timestamps,
   },
   (table) => [

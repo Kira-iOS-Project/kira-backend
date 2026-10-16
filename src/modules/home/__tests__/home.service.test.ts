@@ -164,7 +164,10 @@ describe('getHome', () => {
     expect(home).toMatchObject({ score: null, step: null, stepPosition: null });
   });
 
-  test('fails loudly when the signed-in account has no row', async () => {
-    await expect(getHome('user-1', deps({ findAccount: async () => null }))).rejects.toThrow();
+  test('answers 401 AUTH_UNAUTHENTICATED when the account was deleted mid-request', async () => {
+    await expect(getHome('user-1', deps({ findAccount: async () => null }))).rejects.toMatchObject({
+      statusCode: 401,
+      code: 'AUTH_UNAUTHENTICATED',
+    });
   });
 });

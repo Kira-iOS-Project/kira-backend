@@ -6,8 +6,9 @@ import {
   TRANSACTION_TYPE,
 } from '../../../lib/constants/money.ts';
 import type { EmailMessage } from '../../../lib/email/resend.ts';
-import { ExportEmailFailedError } from '../account.errors.ts';
+import { ExportEmailFailedError, ExportEmailRateLimitedError } from '../account.errors.ts';
 import {
+  EXPORT_EMAIL_COOLDOWN_MS,
   deleteAccount,
   emailExport,
   exportData,
@@ -123,6 +124,7 @@ describe('the data export', () => {
       repository,
       now,
       send: async (message) => void sent.push(message),
+      exportClaims: claims(),
     });
 
     expect(sent).toHaveLength(1);
@@ -135,14 +137,49 @@ describe('the data export', () => {
       throw new Error('Resend answered 500');
     };
 
-    expect(
-      emailExport(USER_ID, { repository: createAccountRepositoryMock(), now, send }),
+    const released: Date[] = [];
+    const exportClaims = {
+      ...claims(),
+      release: async (_userId: string, at: Date) => void released.push(at),
+    };
+
+    await expect(
+      emailExport(USER_ID, { repository: createAccountRepositoryMock(), now, send, exportClaims }),
     ).rejects.toBeInstanceOf(ExportEmailFailedError);
+    expect(released).toEqual([NOW]);
+  });
+
+  test('answers 429 when an export went out in the last ten minutes, and sends nothing', async () => {
+    const sent: EmailMessage[] = [];
+    const since: Date[] = [];
+    const exportClaims = {
+      ...claims(),
+      claim: async (_userId: string, _now: Date, after: Date) => {
+        since.push(after);
+        return false;
+      },
+    };
+
+    await expect(
+      emailExport(USER_ID, {
+        repository: createAccountRepositoryMock(),
+        now,
+        send: async (message) => void sent.push(message),
+        exportClaims,
+      }),
+    ).rejects.toBeInstanceOf(ExportEmailRateLimitedError);
+    expect(sent).toEqual([]);
+    expect(since).toEqual([new Date(NOW.getTime() - EXPORT_EMAIL_COOLDOWN_MS)]);
   });
 });
 
+/** Export claims that always allow a send and keep nothing. */
+function claims() {
+  return { claim: async () => true, release: async () => undefined };
+}
+
 describe('deleteAccount', () => {
-  test('sends the notice first, then deletes', async () => {
+  test('deletes first, then sends the notice', async () => {
     const steps: string[] = [];
     const repository = createAccountRepositoryMock({
       deleteUser: async () => void steps.push('delete'),
@@ -154,7 +191,25 @@ describe('deleteAccount', () => {
       send: async (message) => void steps.push(message.subject),
     });
 
-    expect(steps).toEqual(['Akun Kira-mu sudah dihapus', 'delete']);
+    await Bun.sleep(0);
+    expect(steps).toEqual(['delete', 'Akun Kira-mu sudah dihapus']);
+  });
+
+  test('answers without waiting for a slow notice', async () => {
+    let release = () => {};
+    const steps: string[] = [];
+    const repository = createAccountRepositoryMock({
+      deleteUser: async () => void steps.push('delete'),
+    });
+    const send = () =>
+      new Promise<void>((resolve) => {
+        release = resolve;
+      });
+
+    await deleteAccount(USER_ID, { repository, now, send });
+
+    expect(steps).toEqual(['delete']);
+    release();
   });
 
   test('deletes even when the notice cannot be sent', async () => {
@@ -167,6 +222,7 @@ describe('deleteAccount', () => {
     };
 
     await deleteAccount(USER_ID, { repository, now, send });
+    await Bun.sleep(0);
 
     expect(steps).toEqual(['delete']);
   });

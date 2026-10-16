@@ -83,7 +83,7 @@ export const changePaymentMethodRoute = createRoute({
   request: { body: { ...json(paymentMethodBodySchema), required: true } },
   responses: {
     200: { ...json(subscriptionSchema), description: 'The updated subscription' },
-    ...errorResponses(401, 404, 422),
+    ...errorResponses(401, 404, 409, 422),
   },
 });
 

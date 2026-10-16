@@ -80,7 +80,7 @@ describe('finding 1: code checks', () => {
     expect(outcomes.filter((code) => code === 'SIGNED_IN')).toEqual([]);
     expect(state.checks).toBe(CHECKS_PER_EMAIL);
     expect(state.attempts).toBe(MAX_ATTEMPTS);
-    expect(outcomes.filter((code) => code === 'AUTH_CODE_RATE_LIMITED')).toHaveLength(190);
+    expect(outcomes.filter((code) => code === 'AUTH_VERIFY_RATE_LIMITED')).toHaveLength(190);
   });
 
   test('with the check limit out of the way, tries past the fifth are refused before comparing', async () => {

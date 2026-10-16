@@ -13,6 +13,7 @@ import {
   CodeExpiredError,
   CodeInvalidError,
   CodeRateLimitedError,
+  VerifyRateLimitedError,
   EmailDeliveryFailedError,
   RefreshInvalidError,
   UnauthenticatedError,
@@ -128,7 +129,7 @@ export async function verifyCode(
     { email, ip: input.ip, since: new Date(now.getTime() - CHECK_WINDOW_MS) },
     checkRefusal,
   );
-  if (refusal !== null) throw new CodeRateLimitedError(refusal);
+  if (refusal !== null) throw new VerifyRateLimitedError(refusal);
   const active = await repository.findActiveCode(email);
   if (!active) throw new CodeInvalidError();
   if (active.expiresAt.getTime() <= now.getTime()) throw new CodeExpiredError();

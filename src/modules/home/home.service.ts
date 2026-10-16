@@ -16,6 +16,7 @@ import {
 import { findScoreReport, type ScoreReport } from '../score/index.ts';
 import { homeRepository, type HomeAccount, type HomeRepository } from './home.repository.ts';
 import type { Home } from './home.schema.ts';
+import { UnauthenticatedError } from '../auth/index.ts';
 
 export type HomeDeps = {
   repository?: HomeRepository;
@@ -89,7 +90,8 @@ export async function getHome(userId: string, deps: HomeDeps = {}): Promise<Home
     repository.hasTransactions(userId),
     scoreReport(userId),
   ]);
-  if (!account) throw new Error('The signed-in account has no row');
+  /** The account was deleted while this request was in flight: its session is gone too. */
+  if (!account) throw new UnauthenticatedError('account deleted');
   const today = wibDate(now);
   const period = paydayPeriod(today, account.payday);
   const variant =
