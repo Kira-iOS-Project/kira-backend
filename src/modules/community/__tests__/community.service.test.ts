@@ -181,7 +181,7 @@ describe('reportGroup', () => {
     await reportGroup(
       USER_ID,
       GROUP_ID,
-      { reason: COMMUNITY_REPORT_REASON.scam, story: '  ' },
+      { reason: COMMUNITY_REPORT_REASON.scam, story: ' \u200B\uFEFF ' },
       { repository },
     );
     await reportGroup(USER_ID, GROUP_ID, { reason: COMMUNITY_REPORT_REASON.scam }, { repository });

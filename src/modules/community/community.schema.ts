@@ -8,6 +8,8 @@ import {
   COMMUNITY_RULES_VERSION,
 } from '../../lib/constants/community.ts';
 import { enumValues } from '../../lib/constants/enum-values.ts';
+import { MAX_UNITS_PER_CHARACTER } from '../../lib/constants/text.ts';
+import { characterCount, isBlank } from '../../lib/text/characters.ts';
 
 const categorySchema = z.enum(enumValues(COMMUNITY_CATEGORY));
 const platformSchema = z.enum(enumValues(COMMUNITY_PLATFORM));
@@ -74,13 +76,23 @@ export const joinResponseSchema = z
 export const reportBodySchema = z
   .object({
     reason: reasonSchema,
-    /** Ceritakan singkat; required, not blank, when the reason is `other` (Lainnya). */
-    story: z.string().max(COMMUNITY_REPORT_STORY_MAX).nullable().optional(),
+    /**
+     * Ceritakan singkat, at most COMMUNITY_REPORT_STORY_MAX characters as a person counts them
+     * (grapheme clusters); required, not blank, when the reason is `other` (Lainnya). Whitespace
+     * and invisible characters alone are blank.
+     */
+    story: z
+      .string()
+      .max(COMMUNITY_REPORT_STORY_MAX * MAX_UNITS_PER_CHARACTER)
+      .refine((story) => characterCount(story) <= COMMUNITY_REPORT_STORY_MAX, 'too_long')
+      .openapi({ description: 'At most 500 characters (grapheme clusters).' })
+      .nullable()
+      .optional(),
   })
-  .refine(
-    (body) => body.reason !== COMMUNITY_REPORT_REASON.other || (body.story ?? '').trim() !== '',
-    { message: 'A report for another reason needs its story.', path: ['story'] },
-  )
+  .refine((body) => body.reason !== COMMUNITY_REPORT_REASON.other || !isBlank(body.story ?? ''), {
+    message: 'A report for another reason needs its story.',
+    path: ['story'],
+  })
   .openapi('CommunityReportRequest');
 
 export const reportResponseSchema = z.object({ id: z.uuid() }).openapi('CommunityReport');

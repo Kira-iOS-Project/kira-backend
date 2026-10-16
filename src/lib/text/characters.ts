@@ -12,3 +12,11 @@ export function characterCount(text: string): number {
   for (const _ of graphemes.segment(text)) count += 1;
   return count;
 }
+
+/** Whitespace and invisible format characters (zero-width space, joiners, word joiner, BOM, …). */
+const BLANK = /^[\s\p{Cf}]*$/u;
+
+/** Whether `text` shows nothing: only whitespace and invisible format characters, or nothing. */
+export function isBlank(text: string): boolean {
+  return BLANK.test(text);
+}

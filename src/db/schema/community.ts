@@ -29,6 +29,7 @@ import {
   OPEN_REPORT_INDEX,
 } from '../../lib/constants/community.ts';
 import { enumValues } from '../../lib/constants/enum-values.ts';
+import { MAX_UNITS_PER_CHARACTER } from '../../lib/constants/text.ts';
 import { users } from './accounts.ts';
 import { moment, timestamps } from './columns.ts';
 
@@ -137,9 +138,13 @@ export const communityReports = pgTable(
       .where(sql`${table.status} = ${openStatus}`),
     index('community_reports_group_created_idx').on(table.groupId, table.createdAt),
     index('community_reports_user_idx').on(table.userId),
+    /**
+     * The API counts the story in characters (grapheme clusters), which Postgres cannot; the
+     * database holds the bound in code points that every accepted story stays within.
+     */
     check(
       'community_reports_story_check',
-      sql`${table.story} IS NULL OR char_length(${table.story}) <= ${sql.raw(String(COMMUNITY_REPORT_STORY_MAX))}`,
+      sql`${table.story} IS NULL OR char_length(${table.story}) <= ${sql.raw(String(COMMUNITY_REPORT_STORY_MAX * MAX_UNITS_PER_CHARACTER))}`,
     ),
   ],
 );

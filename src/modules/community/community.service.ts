@@ -10,6 +10,7 @@ import {
   COMMUNITY_SUSPENSION_WINDOW_MS,
 } from '../../lib/constants/community.ts';
 import { logger } from '../../lib/server/logger.ts';
+import { isBlank } from '../../lib/text/characters.ts';
 import {
   CommunityGroupNotFoundError,
   CommunityLinkUnavailableError,
@@ -132,7 +133,7 @@ export async function reportGroup(
   deps: CommunityDeps = {},
 ): Promise<{ id: string }> {
   const { repository, now } = resolve(deps);
-  const story = body.story?.trim() || null;
+  const story = body.story && !isBlank(body.story) ? body.story.trim() : null;
   const outcome = await repository.fileReport({
     userId,
     groupId,
