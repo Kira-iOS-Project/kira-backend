@@ -86,7 +86,11 @@
               "SUBSCRIPTION_NOT_FOUND",
               "SUBSCRIPTION_NOT_CANCELLABLE",
               "SCHOLARSHIP_NOT_ELIGIBLE",
-              "SCHOLARSHIP_APPLICATION_NOT_FOUND"
+              "SCHOLARSHIP_APPLICATION_NOT_FOUND",
+              "COMMUNITY_GROUP_NOT_FOUND",
+              "COMMUNITY_PRODUCT_NOT_FOUND",
+              "COMMUNITY_REPORT_DUPLICATE",
+              "COMMUNITY_RULES_NOT_ACCEPTED"
             ]
           },
           "requestId": {
@@ -1906,6 +1910,346 @@
         },
         "required": [
           "situations"
+        ]
+      },
+      "CommunityGroups": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "debt_free",
+                    "stocks",
+                    "crypto",
+                    "finance_talk"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "label"
+              ]
+            }
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommunityGroupSummary"
+            }
+          }
+        },
+        "required": [
+          "categories",
+          "groups"
+        ]
+      },
+      "CommunityGroupSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "debt_free",
+              "stocks",
+              "crypto",
+              "finance_talk"
+            ]
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "whatsapp",
+              "telegram",
+              "discord"
+            ]
+          },
+          "memberCount": {
+            "type": "integer"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          },
+          "educationOnly": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "platform",
+          "memberCount",
+          "summary",
+          "icon",
+          "educationOnly"
+        ]
+      },
+      "CommunityGroup": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CommunityGroupSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "about": {
+                "type": "string"
+              },
+              "admin": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "initials": {
+                    "type": "string"
+                  },
+                  "verifiedSince": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}$"
+                  }
+                },
+                "required": [
+                  "name",
+                  "initials",
+                  "verifiedSince"
+                ]
+              },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "linkCheckedOn": {
+                "type": "string",
+                "format": "date"
+              },
+              "adminUnchanged": {
+                "type": "boolean"
+              },
+              "rulesAccepted": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "about",
+              "admin",
+              "rules",
+              "linkCheckedOn",
+              "adminUnchanged",
+              "rulesAccepted"
+            ]
+          }
+        ]
+      },
+      "CommunityRulesConsentRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "enum": [
+              "community-2026-10-01"
+            ]
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "CommunityGroupJoin": {
+        "type": "object",
+        "properties": {
+          "inviteUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "whatsapp",
+              "telegram",
+              "discord"
+            ]
+          },
+          "linkCheckedOn": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "inviteUrl",
+          "platform",
+          "linkCheckedOn"
+        ]
+      },
+      "CommunityReport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CommunityReportRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "default_invite",
+              "guaranteed_profit",
+              "scam",
+              "data_or_jockey",
+              "inappropriate",
+              "other"
+            ]
+          },
+          "story": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "CommunityProducts": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommunityProductSummary"
+            }
+          }
+        },
+        "required": [
+          "products"
+        ]
+      },
+      "CommunityProductSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "course",
+              "consultation",
+              "ebook",
+              "event"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "sellerName": {
+            "type": "string"
+          },
+          "sellerInitials": {
+            "type": "string"
+          },
+          "sellerBadge": {
+            "type": "string"
+          },
+          "price": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "icon": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "sellerName",
+          "sellerInitials",
+          "sellerBadge",
+          "price",
+          "icon"
+        ]
+      },
+      "CommunityProduct": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CommunityProductSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "meta": {
+                "type": "string"
+              },
+              "sellerRole": {
+                "type": "string"
+              },
+              "contentsTitle": {
+                "type": "string"
+              },
+              "contents": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "affiliate": {
+                "type": "boolean"
+              },
+              "investmentRisk": {
+                "type": "boolean"
+              },
+              "sellerUrl": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "description",
+              "meta",
+              "sellerRole",
+              "contentsTitle",
+              "contents",
+              "affiliate",
+              "investmentRisk",
+              "sellerUrl"
+            ]
+          }
         ]
       },
       "ChatMessagePage": {
@@ -4131,6 +4475,479 @@
           },
           "404": {
             "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/community/groups": {
+      "get": {
+        "tags": [
+          "Community"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listCommunityGroups",
+        "summary": "The curated groups, in curation order (Komunitas)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "debt_free",
+                "stocks",
+                "crypto",
+                "finance_talk"
+              ]
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categories and active groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityGroups"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/community/groups/{id}": {
+      "get": {
+        "tags": [
+          "Community"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getCommunityGroup",
+        "summary": "A group, its admin and rules (Detail Grup)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityGroup"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/community/rules/consent": {
+      "post": {
+        "tags": [
+          "Community"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "acceptCommunityRules",
+        "summary": "Accept the current community rules (Aturan Komunitas)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommunityRulesConsentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Accepted"
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/community/groups/{id}/join": {
+      "post": {
+        "tags": [
+          "Community"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "joinCommunityGroup",
+        "summary": "The verified invite link (Membuka Tautan Keluar)",
+        "description": "Needs the current community rules accepted; records that the invite was opened.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The invite",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityGroupJoin"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/community/groups/{id}/reports": {
+      "post": {
+        "tags": [
+          "Community"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "reportCommunityGroup",
+        "summary": "Report a group (Laporkan Grup)",
+        "description": "One open report a person per group. Reports from five people within 24 hours take the group down until the team reviews it.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommunityReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/community/products": {
+      "get": {
+        "tags": [
+          "Community"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listCommunityProducts",
+        "summary": "The curated Etalase products",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "course",
+                "consultation",
+                "ebook",
+                "event"
+              ]
+            },
+            "required": false,
+            "name": "kind",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityProducts"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/community/products/{id}": {
+      "get": {
+        "tags": [
+          "Community"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getCommunityProduct",
+        "summary": "A product and its seller (Detail Produk)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommunityProduct"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {

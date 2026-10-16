@@ -52,6 +52,12 @@ export const ERROR_CODES = [
   'SUBSCRIPTION_NOT_CANCELLABLE',
   'SCHOLARSHIP_NOT_ELIGIBLE',
   'SCHOLARSHIP_APPLICATION_NOT_FOUND',
+
+  /** Terhubung: community groups, their rules and reports, and Etalase. */
+  'COMMUNITY_GROUP_NOT_FOUND',
+  'COMMUNITY_PRODUCT_NOT_FOUND',
+  'COMMUNITY_REPORT_DUPLICATE',
+  'COMMUNITY_RULES_NOT_ACCEPTED',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
