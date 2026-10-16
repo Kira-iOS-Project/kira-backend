@@ -124,6 +124,8 @@ describe('saveHealthCheck', () => {
         remaining: 420_000,
         monthlyInstalment: 210_000,
         remainingTenorMonths: 2,
+        annualInterestRate: null,
+        dueDay: null,
       },
     ],
     emergencyFund: 3_360_000,

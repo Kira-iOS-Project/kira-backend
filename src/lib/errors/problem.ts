@@ -40,6 +40,7 @@ const TITLES = {
   AUTH_REFRESH_INVALID: 'Session Ended',
   EMAIL_DELIVERY_FAILED: 'Email Not Sent',
   SCORE_NOT_AVAILABLE: 'Score Not Available',
+  PAYOFF_EXTRA_TOO_HIGH: 'Extra Payment Too High',
   CHAT_AI_DISABLED: 'Kira AI Is Off',
   CHAT_MESSAGE_NOT_FOUND: 'Message Not Found',
   CHAT_DRAFTS_NOT_PENDING: 'Drafts Already Settled',

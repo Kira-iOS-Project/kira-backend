@@ -72,6 +72,7 @@
               "AUTH_REFRESH_INVALID",
               "EMAIL_DELIVERY_FAILED",
               "SCORE_NOT_AVAILABLE",
+              "PAYOFF_EXTRA_TOO_HIGH",
               "CHAT_AI_DISABLED",
               "CHAT_MESSAGE_NOT_FOUND",
               "CHAT_DRAFTS_NOT_PENDING",
@@ -1030,6 +1031,24 @@
             "minimum": 0,
             "maximum": 600,
             "default": null
+          },
+          "annualInterestRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 300,
+            "default": null
+          },
+          "dueDay": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 31,
+            "default": null
           }
         },
         "required": [
@@ -1155,6 +1174,269 @@
               "milestones"
             ]
           }
+        ]
+      },
+      "PayoffPlan": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "snowball",
+              "avalanche"
+            ]
+          },
+          "extraPayment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "maxExtraPayment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "monthlyBudget": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "hasUnknownRate": {
+            "type": "boolean"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayoffAccount"
+            }
+          },
+          "productive": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayoffProductiveDebt"
+            }
+          },
+          "totalInterest": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "allPaidMonths": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "allPaidMonth": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-\\d{2}$",
+            "example": "2027-03"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/PayoffComparison"
+          }
+        },
+        "required": [
+          "method",
+          "extraPayment",
+          "maxExtraPayment",
+          "monthlyBudget",
+          "hasUnknownRate",
+          "accounts",
+          "productive",
+          "totalInterest",
+          "allPaidMonths",
+          "allPaidMonth",
+          "comparison"
+        ]
+      },
+      "PayoffAccount": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "paylater",
+              "online_loan",
+              "credit_card",
+              "vehicle",
+              "mortgage",
+              "family_loan"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "monthlyInstalment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "annualInterestRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 300
+          },
+          "dueDay": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 31
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "months": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "payoffMonth": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-\\d{2}$",
+            "example": "2027-03"
+          },
+          "interest": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "remaining",
+          "monthlyInstalment",
+          "annualInterestRate",
+          "dueDay",
+          "position",
+          "months",
+          "payoffMonth",
+          "interest"
+        ]
+      },
+      "PayoffProductiveDebt": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "paylater",
+              "online_loan",
+              "credit_card",
+              "vehicle",
+              "mortgage",
+              "family_loan"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "monthlyInstalment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "remaining",
+          "monthlyInstalment"
+        ]
+      },
+      "PayoffComparison": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "otherMethod": {
+            "type": "string",
+            "enum": [
+              "snowball",
+              "avalanche"
+            ]
+          },
+          "interestSaved": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "firstPayoffMonthsLater": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "otherMethod",
+          "interestSaved",
+          "firstPayoffMonthsLater"
+        ]
+      },
+      "SimulatePayoff": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "snowball",
+              "avalanche"
+            ]
+          },
+          "extraPayment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "default": 0
+          }
+        },
+        "required": [
+          "method"
         ]
       },
       "Home": {
@@ -3589,6 +3871,73 @@
           },
           "404": {
             "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payoff/simulate": {
+      "post": {
+        "operationId": "simulatePayoff",
+        "tags": [
+          "Payoff"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Simulate a debt payoff plan",
+        "description": "Orders the consumer debts by snowball or avalanche and returns the month and interest of each, set against the other method. Nothing is saved.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulatePayoff"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The simulated plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoffPlan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A business rule refused the request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
             "content": {
               "application/problem+json": {
                 "schema": {

@@ -27,7 +27,7 @@ session, and after that it stops trusting any rule in the file.
 | Section | Status | What that means here |
 |---|---|---|
 | §A Protocol | Enforced | Applies as written. Commits are `type: description`. |
-| §B Layer boundaries | Enforced | Eight modules (`meta`, `auth`, `account`, `score`, `home`, `billing`, `scholarship`, `jobs`), each routes → handler → service → repository; `jobs` has no routes, only the scheduled-job list. `home` reads `score` through its `index.ts`. The oxlint import rules bind every one; the service and handler overrides sit after the cross-module one, which used to replace them. |
+| §B Layer boundaries | Enforced | Nine modules (`meta`, `auth`, `account`, `score`, `payoff`, `home`, `billing`, `scholarship`, `jobs`), each routes → handler → service → repository; `jobs` has no routes, only the scheduled-job list. `home` and `payoff` read `score` through its `index.ts`, and `payoff` reads `home` through its. The oxlint import rules bind every one; the service and handler overrides sit after the cross-module one, which used to replace them. |
 | §C Error contract | Enforced | `src/lib/errors/` is the whole contract; base `https://api-kira.serenitycode.tech/problems/`; `check:openapi` holds the spec side. |
 | §D Database | Enforced | Seventeen tables in four domain files under `src/db/schema/` (SSOT.md § Database), with their indexes and CHECK constraints mirroring the zod rules, in one generated migration. Migrations run at boot. |
 | §E Testing | Enforced | Unit tier at 100% per file, against the fake Postgres client (`src/test/fake-postgres.ts`) and the shared doubles in `src/test/preload.ts`. No integration test yet; `src/test/config.ts` is ready for the first. |

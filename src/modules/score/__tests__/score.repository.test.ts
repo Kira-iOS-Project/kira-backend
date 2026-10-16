@@ -99,6 +99,8 @@ describe('createScoreRepository', () => {
           remaining: 420_000,
           monthlyInstalment: 210_000,
           remainingTenorMonths: null,
+          annualInterestRate: 36,
+          dueDay: 5,
         },
       ],
       emergencyFund: null,
@@ -125,6 +127,8 @@ describe('createScoreRepository', () => {
     ]);
     expect(fake.queries[0]?.sql).toContain('on conflict ("user_id") do update');
     expect(fake.queries[2]?.params).toContain(420_000);
+    expect(fake.queries[2]?.sql).toContain('"annual_interest_rate"');
+    expect(fake.queries[2]?.params).toContain('36');
     expect(fake.queries).toHaveLength(9);
   });
 });

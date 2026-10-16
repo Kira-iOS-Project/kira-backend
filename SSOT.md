@@ -71,6 +71,7 @@ public/email/          the PNGs every email shows, served at /email/*
 | `auth` | `/api/auth` | Sign-in codes, sessions, `requireSession` (the gate every protected router uses) |
 | `account` | `/api/me` | Me, settings, consents, CSV export (download and email), account deletion |
 | `score` | `/api/health-check`, `/api/score` | The health-check quiz, the Kira Score engine, indicator detail |
+| `payoff` | `/api/payoff` | Rencana Pelunasan: simulates snowball or avalanche over the consumer debts; reads `score` and `home` through their barrels |
 | `home` | `/api/home` | Beranda's aggregate; reads `score` through its barrel |
 | `billing` | `/api/plans`, `/api/billing/*`, `/api/subscription*` | Plans, simulated checkout, invoices, gifts; its two jobs |
 | `scholarship` | `/api/scholarship*` | Beasiswa Kira applications and the simulated review job |
