@@ -17,6 +17,13 @@ import {
   RefreshInvalidError,
   UnauthenticatedError,
 } from './auth.errors.ts';
+import {
+  CHECK_WINDOW_MS,
+  checkRefusal,
+  CODE_WINDOW_MS,
+  codeRefusal,
+  RESEND_COOLDOWN_MS,
+} from './auth.limits.ts';
 import { type AuthRepository, authRepository, type SessionSecrets } from './auth.repository.ts';
 import type {
   CodeRequestedResponse,
@@ -35,13 +42,9 @@ import {
 
 const MINUTE_MS = 60_000;
 export const CODE_TTL_MS = 10 * MINUTE_MS;
-export const RESEND_COOLDOWN_MS = MINUTE_MS;
 export const ACCESS_TTL_MS = 15 * MINUTE_MS;
 const REFRESH_TTL_MS = 60 * 24 * 60 * MINUTE_MS;
-const HOUR_MS = 60 * MINUTE_MS;
-/** Per address and per network, in any hour; a code allows five tries. */
-const CODES_PER_EMAIL_HOURLY = 5;
-const CODES_PER_IP_HOURLY = 20;
+/** Tries one code allows; the limits on requests and checks are in auth.limits.ts. */
 export const MAX_ATTEMPTS = 5;
 
 type AuthDeps = {
@@ -88,26 +91,19 @@ export async function requestCode(
 ): Promise<CodeRequestedResponse> {
   const { repository, send, now, secret, makeCode } = resolve(deps);
   const email = normalizeEmail(input.email);
-  const hourAgo = new Date(now.getTime() - HOUR_MS);
-  const [latest, emailCount, ipCount] = await Promise.all([
-    repository.latestCodeAt(email),
-    repository.countCodesForEmailSince(email, hourAgo),
-    repository.countCodesFromIpSince(input.ip, hourAgo),
-  ]);
-  if (latest && now.getTime() - latest.getTime() < RESEND_COOLDOWN_MS) {
-    throw new CodeRateLimitedError('resend cooldown');
-  }
-  if (emailCount >= CODES_PER_EMAIL_HOURLY) throw new CodeRateLimitedError('address hourly limit');
-  if (ipCount >= CODES_PER_IP_HOURLY) throw new CodeRateLimitedError('network hourly limit');
-
   const code = makeCode();
-  await repository.replaceCode({
-    email,
-    codeHash: codeHash(email, code, secret),
-    requestIp: input.ip,
-    expiresAt: new Date(now.getTime() + CODE_TTL_MS),
-    now,
-  });
+  const refusal = await repository.issueCode(
+    {
+      email,
+      ip: input.ip,
+      codeHash: codeHash(email, code, secret),
+      expiresAt: new Date(now.getTime() + CODE_TTL_MS),
+      now,
+      since: new Date(now.getTime() - CODE_WINDOW_MS),
+    },
+    (usage) => codeRefusal(usage, now),
+  );
+  if (refusal !== null) throw new CodeRateLimitedError(refusal);
   try {
     await send(loginCodeEmail({ to: email, code, name: displayNameFromEmail(email) }));
   } catch (err) {
@@ -117,20 +113,29 @@ export async function requestCode(
   return { expiresInSeconds: CODE_TTL_MS / 1000, resendAfterSeconds: RESEND_COOLDOWN_MS / 1000 };
 }
 
-/** Checks the code and signs the address in, creating its account the first time. */
+/**
+ * Checks the code and signs the address in, creating its account the first time. The check is
+ * counted against the address's and the network's limits first, and a try of the code is claimed
+ * before comparing, so parallel guesses get the code's five tries and no more.
+ */
 export async function verifyCode(
-  input: { email: string; code: string },
+  input: { email: string; code: string; ip: string },
   deps: AuthDeps = {},
 ): Promise<SignedInResponse> {
   const { repository, now, secret, makeToken } = resolve(deps);
   const email = normalizeEmail(input.email);
+  const refusal = await repository.recordCheck(
+    { email, ip: input.ip, since: new Date(now.getTime() - CHECK_WINDOW_MS) },
+    checkRefusal,
+  );
+  if (refusal !== null) throw new CodeRateLimitedError(refusal);
   const active = await repository.findActiveCode(email);
   if (!active) throw new CodeInvalidError();
   if (active.expiresAt.getTime() <= now.getTime()) throw new CodeExpiredError();
-  if (active.attempts >= MAX_ATTEMPTS) throw new CodeAttemptsExceededError();
-  if (!sameHash(codeHash(email, input.code, secret), active.codeHash)) {
-    const attempts = await repository.recordFailedAttempt(active.id);
-    throw attempts >= MAX_ATTEMPTS ? new CodeAttemptsExceededError() : new CodeInvalidError();
+  const claim = await repository.claimAttempt(active.id, now, MAX_ATTEMPTS);
+  if (!claim) throw new CodeAttemptsExceededError();
+  if (!sameHash(codeHash(email, input.code, secret), claim.codeHash)) {
+    throw claim.attempts >= MAX_ATTEMPTS ? new CodeAttemptsExceededError() : new CodeInvalidError();
   }
   const { secrets, tokens } = issueTokens(now, makeToken);
   const { needsOnboarding } = await repository.completeSignIn({
@@ -145,7 +150,8 @@ export async function verifyCode(
 
 /**
  * Trades a refresh token for a new pair. A refresh token that was already traded ends its session:
- * only a copy held by someone else is ever presented twice.
+ * only a copy held by someone else is ever presented twice. Two trades of one token racing count
+ * the same way: the rotation is conditional, and the one that loses revokes the session.
  */
 export async function refreshSession(
   refreshToken: string,
@@ -162,7 +168,10 @@ export async function refreshSession(
   if (session.revokedAt) throw new RefreshInvalidError('revoked');
   if (session.refreshExpiresAt.getTime() <= now.getTime()) throw new RefreshInvalidError('expired');
   const { secrets, tokens } = issueTokens(now, makeToken);
-  await repository.rotateSession(session.sessionId, secrets, hash);
+  if (!(await repository.rotateSession(session.sessionId, secrets, hash))) {
+    await repository.revokeSession(session.sessionId, now);
+    throw new RefreshInvalidError('reused');
+  }
   return tokens;
 }
 

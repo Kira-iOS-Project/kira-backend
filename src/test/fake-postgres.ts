@@ -23,7 +23,27 @@ type FakeMethods = {
   savepoint<T>(run: (client: unknown) => Promise<T>): Promise<T>;
 };
 
-function fakeMethods(client: object, respond: () => FakeResponder, log: FakeQuery[]): FakeMethods {
+/**
+ * Runs transactions one after another when `serial` is set: the stand-in for the row and advisory
+ * locks that make Postgres serialize them, so a test can fire a burst of parallel requests.
+ */
+function transactionRunner(serial: boolean) {
+  let tail: Promise<unknown> = Promise.resolve();
+  return <T>(run: () => Promise<T>): Promise<T> => {
+    if (!serial) return run();
+    const next = tail.then(run, run);
+    tail = next.catch(() => undefined);
+    return next;
+  };
+}
+
+function fakeMethods(
+  client: object,
+  respond: () => FakeResponder,
+  log: FakeQuery[],
+  serial: boolean,
+): FakeMethods {
+  const inTransaction = transactionRunner(serial);
   return {
     unsafe(sql, params = []) {
       const query = { sql, params };
@@ -33,7 +53,7 @@ function fakeMethods(client: object, respond: () => FakeResponder, log: FakeQuer
         values: async () => (await rows).map((row) => Object.values(row)),
       });
     },
-    begin: (run) => run(client),
+    begin: (run) => inTransaction(() => run(client)),
     savepoint: (run) => run(client),
   };
 }
@@ -43,7 +63,10 @@ function fakeMethods(client: object, respond: () => FakeResponder, log: FakeQuer
  * `drizzle.mock()` builds the real session over a bare client object; the methods the session calls
  * are added to that same object, which Drizzle exposes as `$client`.
  */
-export function createFakeDb(responder: FakeResponder = () => []) {
+export function createFakeDb(
+  responder: FakeResponder = () => [],
+  options: { serialTransactions?: boolean } = {},
+) {
   const queries: FakeQuery[] = [];
   const state = { responder };
   const db = drizzle.mock();
@@ -52,7 +75,7 @@ export function createFakeDb(responder: FakeResponder = () => []) {
     throw new Error('drizzle.mock() kept no client');
   Object.assign(
     client,
-    fakeMethods(client, () => state.responder, queries),
+    fakeMethods(client, () => state.responder, queries, options.serialTransactions ?? false),
   );
   return {
     db,

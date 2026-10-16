@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import type { EmailMessage } from '../../../lib/email/resend.ts';
+import { CODE_WINDOW_MS } from '../auth.limits.ts';
 import {
   ACCESS_TTL_MS,
   CODE_TTL_MS,
   MAX_ATTEMPTS,
   requestCode,
-  RESEND_COOLDOWN_MS,
   verifyCode,
 } from '../auth.service.ts';
 import { codeHash, tokenHash } from '../auth.tokens.ts';
@@ -15,14 +15,17 @@ const SECRET = 'test-secret-that-is-long-enough-000000';
 const clock = () => NOW;
 
 describe('requestCode', () => {
-  test('stores the hashed code for the normalised address and emails the code', async () => {
-    const stored: unknown[] = [];
+  test('issues the hashed code for the normalised address and emails it', async () => {
+    const issued: unknown[] = [];
     const sent: EmailMessage[] = [];
     const result = await requestCode(
       { email: ' Dinda@Email.com ', ip: '1.2.3.4' },
       {
         repository: createAuthRepositoryMock({
-          replaceCode: async (input) => void stored.push(input),
+          issueCode: async (input, decide) => {
+            issued.push(input);
+            return decide({ latestAt: null, emailCount: 0, ipCount: 0 });
+          },
         }),
         send: async (message) => void sent.push(message),
         now: clock,
@@ -32,13 +35,14 @@ describe('requestCode', () => {
     );
 
     expect(result).toEqual({ expiresInSeconds: 600, resendAfterSeconds: 60 });
-    expect(stored).toEqual([
+    expect(issued).toEqual([
       {
         email: 'dinda@email.com',
+        ip: '1.2.3.4',
         codeHash: codeHash('dinda@email.com', '381427', SECRET),
-        requestIp: '1.2.3.4',
         expiresAt: new Date(NOW.getTime() + CODE_TTL_MS),
         now: NOW,
+        since: new Date(NOW.getTime() - CODE_WINDOW_MS),
       },
     ]);
     expect(sent[0]?.subject).toBe('381427 adalah kode masuk Kira');
@@ -46,43 +50,19 @@ describe('requestCode', () => {
     expect(sent[0]?.html).toContain('Hai Dinda');
   });
 
-  test('refuses a second code inside the resend cooldown', async () => {
+  test('refuses with 429 and sends nothing when the repository reports a limit', async () => {
+    const sent: EmailMessage[] = [];
     const repository = createAuthRepositoryMock({
-      latestCodeAt: async () => new Date(NOW.getTime() - RESEND_COOLDOWN_MS + 1),
+      issueCode: async (_input, decide) => decide({ latestAt: NOW, emailCount: 0, ipCount: 0 }),
     });
 
     await expect(
-      requestCode({ email: 'dinda@email.com', ip: '1.2.3.4' }, { repository, now: clock }),
-    ).rejects.toMatchObject({ statusCode: 429, code: 'AUTH_CODE_RATE_LIMITED' });
-  });
-
-  test('allows a code once the cooldown has passed', async () => {
-    const repository = createAuthRepositoryMock({
-      latestCodeAt: async () => new Date(NOW.getTime() - RESEND_COOLDOWN_MS),
-    });
-
-    expect(
-      await requestCode(
+      requestCode(
         { email: 'dinda@email.com', ip: '1.2.3.4' },
-        { repository, now: clock, send: async () => undefined },
+        { repository, now: clock, send: async (message) => void sent.push(message) },
       ),
-    ).toMatchObject({ resendAfterSeconds: 60 });
-  });
-
-  test('refuses a sixth code for one address within the hour', async () => {
-    const repository = createAuthRepositoryMock({ countCodesForEmailSince: async () => 5 });
-
-    await expect(
-      requestCode({ email: 'dinda@email.com', ip: '1.2.3.4' }, { repository, now: clock }),
-    ).rejects.toMatchObject({ code: 'AUTH_CODE_RATE_LIMITED' });
-  });
-
-  test('refuses a twenty-first code from one network within the hour', async () => {
-    const repository = createAuthRepositoryMock({ countCodesFromIpSince: async () => 20 });
-
-    await expect(
-      requestCode({ email: 'dinda@email.com', ip: '1.2.3.4' }, { repository, now: clock }),
-    ).rejects.toMatchObject({ code: 'AUTH_CODE_RATE_LIMITED' });
+    ).rejects.toMatchObject({ statusCode: 429, code: 'AUTH_CODE_RATE_LIMITED' });
+    expect(sent).toEqual([]);
   });
 
   test('answers 503 when Resend refuses the email', async () => {
@@ -108,8 +88,14 @@ describe('verifyCode', () => {
     attempts: 0,
     expiresAt: new Date(NOW.getTime() + 60_000),
   };
+  const claimed = (attempts = 1) => async () => ({ codeHash: active.codeHash, attempts });
+  const input = (code: string) => ({ email: 'dinda@email.com', code, ip: '1.2.3.4' });
   const deps = (overrides = {}) => ({
-    repository: createAuthRepositoryMock({ findActiveCode: async () => active, ...overrides }),
+    repository: createAuthRepositoryMock({
+      findActiveCode: async () => active,
+      claimAttempt: claimed(),
+      ...overrides,
+    }),
     now: clock,
     secret: SECRET,
     makeToken: (() => {
@@ -121,10 +107,10 @@ describe('verifyCode', () => {
   test('signs in with the right code and returns both tokens', async () => {
     const signIns: unknown[] = [];
     const result = await verifyCode(
-      { email: 'Dinda@email.com', code: '381427' },
+      { ...input('381427'), email: 'Dinda@email.com' },
       deps({
-        completeSignIn: async (input: unknown) => {
-          signIns.push(input);
+        completeSignIn: async (signIn: unknown) => {
+          signIns.push(signIn);
           return { userId: 'user-1', needsOnboarding: false };
         },
       }),
@@ -144,55 +130,53 @@ describe('verifyCode', () => {
     });
   });
 
-  test('refuses when no code is waiting for the address', async () => {
+  test('accepts the right code on its last try', async () => {
+    const result = await verifyCode(input('381427'), deps({ claimAttempt: claimed(MAX_ATTEMPTS) }));
+    expect(result.accessToken).toBe('token-1');
+  });
+
+  test('refuses with 429 before looking at the code when the check limit is reached', async () => {
+    let looked = false;
     await expect(
       verifyCode(
-        { email: 'dinda@email.com', code: '381427' },
-        deps({ findActiveCode: async () => null }),
+        input('381427'),
+        deps({
+          recordCheck: async (_input: unknown, decide: (usage: object) => string | null) =>
+            decide({ emailCount: 10, ipCount: 0 }),
+          findActiveCode: async () => {
+            looked = true;
+            return active;
+          },
+        }),
       ),
+    ).rejects.toMatchObject({ statusCode: 429, code: 'AUTH_CODE_RATE_LIMITED' });
+    expect(looked).toBe(false);
+  });
+
+  test('refuses when no code is waiting for the address', async () => {
+    await expect(
+      verifyCode(input('381427'), deps({ findActiveCode: async () => null })),
     ).rejects.toMatchObject({ statusCode: 400, code: 'AUTH_CODE_INVALID' });
   });
 
   test('refuses an expired code', async () => {
     await expect(
-      verifyCode(
-        { email: 'dinda@email.com', code: '381427' },
-        deps({ findActiveCode: async () => ({ ...active, expiresAt: NOW }) }),
-      ),
+      verifyCode(input('381427'), deps({ findActiveCode: async () => ({ ...active, expiresAt: NOW }) })),
     ).rejects.toMatchObject({ code: 'AUTH_CODE_EXPIRED' });
   });
 
-  test('refuses a code that has used up its tries', async () => {
+  test('refuses without comparing when no try can be claimed', async () => {
     await expect(
-      verifyCode(
-        { email: 'dinda@email.com', code: '381427' },
-        deps({ findActiveCode: async () => ({ ...active, attempts: MAX_ATTEMPTS }) }),
-      ),
+      verifyCode(input('381427'), deps({ claimAttempt: async () => null })),
     ).rejects.toMatchObject({ statusCode: 429, code: 'AUTH_CODE_ATTEMPTS_EXCEEDED' });
   });
 
-  test('counts a wrong code and says so', async () => {
-    const failed: string[] = [];
+  test('says a wrong code is wrong, and ends the code on its fifth wrong try', async () => {
+    await expect(verifyCode(input('000000'), deps())).rejects.toMatchObject({
+      code: 'AUTH_CODE_INVALID',
+    });
     await expect(
-      verifyCode(
-        { email: 'dinda@email.com', code: '000000' },
-        deps({
-          recordFailedAttempt: async (id: string) => {
-            failed.push(id);
-            return 1;
-          },
-        }),
-      ),
-    ).rejects.toMatchObject({ code: 'AUTH_CODE_INVALID' });
-    expect(failed).toEqual(['code-1']);
-  });
-
-  test('ends the code on its fifth wrong try', async () => {
-    await expect(
-      verifyCode(
-        { email: 'dinda@email.com', code: '000000' },
-        deps({ recordFailedAttempt: async () => MAX_ATTEMPTS }),
-      ),
+      verifyCode(input('000000'), deps({ claimAttempt: claimed(MAX_ATTEMPTS) })),
     ).rejects.toMatchObject({ code: 'AUTH_CODE_ATTEMPTS_EXCEEDED' });
   });
 });

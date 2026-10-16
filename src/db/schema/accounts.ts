@@ -88,6 +88,26 @@ export const sessions = pgTable(
   ],
 );
 
+/**
+ * One row per code check that passed the rate limit (POST /api/auth/verify), counted per address
+ * and per network so a burst of guesses is refused before any code is compared. Deleted by the
+ * hourly cleanup a day later.
+ */
+export const signInAttempts = pgTable(
+  'sign_in_attempts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: varchar('email', { length: 320 }).notNull(),
+    requestIp: varchar('request_ip', { length: 64 }).notNull(),
+    createdAt: moment('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('sign_in_attempts_email_created_idx').on(table.email, table.createdAt.desc().nullsFirst()),
+    index('sign_in_attempts_ip_created_idx').on(table.requestIp, table.createdAt.desc().nullsFirst()),
+    index('sign_in_attempts_created_idx').on(table.createdAt),
+  ],
+);
+
 /** One row per decision, never updated: the latest row per purpose is the one in force. */
 export const consents = pgTable(
   'consents',
