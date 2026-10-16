@@ -11,4 +11,4 @@ export const CONSENT_PURPOSE = {
 } as const;
 
 /** The privacy policy in force (AKN-08c "Berlaku sejak 15 Oktober 2026"). */
-export const PRIVACY_POLICY_VERSION = '2026-10-15';
+export const PRIVACY_POLICY_VERSION = 'privacy-2026-10-15';

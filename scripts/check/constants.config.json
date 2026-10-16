@@ -17,7 +17,20 @@
   {
     "name": "score",
     "home": "src/lib/constants/score.ts",
-    "allow": []
+    "allow": [
+      {
+        "path": "src/modules/meta/",
+        "reason": "The health check's own 'healthy' status (GET /health), a word of the meta module's response, not a Kira Score band."
+      },
+      {
+        "path": "src/__tests__/app.test.ts",
+        "reason": "Asserts GET /health's 'healthy' status, not a Kira Score band."
+      },
+      {
+        "path": "src/db/schema/finances.ts",
+        "reason": "'emergency_fund' there is the financial_profiles column name, which happens to equal the indicator key."
+      }
+    ]
   },
   {
     "name": "money",
