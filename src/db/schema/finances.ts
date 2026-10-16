@@ -5,11 +5,13 @@
 
 import {
   bigint,
+  date,
   index,
   jsonb,
   pgEnum,
   pgTable,
   smallint,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -97,9 +99,15 @@ export const scoreSnapshots = pgTable(
     band: scoreBandEnum('band').notNull(),
     indicators: jsonb('indicators').$type<IndicatorPoints>().notNull(),
     reason: snapshotReasonEnum('reason').notNull(),
+    /** The payday period the snapshot belongs to (its first day, WIB). */
+    periodStart: date('period_start', { mode: 'string' }).notNull(),
     createdAt: moment('created_at').defaultNow().notNull(),
   },
   (table) => [
     index('score_snapshots_user_created_idx').on(table.userId, table.createdAt.desc().nullsFirst()),
+    /** One payday re-check per period: two reads racing at its start store it once. */
+    uniqueIndex('score_snapshots_user_period_recompute_idx')
+      .on(table.userId, table.periodStart)
+      .where(sql`${table.reason} = ${sql.raw(`'${SNAPSHOT_REASON.recompute}'`)}`),
   ],
 );
