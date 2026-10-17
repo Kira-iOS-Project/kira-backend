@@ -10,10 +10,12 @@ import {
   APPLICATION_STATUS,
   OPEN_APPLICATION_INDEX,
   SCHOLARSHIP_SITUATION,
+  SCHOLARSHIP_STORY_MAX,
 } from '../../../lib/constants/scholarship.ts';
-import { inOrder } from '../../../test/fake-postgres.ts';
+import { MAX_UNITS_PER_CHARACTER } from '../../../lib/constants/text.ts';
+import { type FakeResponder, inOrder } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
-import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
+import { AUTH_HEADER, signedIn, TEST_USER_ID } from '../../../test/session.ts';
 
 beforeEach(() => resetExternalMocks());
 
@@ -23,6 +25,14 @@ function call(method: string, path: string, body?: unknown) {
     headers: { 'Content-Type': 'application/json', ...AUTH_HEADER },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
+}
+
+/** Answers the Mode Darurat Utang lookup as opened, and hands every other statement on. */
+function usedDebtEmergency(next: FakeResponder = () => []): FakeResponder {
+  return (query) =>
+    query.sql.includes('"debt_emergency_mode_used_at" is not null')
+      ? [{ id: TEST_USER_ID }]
+      : next(query);
 }
 
 const STORED = {
@@ -40,7 +50,7 @@ describe('scholarship routes', () => {
   });
 
   test('GET /api/scholarship answers eligibility and quota', async () => {
-    dbControl.respond = signedIn();
+    dbControl.respond = signedIn(usedDebtEmergency());
 
     const res = await call('GET', '/api/scholarship');
 
@@ -54,7 +64,7 @@ describe('scholarship routes', () => {
   });
 
   test('POST /api/scholarship/applications answers 201 on the waiting list', async () => {
-    dbControl.respond = signedIn(inOrder([], [], [], [], [], [STORED]));
+    dbControl.respond = signedIn(usedDebtEmergency(inOrder([], [], [], [], [STORED])));
 
     const res = await call('POST', '/api/scholarship/applications', {
       situations: [SCHOLARSHIP_SITUATION.chasedByLender],
@@ -63,6 +73,56 @@ describe('scholarship routes', () => {
 
     expect(res.status).toBe(201);
     expect(body).toMatchObject({ status: APPLICATION_STATUS.waitlisted, decideBy: '2026-10-21' });
+  });
+
+  test('POST /api/scholarship/applications answers 409 before Mode Darurat Utang is opened', async () => {
+    dbControl.respond = signedIn();
+
+    const res = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+    });
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe('SCHOLARSHIP_DEBT_EMERGENCY_REQUIRED');
+  });
+
+  test('POST /api/scholarship/applications counts the story in characters, as the app does', async () => {
+    dbControl.respond = signedIn(usedDebtEmergency(inOrder([], [], [], [], [STORED])));
+    const family = '👨‍👩‍👧';
+
+    const fits = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+      story: family.repeat(1000),
+    });
+    const over = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+      story: family.repeat(1001),
+    });
+
+    expect(fits.status).toBe(201);
+    expect(over.status).toBe(422);
+    expect((await over.json()).code).toBe('VALIDATION_FAILED');
+  });
+
+  test('POST /api/scholarship/applications takes a story the old code-point check refused', async () => {
+    dbControl.respond = signedIn(usedDebtEmergency(inOrder([], [], [], [], [STORED])));
+    const thumbs = '👍🏽'.repeat(600);
+
+    const fits = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+      story: thumbs,
+    });
+    const over = await call('POST', '/api/scholarship/applications', {
+      situations: [SCHOLARSHIP_SITUATION.chasedByLender],
+      story: 'a'.repeat(SCHOLARSHIP_STORY_MAX + 1),
+    });
+
+    /** 1200 code points: past a char_length check of 1000, within the one the schema now holds. */
+    const codePoints = Array.from(thumbs).length;
+    expect(codePoints).toBeGreaterThan(SCHOLARSHIP_STORY_MAX);
+    expect(codePoints).toBeLessThanOrEqual(SCHOLARSHIP_STORY_MAX * MAX_UNITS_PER_CHARACTER);
+    expect(fits.status).toBe(201);
+    expect(await over.json()).toMatchObject({ status: 422, code: 'VALIDATION_FAILED' });
   });
 
   test('POST /api/scholarship/applications refuses no situation, and a paid plan', async () => {
@@ -83,10 +143,12 @@ describe('scholarship routes', () => {
       code: '23505',
       constraint_name: OPEN_APPLICATION_INDEX,
     });
-    dbControl.respond = signedIn((query) => {
-      if (query.sql.startsWith('insert into "scholarship_applications"')) throw duplicate;
-      return [];
-    });
+    dbControl.respond = signedIn(
+      usedDebtEmergency((query) => {
+        if (query.sql.startsWith('insert into "scholarship_applications"')) throw duplicate;
+        return [];
+      }),
+    );
 
     const res = await call('POST', '/api/scholarship/applications', {
       situations: [SCHOLARSHIP_SITUATION.chasedByLender],

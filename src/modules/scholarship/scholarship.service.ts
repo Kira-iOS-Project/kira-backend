@@ -8,6 +8,7 @@ import { APPLICATION_STATUS, INELIGIBLE_REASON } from '../../lib/constants/schol
 import { addDays, monthStart, wibDate, wibStartOfDay } from '../../lib/time/wib.ts';
 import {
   ScholarshipApplicationNotFoundError,
+  ScholarshipDebtEmergencyRequiredError,
   ScholarshipNotEligibleError,
 } from './scholarship.errors.ts';
 import {
@@ -74,22 +75,34 @@ export async function quotaOf(repository: ScholarshipRepository, now: Date) {
 function ineligibleReason(
   source: string | null,
   application: ApplicationRow | null,
+  usedDebtEmergency: boolean,
 ): IneligibleReason | null {
   if (source === SUBSCRIPTION_SOURCE.purchase) return INELIGIBLE_REASON.hasPaidPlan;
   if (source === SUBSCRIPTION_SOURCE.scholarship) return INELIGIBLE_REASON.hasScholarship;
   const open =
     application?.status === APPLICATION_STATUS.inReview ||
     application?.status === APPLICATION_STATUS.waitlisted;
-  return open ? INELIGIBLE_REASON.hasOpenApplication : null;
+  if (open) return INELIGIBLE_REASON.hasOpenApplication;
+  return usedDebtEmergency ? null : INELIGIBLE_REASON.debtEmergencyNotUsed;
 }
 
 async function stateOf(repository: ScholarshipRepository, userId: string, now: Date) {
-  const [source, application, quota] = await Promise.all([
+  const [source, application, quota, usedDebtEmergency] = await Promise.all([
     repository.findActiveSubscriptionSource(userId),
     repository.findCurrentApplication(userId),
     quotaOf(repository, now),
+    repository.hasUsedDebtEmergencyMode(userId),
   ]);
-  return { reason: ineligibleReason(source, application), application, quota };
+  /** An accepted application whose grant has ended is history: the person may apply again. */
+  const ended =
+    application?.status === APPLICATION_STATUS.accepted &&
+    source !== SUBSCRIPTION_SOURCE.scholarship;
+  return {
+    reason: ineligibleReason(source, application, usedDebtEmergency),
+    application: ended ? null : application,
+    quota,
+    usedDebtEmergency,
+  };
 }
 
 /** Beasiswa Kira: whether the person can apply, the quota, and their application. */
@@ -117,14 +130,16 @@ export async function apply(
   deps: ScholarshipDeps = {},
 ): Promise<ApplicationResponse> {
   const { repository, now } = resolve(deps);
-  const { reason, quota } = await stateOf(repository, userId, now);
+  const { reason, quota, usedDebtEmergency } = await stateOf(repository, userId, now);
+  if (reason === INELIGIBLE_REASON.debtEmergencyNotUsed)
+    throw new ScholarshipDebtEmergencyRequiredError();
   if (reason !== null) throw new ScholarshipNotEligibleError(reason);
   const story = body.story?.trim() ?? '';
   const row = await repository.createApplication({
     userId,
     situations: [...new Set(body.situations)],
     story: story === '' ? null : story,
-    usedDebtEmergencyMode: await repository.hasUsedDebtEmergencyMode(userId),
+    usedDebtEmergencyMode: usedDebtEmergency,
     status: quota.remaining > 0 ? APPLICATION_STATUS.inReview : APPLICATION_STATUS.waitlisted,
   });
   /** A second apply that raced the first past the check above lost at the unique index. */

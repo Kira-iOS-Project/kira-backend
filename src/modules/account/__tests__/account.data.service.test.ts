@@ -6,9 +6,9 @@ import {
   TRANSACTION_TYPE,
 } from '../../../lib/constants/money.ts';
 import type { EmailMessage } from '../../../lib/email/resend.ts';
-import { ExportEmailFailedError } from '../account.errors.ts';
+import { ExportEmailFailedError, ExportEmailRateLimitedError } from '../account.errors.ts';
 import {
-  deleteAccount,
+  EXPORT_EMAIL_COOLDOWN_MS,
   emailExport,
   exportData,
   getConsents,
@@ -94,6 +94,27 @@ describe('the data export', () => {
     expect(csv).toContain('Nasi Padang,25000');
   });
 
+  test('writes the other modules’ blocks after the transactions', async () => {
+    const repository = createAccountRepositoryMock({ listExportRows: async () => [EXPORT_ROW] });
+    const exportSections = async (userId: string) => [
+      {
+        title: `Komunitas · ${userId}`,
+        header: ['Tanggal', 'Grup'],
+        rows: [['2026-10-16', 'A, B']],
+      },
+    ];
+
+    const { csv } = await exportData(USER_ID, { repository, now, exportSections });
+
+    expect(csv.split('\r\n').slice(-5)).toEqual([
+      '',
+      `Komunitas · ${USER_ID}`,
+      'Tanggal,Grup',
+      '2026-10-16,"A, B"',
+      '',
+    ]);
+  });
+
   test('emails the CSV as an attachment to the account address', async () => {
     const sent: EmailMessage[] = [];
     const repository = createAccountRepositoryMock({ listExportRows: async () => [EXPORT_ROW] });
@@ -102,6 +123,7 @@ describe('the data export', () => {
       repository,
       now,
       send: async (message) => void sent.push(message),
+      exportClaims: claims(),
     });
 
     expect(sent).toHaveLength(1);
@@ -114,52 +136,43 @@ describe('the data export', () => {
       throw new Error('Resend answered 500');
     };
 
-    expect(
-      emailExport(USER_ID, { repository: createAccountRepositoryMock(), now, send }),
-    ).rejects.toBeInstanceOf(ExportEmailFailedError);
-  });
-});
-
-describe('deleteAccount', () => {
-  test('sends the notice first, then deletes', async () => {
-    const steps: string[] = [];
-    const repository = createAccountRepositoryMock({
-      deleteUser: async () => void steps.push('delete'),
-    });
-
-    await deleteAccount(USER_ID, {
-      repository,
-      now,
-      send: async (message) => void steps.push(message.subject),
-    });
-
-    expect(steps).toEqual(['Akun Kira-mu sudah dihapus', 'delete']);
-  });
-
-  test('deletes even when the notice cannot be sent', async () => {
-    const steps: string[] = [];
-    const repository = createAccountRepositoryMock({
-      deleteUser: async () => void steps.push('delete'),
-    });
-    const send = async () => {
-      throw new Error('Resend answered 500');
+    const released: Date[] = [];
+    const exportClaims = {
+      ...claims(),
+      release: async (_userId: string, at: Date) => void released.push(at),
     };
 
-    await deleteAccount(USER_ID, { repository, now, send });
-
-    expect(steps).toEqual(['delete']);
+    await expect(
+      emailExport(USER_ID, { repository: createAccountRepositoryMock(), now, send, exportClaims }),
+    ).rejects.toBeInstanceOf(ExportEmailFailedError);
+    expect(released).toEqual([NOW]);
   });
 
-  test('an account already gone gets no email and the call still succeeds', async () => {
+  test('answers 429 when an export went out in the last ten minutes, and sends nothing', async () => {
     const sent: EmailMessage[] = [];
-    const repository = createAccountRepositoryMock({ findProfile: async () => null });
+    const since: Date[] = [];
+    const exportClaims = {
+      ...claims(),
+      claim: async (_userId: string, _now: Date, after: Date) => {
+        since.push(after);
+        return false;
+      },
+    };
 
-    await deleteAccount(USER_ID, {
-      repository,
-      now,
-      send: async (message) => void sent.push(message),
-    });
-
+    await expect(
+      emailExport(USER_ID, {
+        repository: createAccountRepositoryMock(),
+        now,
+        send: async (message) => void sent.push(message),
+        exportClaims,
+      }),
+    ).rejects.toBeInstanceOf(ExportEmailRateLimitedError);
     expect(sent).toEqual([]);
+    expect(since).toEqual([new Date(NOW.getTime() - EXPORT_EMAIL_COOLDOWN_MS)]);
   });
 });
+
+/** Export claims that always allow a send and keep nothing. */
+function claims() {
+  return { claim: async () => true, release: async () => undefined };
+}

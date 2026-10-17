@@ -7,6 +7,17 @@ export class ScholarshipNotEligibleError extends ConflictError {
   }
 }
 
+/** Otherwise eligible, but Mode Darurat Utang has never been opened (Beasiswa Kira is for its users). */
+export class ScholarshipDebtEmergencyRequiredError extends ConflictError {
+  constructor() {
+    super(
+      'Beasiswa Kira is for people who use Mode Darurat Utang.',
+      undefined,
+      'SCHOLARSHIP_DEBT_EMERGENCY_REQUIRED',
+    );
+  }
+}
+
 /** There is no application in review or on the waiting list to withdraw. */
 export class ScholarshipApplicationNotFoundError extends NotFoundError {
   constructor() {

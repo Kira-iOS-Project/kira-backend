@@ -22,6 +22,7 @@ export const ERROR_CODES = [
 
   /** Sign-in with an email and a one-time code (ONB-05 to ONB-07b, ONB-15). */
   'AUTH_CODE_RATE_LIMITED',
+  'AUTH_VERIFY_RATE_LIMITED',
   'AUTH_CODE_INVALID',
   'AUTH_CODE_EXPIRED',
   'AUTH_CODE_ATTEMPTS_EXCEEDED',
@@ -30,6 +31,7 @@ export const ERROR_CODES = [
 
   /** Transactional email through Resend. */
   'EMAIL_DELIVERY_FAILED',
+  'ACCOUNT_EXPORT_RATE_LIMITED',
 
   /** The Kira Score before the health check has been answered. */
   'SCORE_NOT_AVAILABLE',
@@ -50,8 +52,21 @@ export const ERROR_CODES = [
   /** Plans, the simulated billing and Beasiswa Kira. */
   'SUBSCRIPTION_NOT_FOUND',
   'SUBSCRIPTION_NOT_CANCELLABLE',
+  'SUBSCRIPTION_NOT_PAID',
   'SCHOLARSHIP_NOT_ELIGIBLE',
   'SCHOLARSHIP_APPLICATION_NOT_FOUND',
+  'SCHOLARSHIP_DEBT_EMERGENCY_REQUIRED',
+
+  /** Terhubung: community groups, their rules and reports, and Etalase. */
+  'COMMUNITY_GROUP_NOT_FOUND',
+  'COMMUNITY_LINK_UNAVAILABLE',
+  'COMMUNITY_PRODUCT_NOT_FOUND',
+  'COMMUNITY_REPORT_DUPLICATE',
+  'COMMUNITY_RULES_NOT_ACCEPTED',
+
+  /** Kira Peduli: check-ins and the safety plan (PED-05, PED-06, PED-10). */
+  'CARE_CHECK_IN_NOT_FOUND',
+  'CARE_SAFETY_PLAN_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

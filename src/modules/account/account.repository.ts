@@ -16,6 +16,7 @@ import {
   users,
 } from '../../db/schema/schema.ts';
 import { CONSENT_PURPOSE, PRIVACY_POLICY_VERSION } from '../../lib/constants/consents.ts';
+import { EXPORT_ROW_LIMIT } from '../../lib/constants/export.ts';
 import { SUBSCRIPTION_STATUS } from '../../lib/constants/plans.ts';
 import type { PlanSubscription, UsageCounters } from '../../lib/usage/plan-usage.ts';
 
@@ -32,6 +33,7 @@ export type Profile = Pick<
   | 'paydayEndOfMonth'
   | 'hideBalances'
   | 'consentedAt'
+  | 'debtEmergencyModeUsedAt'
 >;
 export type ProfileChanges = Partial<
   Pick<User, 'focus' | 'paydayDay' | 'paydayEndOfMonth' | 'hideBalances'>
@@ -41,9 +43,6 @@ export type ExportRow = Pick<
   Transaction,
   'occurredAt' | 'type' | 'category' | 'name' | 'amount' | 'source' | 'note'
 >;
-
-/** The most rows one export carries: years of daily notes, and a bound the query can promise. */
-export const EXPORT_ROW_LIMIT = 50_000;
 
 export type AccountRepository = {
   findProfile(userId: string): Promise<Profile | null>;
@@ -82,6 +81,7 @@ export function createAccountRepository(client: PostgresJsDatabase = db): Accoun
           paydayEndOfMonth: users.paydayEndOfMonth,
           hideBalances: users.hideBalances,
           consentedAt: users.consentedAt,
+          debtEmergencyModeUsedAt: users.debtEmergencyModeUsedAt,
         })
         .from(users)
         .where(eq(users.id, userId))

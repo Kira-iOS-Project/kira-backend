@@ -4,7 +4,8 @@ import { EXPENSE_CATEGORY, TRANSACTION_TYPE } from '../../../lib/constants/money
 import { PLAN, SUBSCRIPTION_SOURCE, SUBSCRIPTION_STATUS } from '../../../lib/constants/plans.ts';
 import { FOCUS } from '../../../lib/constants/profile.ts';
 import { createFakeDb, inOrder } from '../../../test/fake-postgres.ts';
-import { createAccountRepository, EXPORT_ROW_LIMIT } from '../account.repository.ts';
+import { EXPORT_ROW_LIMIT } from '../../../lib/constants/export.ts';
+import { createAccountRepository } from '../account.repository.ts';
 import { createProfile, NOW, USER_ID } from './helpers.ts';
 
 describe('createAccountRepository: the profile', () => {

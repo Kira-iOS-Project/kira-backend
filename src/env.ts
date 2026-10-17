@@ -65,12 +65,40 @@ const schema = z.object({
      Required in production; elsewhere an unset value becomes a random one per process. */
   AUTH_SECRET: z.string().min(32).optional(),
 
+  /** Layanan Kira Peduli's own line (PED-01, PED-04): the phone and the WhatsApp number, as the
+     person dials them ("0811…"). Until both are set, GET /care/contacts leaves the contact out. */
+  KIRA_CARE_PHONE: z
+    .string()
+    .regex(/^\+?[0-9]{3,15}$/)
+    .optional(),
+  KIRA_CARE_WHATSAPP: z
+    .string()
+    .regex(/^\+?[0-9]{8,15}$/)
+    .optional(),
+
   /** Where the public files live, for the images inside emails (`/email/*.png`). */
   PUBLIC_BASE_URL: z.url({ protocol: /^https?$/ }).default('https://api-kira.serenitycode.tech'),
 
   /** The in-process scheduler (renewal reminders, subscription periods, Beasiswa Kira reviews).
      One replica runs it; off only to run a second process beside the first. */
   JOBS_ENABLED: flag('true'),
+
+  /** The verified links of the curated community groups and Etalase products (KOM-02, KOM-07): a
+     JSON object from a group's or a product's id to its https link, set by the curation team and
+     written at boot. Without one, a group answers Gabung Grup with COMMUNITY_LINK_UNAVAILABLE and
+     a product has no seller page. */
+  COMMUNITY_LINKS_JSON: z
+    .string()
+    .default('{}')
+    .transform((value, context) => {
+      try {
+        return JSON.parse(value) as unknown;
+      } catch {
+        context.addIssue({ code: 'custom', message: 'COMMUNITY_LINKS_JSON must be a JSON object' });
+        return z.NEVER;
+      }
+    })
+    .pipe(z.record(z.uuid(), z.url({ protocol: /^https$/ }))),
 });
 
 const parsed = schema

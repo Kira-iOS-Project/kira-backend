@@ -93,6 +93,17 @@ describe('POST /api/chat/messages', () => {
     expect((await res.json()).fields).toEqual({ voiceSeconds: 'custom' });
   });
 
+  test('answers 403 PLAN_FEATURE_UNAVAILABLE for voice on a plan without it', async () => {
+    dbControl.respond = signedIn(inOrder([], [{ granted: true }]));
+    const res = await send('POST', '/api/chat/messages', {
+      ...MESSAGE_BODY,
+      inputMethod: INPUT_METHOD.voice,
+      voiceSeconds: 5,
+    });
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe('PLAN_FEATURE_UNAVAILABLE');
+  });
+
   test('answers 403 when Kira AI is off', async () => {
     dbControl.respond = signedIn();
     const res = await send('POST', '/api/chat/messages', MESSAGE_BODY);
@@ -125,6 +136,7 @@ describe('PUT /api/chat/messages/{id}/drafts', () => {
     );
     const res = await send('PUT', `/api/chat/messages/${REPLY_ID}/drafts`, { drafts: [] });
     expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe('CHAT_DRAFTS_NOT_PENDING');
   });
 });
 

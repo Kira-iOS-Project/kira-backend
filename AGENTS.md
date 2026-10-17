@@ -79,8 +79,9 @@ Known behaviour, deliberate:
   appears in the log.
 - Urungkan takes the whole batch back: a transaction of the batch edited after Simpan (within the
   30 s window) is deleted with the rest, and its draft returns with the values it was saved with.
-- The data export (`GET /api/me/export` and its email) holds at most 50 000 transactions
-  (`EXPORT_ROW_LIMIT`), newest first. Years of typical use stay far below it.
+- The data export (`GET /api/me/export` and its email) holds at most 50 000 rows a block
+  (`EXPORT_ROW_LIMIT`): the transactions newest first, and each Komunitas and Kira Peduli block.
+  Years of typical use stay far below it. The safety plan is in the download only, never emailed.
 - Someone else can spend an address's code tries and checks (10 per 15 minutes) by guessing at it.
   That briefly blocks its owner's sign-in; it never lets the guesser in.
 

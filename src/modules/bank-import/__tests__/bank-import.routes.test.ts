@@ -41,7 +41,9 @@ describe('POST /api/imports', () => {
 
   test('answers 403 on Kira Gratis, and 422 for a category against the sign', async () => {
     dbControl.respond = signedIn();
-    expect((await post('/api/imports', IMPORT_BODY)).status).toBe(403);
+    const gratis = await post('/api/imports', IMPORT_BODY);
+    expect(gratis.status).toBe(403);
+    expect((await gratis.json()).code).toBe('PLAN_FEATURE_UNAVAILABLE');
     const wrong = {
       ...IMPORT_BODY,
       rows: [{ ...IMPORT_BODY.rows[0], category: INCOME_CATEGORY.salary }],
@@ -49,6 +51,17 @@ describe('POST /api/imports', () => {
     expect((await post('/api/imports', wrong)).status).toBe(422);
     const zero = { ...IMPORT_BODY, rows: [{ ...IMPORT_BODY.rows[0], amount: 0 }] };
     expect((await post('/api/imports', zero)).status).toBe(422);
+  });
+
+  test('answers 400 IMPORT_RANGE_TOO_LONG for more than three months of rows', async () => {
+    dbControl.respond = signedIn(inOrder([plus]));
+    const long = {
+      ...IMPORT_BODY,
+      rows: [IMPORT_BODY.rows[0], { ...IMPORT_BODY.rows[1], date: '2026-06-01' }],
+    };
+    const res = await post('/api/imports', long);
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe('IMPORT_RANGE_TOO_LONG');
   });
 });
 
@@ -70,5 +83,17 @@ describe('POST /api/imports/{id}/commit', () => {
     dbControl.respond = signedIn();
     const res = await post(`/api/imports/${IMPORT_ID}/commit`, { rows: [] });
     expect(res.status).toBe(404);
+    expect((await res.json()).code).toBe('IMPORT_NOT_FOUND');
+  });
+
+  test('answers 400 IMPORT_ROW_UNKNOWN for a row that is not in the import', async () => {
+    dbControl.respond = signedIn(
+      inOrder([{ committedAt: null, savedCount: null, skippedCount: null }], []),
+    );
+    const res = await post(`/api/imports/${IMPORT_ID}/commit`, {
+      rows: [{ id: ROW_ID, category: EXPENSE_CATEGORY.food }],
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe('IMPORT_ROW_UNKNOWN');
   });
 });

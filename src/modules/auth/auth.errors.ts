@@ -16,6 +16,17 @@ export class CodeRateLimitedError extends TooManyRequestsError {
   }
 }
 
+/** Too many codes checked for one address or from one network in fifteen minutes. */
+export class VerifyRateLimitedError extends TooManyRequestsError {
+  constructor(reason: string) {
+    super(
+      'Too many sign-in tries. Wait a few minutes and try again.',
+      reason,
+      'AUTH_VERIFY_RATE_LIMITED',
+    );
+  }
+}
+
 /** The code does not match the latest one sent to the address, or none was sent. */
 export class CodeInvalidError extends ValidationError {
   constructor() {

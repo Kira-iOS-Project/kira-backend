@@ -10,7 +10,8 @@ import {
   TRANSACTION_SOURCE,
   TRANSACTION_TYPE,
 } from '../../lib/constants/money.ts';
-import { wibDate } from '../../lib/time/wib.ts';
+import { wibDate, wibTime } from '../../lib/time/wib.ts';
+import type { ExportSection } from '../../lib/export/export-section.ts';
 import type { ExportRow } from './account.repository.ts';
 
 const HEADER = ['Tanggal', 'Jam', 'Jenis', 'Kategori', 'Nama', 'Nominal', 'Sumber', 'Catatan'];
@@ -49,13 +50,6 @@ const SOURCE_LABEL: Record<ExportRow['source'], string> = {
   [TRANSACTION_SOURCE.bankImport]: 'Impor',
 };
 
-const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
-
-/** "12.41", the WIB clock time the app writes. */
-export function wibTime(instant: Date): string {
-  return new Date(instant.getTime() + WIB_OFFSET_MS).toISOString().slice(11, 16).replace(':', '.');
-}
-
 /**
  * One RFC 4180 field. A text that a spreadsheet would run as a formula (=, +, -, @) is opened with
  * an apostrophe, so a transaction name can never execute in the person's spreadsheet.
@@ -85,4 +79,22 @@ export function transactionsCsv(rows: readonly ExportRow[]): string {
     ].join(','),
   );
   return `﻿${[HEADER.join(','), ...lines].join('\r\n')}\r\n`;
+}
+
+/**
+ * Other modules' blocks after the transactions: each after a blank line, its title on a line of
+ * its own, then its header and rows, escaped like the transactions.
+ */
+export function sectionsCsv(sections: readonly ExportSection[]): string {
+  return sections
+    .map((section) =>
+      [
+        '',
+        field(section.title),
+        section.header.map(field).join(','),
+        ...section.rows.map((row) => row.map(field).join(',')),
+      ].join('\r\n'),
+    )
+    .map((block) => `${block}\r\n`)
+    .join('');
 }

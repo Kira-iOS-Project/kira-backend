@@ -13,3 +13,10 @@ export class SubscriptionNotCancellableError extends ConflictError {
     super('This subscription cannot be cancelled.', reason, 'SUBSCRIPTION_NOT_CANCELLABLE');
   }
 }
+
+/** A Beasiswa Kira grant is free: it has no payment method to change. */
+export class SubscriptionNotPaidError extends ConflictError {
+  constructor() {
+    super('This subscription has no payment method.', 'scholarship grant', 'SUBSCRIPTION_NOT_PAID');
+  }
+}

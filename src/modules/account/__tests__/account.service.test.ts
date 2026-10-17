@@ -52,6 +52,7 @@ describe('getMe', () => {
       debtAccountCount: 0,
       aiEnabled: false,
       weeklySummaryEnabled: false,
+      debtEmergencyActive: false,
     });
   });
 
@@ -101,10 +102,21 @@ describe('getMe', () => {
     });
   });
 
-  test('fails loudly when the session has no account', async () => {
+  test('says Mode Darurat Utang is active once it has been opened', async () => {
+    const repository = createAccountRepositoryMock({
+      findProfile: async () => createProfile({ debtEmergencyModeUsedAt: NOW }),
+    });
+
+    expect((await getMe(USER_ID, { repository, now: () => NOW })).debtEmergencyActive).toBe(true);
+  });
+
+  test('answers 401 AUTH_UNAUTHENTICATED when the account was deleted mid-request', async () => {
     const repository = createAccountRepositoryMock({ findProfile: async () => null });
 
-    expect(getMe(USER_ID, { repository, now })).rejects.toThrow('The session has no account');
+    await expect(getMe(USER_ID, { repository, now })).rejects.toMatchObject({
+      statusCode: 401,
+      code: 'AUTH_UNAUTHENTICATED',
+    });
   });
 });
 

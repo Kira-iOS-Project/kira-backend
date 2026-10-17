@@ -7,7 +7,7 @@
 import { renderEmail } from '../../lib/email/layout.ts';
 import type { EmailMessage } from '../../lib/email/resend.ts';
 import { wibDate } from '../../lib/time/wib.ts';
-import { wibTime } from './account.csv.ts';
+import { wibTime } from '../../lib/time/wib.ts';
 
 const MONTHS = [
   'Januari',

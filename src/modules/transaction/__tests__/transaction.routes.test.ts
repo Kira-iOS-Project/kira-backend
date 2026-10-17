@@ -9,6 +9,7 @@ import {
   INCOME_CATEGORY,
   TRANSACTION_TYPE,
 } from '../../../lib/constants/money.ts';
+import { MESSAGE_KIND } from '../../../lib/constants/chat.ts';
 import { inOrder } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
 import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
@@ -109,5 +110,18 @@ describe('DELETE /api/transactions/batches/{batchId}', () => {
     const res = await send('DELETE', `/api/transactions/batches/${TX_ID}`);
     expect(res.status).toBe(404);
     expect((await res.json()).code).toBe('TRANSACTION_BATCH_NOT_FOUND');
+  });
+
+  test('answers 409 TRANSACTION_UNDO_EXPIRED after the undo window', async () => {
+    const committed = createManualMessageMock({
+      kind: MESSAGE_KIND.drafts,
+      payload: { batchId: TX_ID, committedAt: '2026-01-01T00:00:00.000Z', transactionIds: [TX_ID] },
+    });
+    dbControl.respond = signedIn(
+      inOrder([{ ...committed, createdAt: committed.createdAt.toISOString() }]),
+    );
+    const res = await send('DELETE', `/api/transactions/batches/${TX_ID}`);
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe('TRANSACTION_UNDO_EXPIRED');
   });
 });

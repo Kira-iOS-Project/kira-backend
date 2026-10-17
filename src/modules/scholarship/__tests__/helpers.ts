@@ -31,7 +31,7 @@ export function createScholarshipRepositoryMock(
     findActiveSubscriptionSource: async () => null,
     findCurrentApplication: async () => null,
     countQuota: async () => ({ giftedMonths: 0, accepted: 0 }),
-    hasUsedDebtEmergencyMode: async () => false,
+    hasUsedDebtEmergencyMode: async () => true,
     createApplication: async () => applicationRow(),
     withdrawOpenApplication: async () => false,
     ...overrides,
