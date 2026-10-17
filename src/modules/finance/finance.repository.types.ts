@@ -1,5 +1,7 @@
 import type { DEBT_KIND, DEBT_PAYMENT_STATUS } from '../../lib/constants/profile.ts';
-import type { WALLET_TYPE } from '../../lib/constants/ung.ts';
+import type { BILL_REPEAT_INTERVAL, WALLET_TYPE } from '../../lib/constants/ung.ts';
+import { expenseCategorySchema } from '../../lib/money/money.schema.ts';
+import type { z } from 'zod';
 
 type Values<T> = T[keyof T];
 
@@ -23,7 +25,22 @@ type DebtRow = {
   paymentStatus: Values<typeof DEBT_PAYMENT_STATUS>;
 };
 
+export type BillRow = {
+  id: string;
+  name: string;
+  amount: number;
+  category: z.infer<typeof expenseCategorySchema>;
+  nextDueDate: string;
+  repeatInterval: Values<typeof BILL_REPEAT_INTERVAL>;
+  installmentsTotal: number | null;
+  installmentsRemaining: number | null;
+  linkedDebtAccountId: string | null;
+  linkedDebtName: string | null;
+  paidThisPeriod: boolean;
+};
+
 export type FinanceRepository = {
   listWallets(userId: string): Promise<WalletRow[]>;
   listDebts(userId: string): Promise<DebtRow[]>;
+  listBills(userId: string, periodStart: string): Promise<BillRow[]>;
 };

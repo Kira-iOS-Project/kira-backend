@@ -8,6 +8,7 @@
 export * from './accounts.ts';
 export * from './assets.ts';
 export * from './billing.ts';
+export * from './bills.ts';
 export * from './budgets.ts';
 export * from './care.ts';
 export * from './columns.ts';

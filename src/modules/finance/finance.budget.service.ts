@@ -31,7 +31,7 @@ function shiftedMonth(year: number, month: number, offset: number) {
   return [date.getUTCFullYear(), date.getUTCMonth() + 1] as const;
 }
 
-function currentPaydayPeriod(today: string, choice: PaydayChoice) {
+export function getCurrentPaydayPeriod(today: string, choice: PaydayChoice) {
   const [year = 0, month = 1] = today.split('-').map(Number);
   const holidaySet = new Set(INDONESIAN_NATIONAL_HOLIDAYS.map(({ date }) => date));
   const candidates = [-1, 0, 1, 2]
@@ -112,7 +112,7 @@ export async function getCurrentBudget(userId: string, deps: Deps = {}) {
   const saved = await repository.getBudget(userId);
   const defaults = saved ?? { ...(await repository.getProfileBudget(userId)), allocations: [] };
   const today = wibDate(now);
-  const payday = currentPaydayPeriod(today, defaults.payday);
+  const payday = getCurrentPaydayPeriod(today, defaults.payday);
   const [spending, profile] = await Promise.all([
     repository.spendingByCategory(
       userId,

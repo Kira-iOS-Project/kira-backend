@@ -5022,6 +5022,119 @@
           "dueSoon"
         ]
       },
+      "BillList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Bill"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "Bill": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "bill",
+              "debtInstallment"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "food",
+              "coffee",
+              "transport",
+              "shopping",
+              "bills",
+              "paylater_instalment",
+              "savings_deposit",
+              "insurance",
+              "entertainment",
+              "health",
+              "education",
+              "household",
+              "other_expense"
+            ]
+          },
+          "nextDueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "repeatInterval": {
+            "type": "string",
+            "enum": [
+              "weekly",
+              "monthly",
+              "yearly"
+            ]
+          },
+          "installmentsTotal": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "installmentsRemaining": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "linkedDebtAccountId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "linkedDebtName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dueSoon": {
+            "type": "boolean"
+          },
+          "paidThisPeriod": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "amount",
+          "category",
+          "nextDueDate",
+          "repeatInterval",
+          "installmentsTotal",
+          "installmentsRemaining",
+          "linkedDebtAccountId",
+          "linkedDebtName",
+          "dueSoon",
+          "paidThisPeriod"
+        ]
+      },
       "CurrentBudget": {
         "type": "object",
         "properties": {
@@ -10558,6 +10671,52 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/WalletList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bills": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listBills",
+        "summary": "Recurring bills and debt installments by due date",
+        "responses": {
+          "200": {
+            "description": "Owner bills and debt installments with due and payment status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillList"
                 }
               }
             }

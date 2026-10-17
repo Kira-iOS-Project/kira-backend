@@ -61,6 +61,10 @@
     "home": "src/lib/constants/ung.ts",
     "allow": [
       {
+        "path": "src/lib/constants/plans.ts",
+        "reason": "Subscription billing periods and recurring-bill intervals both use monthly/yearly, but remain separate API vocabularies."
+      },
+      {
         "path": "src/lib/constants/community.ts",
         "reason": "'other' there is a community category, not the fallback wallet type."
       }
@@ -75,6 +79,10 @@
     "name": "plans",
     "home": "src/lib/constants/plans.ts",
     "allow": [
+      {
+        "path": "src/lib/constants/ung.ts",
+        "reason": "Recurring bill intervals and subscription billing periods both use monthly/yearly, but remain separate API vocabularies."
+      },
       {
         "path": "src/lib/constants/community.ts",
         "reason": "'active' there is a curated group's or product's listing status, not a subscription status."

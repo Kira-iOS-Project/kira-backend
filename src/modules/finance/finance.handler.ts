@@ -1,7 +1,9 @@
 import type { RouteHandler } from '@hono/zod-openapi';
 import type { AppEnv } from '../../lib/server/factory.ts';
 import type { listWalletsRoute } from './finance.routes.accounts.ts';
+import type { listBillsRoute } from './finance.routes.bills.ts';
 import { listWallets } from './finance.accounts.service.ts';
+import { listBills } from './finance.bills.service.ts';
 import type { currentBudgetRoute } from './finance.routes.budget.ts';
 import type { currentBudgetEditRoute, updateCurrentBudgetRoute } from './finance.routes.budget.ts';
 import {
@@ -12,6 +14,9 @@ import {
 
 export const listWalletsHandler: RouteHandler<typeof listWalletsRoute, AppEnv> = async (c) =>
   c.json(await listWallets(c.get('userId')), 200);
+
+export const listBillsHandler: RouteHandler<typeof listBillsRoute, AppEnv> = async (c) =>
+  c.json(await listBills(c.get('userId')), 200);
 
 export const currentBudgetHandler: RouteHandler<typeof currentBudgetRoute, AppEnv> = async (c) =>
   c.json(await getCurrentBudget(c.get('userId')), 200);
