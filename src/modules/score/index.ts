@@ -1,5 +1,5 @@
 export { healthCheckRouter, scoreRouter } from './score.routes.ts';
-export { factsOf, isConsumerDebt } from './score.engine.ts';
+export { factsOf, isConsumerDebt, targetMultipleOf } from './score.engine.ts';
 export {
   estimateScoreChange,
   findScoreInput,

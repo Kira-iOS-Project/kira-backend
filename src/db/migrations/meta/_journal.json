@@ -85,6 +85,13 @@
       "when": 1792205909578,
       "tag": "0011_flimsy_moira_mactaggert",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792207337559,
+      "tag": "0012_chief_ender_wiggin",
+      "breakpoints": true
     }
   ]
 }

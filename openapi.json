@@ -5022,6 +5022,210 @@
           "dueSoon"
         ]
       },
+      "CurrentBudget": {
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "income": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remaining": {
+            "type": "integer"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                },
+                "amount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "spent": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "nearLimit": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "category",
+                "amount",
+                "spent",
+                "nearLimit"
+              ]
+            }
+          },
+          "totalAllocated": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "overAllocated": {
+            "type": "boolean"
+          },
+          "goalPosts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "emergency_fund"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "currentAmount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetAmount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "milestones": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "amount": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "reached": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "amount",
+                      "label",
+                      "reached"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "category",
+                "name",
+                "currentAmount",
+                "targetAmount",
+                "milestones"
+              ]
+            }
+          },
+          "payday": {
+            "type": "object",
+            "properties": {
+              "requested": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "day"
+                        ]
+                      },
+                      "day": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 31
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "day"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "endOfMonth"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  }
+                ]
+              },
+              "adjustedDate": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-17"
+              },
+              "periodStart": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-17"
+              },
+              "periodEnd": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-17"
+              },
+              "nextPayday": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-17"
+              },
+              "daysUntilPayday": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "requested",
+              "adjustedDate",
+              "periodStart",
+              "periodEnd",
+              "nextPayday",
+              "daysUntilPayday"
+            ]
+          }
+        },
+        "required": [
+          "configured",
+          "income",
+          "remaining",
+          "allocations",
+          "totalAllocated",
+          "overAllocated",
+          "goalPosts",
+          "payday"
+        ]
+      },
       "BankImport": {
         "type": "object",
         "properties": {
@@ -10210,6 +10414,52 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/WalletList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/budgets/current": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getCurrentBudget",
+        "summary": "Current budget and adjusted payday",
+        "responses": {
+          "200": {
+            "description": "Current budget, spending, goal posts and adjusted payday period",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentBudget"
                 }
               }
             }
