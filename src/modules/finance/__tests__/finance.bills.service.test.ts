@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { EXPENSE_CATEGORY } from '../../../lib/constants/money.ts';
 import { BILL_KIND, BILL_REPEAT_INTERVAL } from '../../../lib/constants/ung.ts';
-import { listBills } from '../finance.bills.service.ts';
+import { createBill, listBills } from '../finance.bills.service.ts';
 import type { BillRow } from '../finance.repository.types.ts';
 
 const now = () => new Date('2026-10-17T05:00:00.000Z');
@@ -95,5 +95,78 @@ describe('listBills', () => {
 
     expect(period).toBe('2026-10-05');
     expect(result).toEqual({ items: [] });
+  });
+});
+
+describe('createBill', () => {
+  test('returns the saved schedule with the current due and payment status', async () => {
+    const linked: BillRow = {
+      ...baseBill,
+      linkedDebtAccountId: '00000000-0000-4000-8000-000000000003',
+      linkedDebtName: 'Paylater',
+      installmentsTotal: 8,
+      installmentsRemaining: 8,
+    };
+    const result = await createBill(
+      'owner',
+      {
+        name: 'Paylater',
+        amount: 200_000,
+        category: EXPENSE_CATEGORY.paylaterInstalment,
+        nextDueDate: '2026-10-27',
+        repeatInterval: BILL_REPEAT_INTERVAL.monthly,
+        linkedDebtAccountId: linked.linkedDebtAccountId,
+        clientId: '00000000-0000-4000-8000-000000000006',
+      },
+      {
+        now,
+        repository: {
+          createBill: async (userId, body) => {
+            expect(userId).toBe('owner');
+            expect(body.linkedDebtAccountId).toBe(linked.linkedDebtAccountId);
+            return linked;
+          },
+          listBills: async () => [linked],
+        },
+        budgetRepository: {
+          getBudget: async () => ({
+            income: 1_000_000,
+            allocations: [],
+            payday: { type: 'day', day: 25 },
+          }),
+          getProfileBudget: async () => ({ income: 0, payday: { type: 'endOfMonth' } }),
+        },
+      },
+    );
+
+    expect(result).toMatchObject({
+      id: linked.id,
+      kind: BILL_KIND.debtInstallment,
+      dueSoon: true,
+      paidThisPeriod: false,
+    });
+  });
+
+  test('refuses an unowned or missing debt account', async () => {
+    await expect(
+      createBill(
+        'owner',
+        {
+          name: 'Uang Cemas',
+          amount: 300_000,
+          category: EXPENSE_CATEGORY.bills,
+          nextDueDate: '2026-10-22',
+          repeatInterval: BILL_REPEAT_INTERVAL.monthly,
+          linkedDebtAccountId: '00000000-0000-4000-8000-000000000003',
+          clientId: '00000000-0000-4000-8000-000000000006',
+        },
+        {
+          repository: {
+            createBill: async () => null,
+            listBills: async () => [],
+          },
+        },
+      ),
+    ).rejects.toMatchObject({ code: 'PAYOFF_DEBT_NOT_FOUND' });
   });
 });

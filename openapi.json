@@ -5135,6 +5135,80 @@
           "paidThisPeriod"
         ]
       },
+      "CreateBillInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "food",
+              "coffee",
+              "transport",
+              "shopping",
+              "bills",
+              "paylater_instalment",
+              "savings_deposit",
+              "insurance",
+              "entertainment",
+              "health",
+              "education",
+              "household",
+              "other_expense"
+            ]
+          },
+          "nextDueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "repeatInterval": {
+            "type": "string",
+            "enum": [
+              "weekly",
+              "monthly",
+              "yearly"
+            ]
+          },
+          "installmentsTotal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 600
+          },
+          "installmentsRemaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 600
+          },
+          "linkedDebtAccountId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "name",
+          "amount",
+          "category",
+          "nextDueDate",
+          "repeatInterval",
+          "clientId"
+        ]
+      },
       "CurrentBudget": {
         "type": "object",
         "properties": {
@@ -10723,6 +10797,80 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createBill",
+        "summary": "Add a recurring bill or linked debt installment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBillInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created schedule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bill"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {

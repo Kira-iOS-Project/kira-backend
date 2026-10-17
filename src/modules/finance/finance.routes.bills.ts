@@ -1,6 +1,6 @@
 import { createRoute } from '@hono/zod-openapi';
 import { errorResponses } from '../../lib/errors/problem.ts';
-import { billListSchema } from './finance.bills.schema.ts';
+import { billListSchema, billSchema, createBillBodySchema } from './finance.bills.schema.ts';
 
 export const listBillsRoute = createRoute({
   tags: ['Finance'],
@@ -15,5 +15,24 @@ export const listBillsRoute = createRoute({
       content: { 'application/json': { schema: billListSchema } },
     },
     ...errorResponses(401),
+  },
+});
+
+export const createBillRoute = createRoute({
+  tags: ['Finance'],
+  security: [{ bearerAuth: [] }],
+  method: 'post',
+  path: '/bills',
+  operationId: 'createBill',
+  summary: 'Add a recurring bill or linked debt installment',
+  request: {
+    body: { content: { 'application/json': { schema: createBillBodySchema } }, required: true },
+  },
+  responses: {
+    201: {
+      description: 'Created schedule',
+      content: { 'application/json': { schema: billSchema } },
+    },
+    ...errorResponses(401, 404, 422),
   },
 });

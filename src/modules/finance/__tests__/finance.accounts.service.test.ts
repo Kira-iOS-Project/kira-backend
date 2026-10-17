@@ -29,6 +29,7 @@ function repository(overrides: Partial<FinanceRepository> = {}): FinanceReposito
     listWallets: async () => [wallet],
     listDebts: async () => [debt],
     listBills: async () => [],
+    createBill: async () => null,
     ...overrides,
   };
 }
