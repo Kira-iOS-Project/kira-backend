@@ -37,4 +37,62 @@ describe('finance account repository', () => {
       expect(query.sql).toContain('limit');
     }
   });
+
+  test('creates owned wallets and debt accounts with their persisted finance values', async () => {
+    const fake = createFakeDb((query) =>
+      query.sql.includes('insert into "wallets"')
+        ? [
+            {
+              id: ID,
+              name: 'Cash',
+              type: WALLET_TYPE.cash,
+              balance: 500,
+              createdAt: new Date('2026-10-17T00:00:00.000Z'),
+            },
+          ]
+        : [
+            {
+              id: ID,
+              name: 'Kartu Kredit',
+              kind: DEBT_KIND.creditCard,
+              originalAmount: 1000,
+              remainingAmount: 1000,
+              monthlyInstallment: 200,
+              remainingTenorMonths: 5,
+              dueDay: 20,
+              paymentStatus: DEBT_PAYMENT_STATUS.onTime,
+            },
+          ],
+    );
+    const repository = createFinanceRepository(fake.db);
+    const now = new Date('2026-10-17T00:00:00.000Z');
+
+    await expect(
+      repository.createWallet(
+        'owner',
+        { name: 'Cash', type: WALLET_TYPE.cash, openingBalance: 500 },
+        now,
+      ),
+    ).resolves.toMatchObject({ id: ID, balance: 500 });
+    await expect(
+      repository.createDebt(
+        'owner',
+        {
+          name: 'Kartu Kredit',
+          kind: DEBT_KIND.creditCard,
+          amount: 1000,
+          monthlyInstallment: 200,
+          remainingTenorMonths: 5,
+          dueDay: 20,
+        },
+        now,
+      ),
+    ).resolves.toMatchObject({ originalAmount: 1000, remainingAmount: 1000, dueDay: 20 });
+
+    expect(fake.queries).toHaveLength(2);
+    for (const query of fake.queries) {
+      expect(query.sql).toContain('"user_id"');
+      expect(query.sql).toContain('returning');
+    }
+  });
 });

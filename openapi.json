@@ -5226,6 +5226,135 @@
           "payday"
         ]
       },
+      "CreateWalletInput": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash",
+                  "bank",
+                  "ewallet",
+                  "e_wallet",
+                  "other"
+                ]
+              },
+              "balance": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              },
+              "openingBalance": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              }
+            },
+            "required": [
+              "name",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "credit_card",
+                  "paylater",
+                  "pinjol"
+                ]
+              },
+              "remainingDebt": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000000000000
+              },
+              "monthlyInstallment": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              },
+              "remainingTenorMonths": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 600
+              },
+              "nextDueDate": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "required": [
+              "name",
+              "type",
+              "remainingDebt"
+            ]
+          }
+        ]
+      },
+      "CreateDebtInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "credit_card",
+              "paylater",
+              "pinjol",
+              "online_loan"
+            ]
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "monthlyInstallment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000000
+          },
+          "remainingTenorMonths": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 600
+          },
+          "nextDueDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "amount"
+        ]
+      },
       "BankImport": {
         "type": "object",
         "properties": {
@@ -8647,6 +8776,70 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createDebt",
+        "summary": "Add a debt account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDebtInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created debt account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/care/safety-plan": {
@@ -10420,6 +10613,77 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createWallet",
+        "summary": "Add a wallet or a debt account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWalletInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created wallet or debt account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Wallet"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DebtSummary"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {

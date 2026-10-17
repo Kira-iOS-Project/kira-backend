@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { DEBT_KIND, DEBT_PAYMENT_STATUS } from '../../../lib/constants/profile.ts';
-import { WALLET_TYPE } from '../../../lib/constants/ung.ts';
-import { listDebts, listWallets } from '../finance.accounts.service.ts';
+import { FINANCE_INPUT_ALIAS, WALLET_TYPE } from '../../../lib/constants/ung.ts';
+import { createDebt, createWallet, listDebts, listWallets } from '../finance.accounts.service.ts';
 import type { FinanceRepository } from '../finance.repository.types.ts';
 
 const wallet = {
@@ -27,7 +27,23 @@ const debt = {
 function repository(overrides: Partial<FinanceRepository> = {}): FinanceRepository {
   return {
     listWallets: async () => [wallet],
+    createWallet: async (_userId, body) => ({
+      ...wallet,
+      name: body.name,
+      type: body.type,
+      balance: body.openingBalance,
+    }),
     listDebts: async () => [debt],
+    createDebt: async (_userId, body) => ({
+      ...debt,
+      name: body.name,
+      kind: body.kind,
+      originalAmount: body.amount,
+      remainingAmount: body.amount,
+      monthlyInstallment: body.monthlyInstallment,
+      remainingTenorMonths: body.remainingTenorMonths,
+      dueDay: body.dueDay,
+    }),
     ...overrides,
   };
 }
@@ -68,5 +84,56 @@ describe('finance account lists', () => {
     ]);
     expect(result.items[0]).toMatchObject({ dueSoon: true, nextInstallment: { amount: 100_000 } });
     expect(result.items[2]?.dueSoon).toBe(false);
+  });
+
+  test('creates e-wallets using the persisted e_wallet type and the opening balance', async () => {
+    const created = await createWallet(
+      'owner',
+      { name: 'Jago', type: FINANCE_INPUT_ALIAS.eWallet, balance: 75_000 },
+      { repository: repository(), now },
+    );
+    expect(created).toMatchObject({ name: 'Jago', type: WALLET_TYPE.eWallet, balance: 75_000 });
+  });
+
+  test('creates a pinjol debt with its linked due-day summary', async () => {
+    const created = await createDebt(
+      'owner',
+      {
+        name: 'Pinjol',
+        kind: FINANCE_INPUT_ALIAS.pinjol,
+        amount: 1_000_000,
+        monthlyInstallment: 100_000,
+        remainingTenorMonths: 10,
+        nextDueDate: '2026-10-20',
+      },
+      { repository: repository(), now },
+    );
+    expect(created).toMatchObject({
+      name: 'Pinjol',
+      kind: DEBT_KIND.onlineLoan,
+      originalAmount: 1_000_000,
+      remainingAmount: 1_000_000,
+      installmentsTotal: 10,
+      nextInstallment: { dueDate: '2026-10-20', amount: 100_000, status: 'dueSoon' },
+    });
+  });
+
+  test('accepts debt kinds from the wallet creation sheet and stores their canonical kind', async () => {
+    const created = await createWallet(
+      'owner',
+      {
+        name: 'Kartu Kredit',
+        type: DEBT_KIND.creditCard,
+        remainingDebt: 2_000_000,
+        monthlyInstallment: 200_000,
+      },
+      { repository: repository(), now },
+    );
+    expect(created).toMatchObject({
+      kind: DEBT_KIND.creditCard,
+      originalAmount: 2_000_000,
+      remainingAmount: 2_000_000,
+      monthlyInstallment: 200_000,
+    });
   });
 });

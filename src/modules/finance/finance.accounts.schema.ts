@@ -1,7 +1,8 @@
 import { z } from '@hono/zod-openapi';
 import { enumValues } from '../../lib/constants/enum-values.ts';
 import { DEBT_KIND, DEBT_PAYMENT_STATUS } from '../../lib/constants/profile.ts';
-import { WALLET_TYPE } from '../../lib/constants/ung.ts';
+import { amountSchema } from '../../lib/money/money.schema.ts';
+import { FINANCE_INPUT_ALIAS, WALLET_TYPE } from '../../lib/constants/ung.ts';
 
 const walletSchema = z
   .object({
@@ -34,6 +35,9 @@ const debtSummarySchema = z
   })
   .openapi('DebtSummary');
 
+export const walletCreateResponseSchema = z.union([walletSchema, debtSummarySchema]);
+export const debtCreateResponseSchema = debtSummarySchema;
+
 export const walletListSchema = z
   .object({
     items: z.array(walletSchema),
@@ -42,3 +46,61 @@ export const walletListSchema = z
     totalDebt: z.number().int().min(0),
   })
   .openapi('WalletList');
+
+const name = z.string().trim().min(1).max(60);
+const optionalBalance = {
+  balance: z.number().int().min(0).max(10_000_000_000_000).optional(),
+  openingBalance: z.number().int().min(0).max(10_000_000_000_000).optional(),
+};
+const createWalletInputSchema = z
+  .object({
+    name,
+    type: z.enum([
+      WALLET_TYPE.cash,
+      WALLET_TYPE.bank,
+      FINANCE_INPUT_ALIAS.eWallet,
+      WALLET_TYPE.eWallet,
+      WALLET_TYPE.other,
+    ]),
+    ...optionalBalance,
+  })
+  .refine(({ balance, openingBalance }) => balance !== undefined || openingBalance !== undefined, {
+    path: ['balance'],
+    message: 'A wallet balance is required.',
+  })
+  .refine(
+    ({ balance, openingBalance }) =>
+      balance === undefined || openingBalance === undefined || balance === openingBalance,
+    { path: ['balance'], message: 'balance and openingBalance must match when both are sent.' },
+  );
+const createDebtWalletInputSchema = z.object({
+  name,
+  type: z.enum([DEBT_KIND.creditCard, DEBT_KIND.paylater, FINANCE_INPUT_ALIAS.pinjol]),
+  remainingDebt: amountSchema,
+  monthlyInstallment: z.number().int().min(0).max(10_000_000_000_000).optional(),
+  remainingTenorMonths: z.number().int().min(0).max(600).nullable().optional(),
+  nextDueDate: date.optional(),
+});
+
+export const createWalletBodySchema = z
+  .union([createWalletInputSchema, createDebtWalletInputSchema])
+  .openapi('CreateWalletInput');
+
+export const createDebtBodySchema = z
+  .object({
+    name,
+    kind: z.enum([
+      DEBT_KIND.creditCard,
+      DEBT_KIND.paylater,
+      FINANCE_INPUT_ALIAS.pinjol,
+      DEBT_KIND.onlineLoan,
+    ]),
+    amount: amountSchema,
+    monthlyInstallment: z.number().int().min(0).max(10_000_000_000_000).optional(),
+    remainingTenorMonths: z.number().int().min(0).max(600).nullable().optional(),
+    nextDueDate: date.optional(),
+  })
+  .openapi('CreateDebtInput');
+
+export type CreateWalletInput = z.infer<typeof createWalletBodySchema>;
+export type CreateDebtInput = z.infer<typeof createDebtBodySchema>;
