@@ -92,6 +92,13 @@
       "when": 1792210893868,
       "tag": "0012_budgets",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792211238507,
+      "tag": "0013_bills_and_health_check_debts",
+      "breakpoints": true
     }
   ]
 }
