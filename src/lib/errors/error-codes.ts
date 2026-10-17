@@ -74,6 +74,9 @@ export const ERROR_CODES = [
   /** Kira Peduli: check-ins and the safety plan (PED-05, PED-06, PED-10). */
   'CARE_CHECK_IN_NOT_FOUND',
   'CARE_SAFETY_PLAN_NOT_FOUND',
+
+  /** Portofolio Manual (REN-10, REN-11). */
+  'ASSET_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

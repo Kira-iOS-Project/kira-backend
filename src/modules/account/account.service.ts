@@ -10,6 +10,7 @@ import type { ExportScope, ExportSection } from '../../lib/export/export-section
 import { logger } from '../../lib/server/logger.ts';
 import { paydayPeriod, wibDate } from '../../lib/time/wib.ts';
 import { activePlanOf, quotaPeriod, usageOf } from '../../lib/usage/plan-usage.ts';
+import { assetExportSections } from '../asset/index.ts';
 import { careExportSections } from '../care/index.ts';
 import { communityExportSections } from '../community/index.ts';
 import { exportFileName, sectionsCsv, transactionsCsv } from './account.csv.ts';
@@ -39,7 +40,11 @@ export const EXPORT_EMAIL_COOLDOWN_MS = 10 * 60_000;
 /** Every other module's blocks of Unduh Datamu, after the transactions in this order. */
 async function moduleExportSections(userId: string, scope: ExportScope): Promise<ExportSection[]> {
   return (
-    await Promise.all([communityExportSections(userId), careExportSections(userId, scope)])
+    await Promise.all([
+      communityExportSections(userId),
+      careExportSections(userId, scope),
+      assetExportSections(userId),
+    ])
   ).flat();
 }
 
