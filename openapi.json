@@ -103,7 +103,8 @@
               "COMMUNITY_REPORT_DUPLICATE",
               "COMMUNITY_RULES_NOT_ACCEPTED",
               "CARE_CHECK_IN_NOT_FOUND",
-              "CARE_SAFETY_PLAN_NOT_FOUND"
+              "CARE_SAFETY_PLAN_NOT_FOUND",
+              "ASSET_NOT_FOUND"
             ]
           },
           "requestId": {
@@ -1078,6 +1079,117 @@
           "monthlyInstalment"
         ]
       },
+      "ScoreHistory": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "type": "object",
+            "properties": {
+              "score": {
+                "type": "integer"
+              },
+              "band": {
+                "type": "string",
+                "enum": [
+                  "vulnerable",
+                  "coping",
+                  "healthy"
+                ]
+              },
+              "deltaFromPrevious": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "previousMonth": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "example": "2026-09"
+              }
+            },
+            "required": [
+              "score",
+              "band",
+              "deltaFromPrevious",
+              "previousMonth"
+            ]
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "month": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                  "example": "2026-09"
+                },
+                "score": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "month",
+                "score"
+              ]
+            }
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "indicator": {
+                  "type": "string",
+                  "enum": [
+                    "emergency_fund",
+                    "savings_ratio",
+                    "instalment_ratio",
+                    "consumer_debt",
+                    "debt_to_asset",
+                    "protection_cover"
+                  ]
+                },
+                "fromLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "toLabel": {
+                  "type": "string"
+                },
+                "fromPoints": {
+                  "type": "integer"
+                },
+                "toPoints": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "indicator",
+                "fromLabel",
+                "toLabel",
+                "fromPoints",
+                "toPoints"
+              ]
+            }
+          },
+          "unchangedCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "current",
+          "points",
+          "changes",
+          "unchangedCount"
+        ]
+      },
       "IndicatorDetail": {
         "allOf": [
           {
@@ -1831,6 +1943,166 @@
           "amount",
           "paymentId"
         ]
+      },
+      "Portfolio": {
+        "type": "object",
+        "properties": {
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "updatedOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "debtToAsset": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "percent": {
+                "type": "integer"
+              },
+              "points": {
+                "type": "integer"
+              },
+              "band": {
+                "type": "string",
+                "enum": [
+                  "vulnerable",
+                  "coping",
+                  "healthy"
+                ]
+              }
+            },
+            "required": [
+              "percent",
+              "points",
+              "band"
+            ]
+          }
+        },
+        "required": [
+          "assets",
+          "total",
+          "updatedOn",
+          "debtToAsset"
+        ]
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assetClass": {
+            "type": "string",
+            "enum": [
+              "deposit",
+              "mutual_fund",
+              "government_bond",
+              "gold",
+              "stock",
+              "crypto",
+              "other"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "integer"
+          },
+          "valuedOn": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "id",
+          "assetClass",
+          "name",
+          "value",
+          "valuedOn"
+        ]
+      },
+      "AssetInput": {
+        "type": "object",
+        "properties": {
+          "assetClass": {
+            "type": "string",
+            "enum": [
+              "deposit",
+              "mutual_fund",
+              "government_bond",
+              "gold",
+              "stock",
+              "crypto",
+              "other"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "value": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999999999999
+          },
+          "valuedOn": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "assetClass",
+          "name",
+          "value",
+          "valuedOn"
+        ]
+      },
+      "AssetUpdate": {
+        "type": "object",
+        "properties": {
+          "assetClass": {
+            "type": "string",
+            "enum": [
+              "deposit",
+              "mutual_fund",
+              "government_bond",
+              "gold",
+              "stock",
+              "crypto",
+              "other"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "value": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999999999999
+          },
+          "valuedOn": {
+            "type": "string",
+            "format": "date"
+          }
+        }
       },
       "Home": {
         "type": "object",
@@ -5015,6 +5287,98 @@
         }
       }
     },
+    "/api/score/history": {
+      "get": {
+        "tags": [
+          "Score"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getScoreHistory",
+        "summary": "Riwayat Kira Score",
+        "description": "The score now against last month, a point per month (taken on the 25th, WIB, and at the first health check) and the indicators that changed. Kira Plus only: other plans get 403 PLAN_FEATURE_UNAVAILABLE.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "6m",
+                "1y"
+              ],
+              "default": "6m"
+            },
+            "required": false,
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The score history over the range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreHistory"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/score/indicators/{key}": {
       "get": {
         "tags": [
@@ -5463,6 +5827,235 @@
           },
           "409": {
             "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assets": {
+      "get": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listAssets",
+        "summary": "Portofolio Manual",
+        "description": "The assets, newest value first, their total, and Utang terhadap Aset with them.",
+        "responses": {
+          "200": {
+            "description": "The portfolio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Portfolio"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createAsset",
+        "summary": "Tambah Aset",
+        "description": "The score reads the new total on its next request.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assets/{id}": {
+      "patch": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateAsset",
+        "summary": "Change an asset",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed asset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
             "content": {
               "application/problem+json": {
                 "schema": {

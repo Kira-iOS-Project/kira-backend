@@ -69,3 +69,20 @@ export const PLAN_TERMS: Readonly<Record<(typeof PLAN)[keyof typeof PLAN], PlanT
     voiceAndImport: true,
   },
 };
+
+/** Kira Plus features beyond the quotas (Paket): Riwayat Skor and Portofolio. */
+export const PLAN_FEATURE = {
+  scoreHistory: 'score_history',
+  portfolio: 'portfolio',
+} as const;
+
+export type PlanFeature = (typeof PLAN_FEATURE)[keyof typeof PLAN_FEATURE];
+
+/** Which plan opens which feature: both are Kira Plus only (Paket: "Portofolio", "Kira Score otomatis tiap bulan"). */
+export const PLAN_FEATURES: Readonly<
+  Record<(typeof PLAN)[keyof typeof PLAN], readonly PlanFeature[]>
+> = {
+  free: [],
+  young: [],
+  plus: [PLAN_FEATURE.scoreHistory, PLAN_FEATURE.portfolio],
+};

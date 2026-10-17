@@ -3,6 +3,8 @@ import { DEBT_KIND, FOCUS, MARITAL_STATUS, PROTECTION } from '../../../lib/const
 import { SCORE_BAND, SNAPSHOT_REASON } from '../../../lib/constants/score.ts';
 import { createFakeDb, inOrder } from '../../../test/fake-postgres.ts';
 import { pointsOf, factsOf } from '../score.engine.ts';
+import { labelsOf } from '../score.labels.ts';
+import { evaluate } from '../score.measure.ts';
 import { createScoreRepository } from '../score.repository.ts';
 import type { HealthCheckBody } from '../score.schema.ts';
 import { DINDA, DINDA_ANSWERS, DINDA_DEBTS, NOW } from './helpers.ts';
@@ -11,6 +13,7 @@ const SNAPSHOT = {
   score: 66,
   band: SCORE_BAND.coping,
   indicators: pointsOf(factsOf(DINDA)),
+  measures: labelsOf(evaluate(DINDA)),
   reason: SNAPSHOT_REASON.healthCheck,
   periodStart: '2026-09-25',
 };

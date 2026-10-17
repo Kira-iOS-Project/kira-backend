@@ -12,6 +12,7 @@ import {
   PROTECTION,
 } from '../../../lib/constants/profile.ts';
 import type { DebtInput, ScoreInput } from '../score.engine.ts';
+import type { ScoreHistoryRepository } from '../score.history.repository.ts';
 import type { ScoreRepository } from '../score.repository.ts';
 
 export const NOW = new Date('2026-10-16T05:00:00.000Z');
@@ -69,6 +70,18 @@ export function createScoreRepositoryMock(
     snapshotHistory: async () => ({ count: 1, latestInPeriodAt: NOW, previousScore: null }),
     insertSnapshot: async () => undefined,
     saveHealthCheck: async () => undefined,
+    ...overrides,
+  };
+}
+
+export function createScoreHistoryRepositoryMock(
+  overrides: Partial<ScoreHistoryRepository> = {},
+): ScoreHistoryRepository {
+  return {
+    listHistory: async () => [],
+    listMonthlyCandidates: async () => [],
+    insertMonthlySnapshot: async () => true,
+    listSnapshots: async () => [],
     ...overrides,
   };
 }

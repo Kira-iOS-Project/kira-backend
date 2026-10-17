@@ -117,6 +117,9 @@ export const debtAccounts = pgTable(
 
 export type IndicatorPoints = Record<(typeof INDICATOR)[keyof typeof INDICATOR], number>;
 
+/** What each indicator measured at a snapshot, as Riwayat Kira Score shows it ("1,1×", "32%"). */
+export type IndicatorLabels = Record<(typeof INDICATOR)[keyof typeof INDICATOR], string>;
+
 export const scoreSnapshots = pgTable(
   'score_snapshots',
   {
@@ -127,8 +130,12 @@ export const scoreSnapshots = pgTable(
     score: smallint('score').notNull(),
     band: scoreBandEnum('band').notNull(),
     indicators: jsonb('indicators').$type<IndicatorPoints>().notNull(),
+    /** The measured figures behind the points; null on snapshots taken before they were kept. */
+    measures: jsonb('measures').$type<IndicatorLabels>(),
+    /** A monthly snapshot's 25th (WIB); null on every other snapshot. */
+    monthlyOn: date('monthly_on', { mode: 'string' }),
     reason: snapshotReasonEnum('reason').notNull(),
-    /** The payday period the snapshot belongs to (its first day, WIB). */
+    /** The payday period the snapshot belongs to (its first day, WIB); a monthly one's 25th. */
     periodStart: date('period_start', { mode: 'string' }).notNull(),
     createdAt: moment('created_at').defaultNow().notNull(),
   },
@@ -138,6 +145,12 @@ export const scoreSnapshots = pgTable(
     uniqueIndex('score_snapshots_user_period_recompute_idx')
       .on(table.userId, table.periodStart)
       .where(sql`${table.reason} = ${sql.raw(`'${SNAPSHOT_REASON.recompute}'`)}`),
+    /**
+     * One monthly point per month: the 25th's job and a catch-up run store it once. A column of its
+     * own rather than a partial index on the reason, which Postgres cannot build in the transaction
+     * that adds the enum value; the other snapshots leave it null, and nulls never collide.
+     */
+    uniqueIndex('score_snapshots_user_monthly_idx').on(table.userId, table.monthlyOn),
     check('score_snapshots_score_check', sql`${table.score} between 0 and 100`),
   ],
 );

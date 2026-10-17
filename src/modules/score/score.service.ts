@@ -10,6 +10,7 @@ import { INDICATOR, SNAPSHOT_REASON } from '../../lib/constants/score.ts';
 import { paydayPeriod, wibDate, wibStartOfDay } from '../../lib/time/wib.ts';
 import type { DebtInput, IndicatorKey, ScoreInput } from './score.engine.ts';
 import { ScoreNotAvailableError } from './score.errors.ts';
+import { labelsOf } from './score.labels.ts';
 import { ladderOf } from './score.ladder.ts';
 import { evaluate, type Evaluation } from './score.measure.ts';
 import { scoreRepository, type NewSnapshot, type ScoreRepository } from './score.repository.ts';
@@ -18,19 +19,19 @@ import { stepsFor } from './score.steps.ts';
 
 export type ScoreDeps = { repository?: ScoreRepository; now?: () => Date };
 
-type Scored = { evaluation: Evaluation; report: ScoreReport };
+export type Scored = { evaluation: Evaluation; report: ScoreReport };
 
-function snapshotOf(
+export function snapshotOf(
   evaluation: Evaluation,
   reason: NewSnapshot['reason'],
   periodStart: string,
 ): NewSnapshot {
   const { score, band, points } = evaluation;
-  return { score, band, indicators: points, reason, periodStart };
+  return { score, band, indicators: points, measures: labelsOf(evaluation), reason, periodStart };
 }
 
 /** Scores the answers on file, taking this period's snapshot if there is none yet; null before the quiz. */
-async function scoreOf(userId: string, deps: ScoreDeps): Promise<Scored | null> {
+export async function scoreOf(userId: string, deps: ScoreDeps): Promise<Scored | null> {
   const repository = deps.repository ?? scoreRepository;
   const now = (deps.now ?? (() => new Date()))();
   const state = await repository.findState(userId);
