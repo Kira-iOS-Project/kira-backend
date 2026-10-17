@@ -47,4 +47,5 @@ export type FinanceRepository = {
   createBill(userId: string, body: CreateBillBody): Promise<BillRow | null>;
   getBill(userId: string, id: string): Promise<BillRow | null>;
   updateBill(userId: string, id: string, body: UpdateBillBody): Promise<BillRow | null>;
+  deleteBill(userId: string, id: string): Promise<boolean>;
 };

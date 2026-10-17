@@ -78,3 +78,18 @@ export const updateBillRoute = createRoute({
     ...errorResponses(401, 404, 422),
   },
 });
+
+export const deleteBillRoute = createRoute({
+  tags: ['Finance'],
+  security: [{ bearerAuth: [] }],
+  method: 'delete',
+  path: '/bills/{id}',
+  operationId: 'deleteBill',
+  summary: 'Cancel a recurring bill schedule',
+  description: 'Cancels future occurrences while preserving saved payment transactions.',
+  request: { params: billIdParamSchema },
+  responses: {
+    204: { description: 'Schedule cancelled' },
+    ...errorResponses(401, 404, 422),
+  },
+});

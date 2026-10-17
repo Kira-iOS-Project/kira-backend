@@ -32,6 +32,7 @@ function repository(overrides: Partial<FinanceRepository> = {}): FinanceReposito
     createBill: async () => null,
     getBill: async () => null,
     updateBill: async () => null,
+    deleteBill: async () => false,
     ...overrides,
   };
 }

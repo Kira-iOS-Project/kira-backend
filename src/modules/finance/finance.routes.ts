@@ -5,6 +5,7 @@ import {
   currentBudgetHandler,
   listWalletsHandler,
   createBillHandler,
+  deleteBillHandler,
   listBillsHandler,
   getBillHandler,
   updateBillHandler,
@@ -18,6 +19,7 @@ import {
 import { listWalletsRoute } from './finance.routes.accounts.ts';
 import {
   createBillRoute,
+  deleteBillRoute,
   getBillRoute,
   listBillsRoute,
   updateBillRoute,
@@ -32,6 +34,7 @@ financeRouter.openapi(listBillsRoute, listBillsHandler);
 financeRouter.openapi(createBillRoute, createBillHandler);
 financeRouter.openapi(getBillRoute, getBillHandler);
 financeRouter.openapi(updateBillRoute, updateBillHandler);
+financeRouter.openapi(deleteBillRoute, deleteBillHandler);
 financeRouter.use('/budgets/current', requireSession);
 financeRouter.use('/budgets/current/edit', requireSession);
 financeRouter.openapi(currentBudgetRoute, currentBudgetHandler);

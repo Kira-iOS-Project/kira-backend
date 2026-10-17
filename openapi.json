@@ -11106,6 +11106,75 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteBill",
+        "summary": "Cancel a recurring bill schedule",
+        "description": "Cancels future occurrences while preserving saved payment transactions.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Schedule cancelled"
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/budgets/current": {

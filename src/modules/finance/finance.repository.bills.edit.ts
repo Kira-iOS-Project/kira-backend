@@ -98,3 +98,24 @@ export function createBillEditRepository(client: PostgresJsDatabase = db): BillE
     },
   };
 }
+
+type BillDeleteRepository = Pick<FinanceRepository, 'deleteBill'>;
+
+export function createBillDeleteRepository(client: PostgresJsDatabase = db): BillDeleteRepository {
+  return {
+    async deleteBill(userId, id) {
+      const [archived] = await client
+        .update(recurringBills)
+        .set({ archivedAt: new Date() })
+        .where(
+          and(
+            eq(recurringBills.userId, userId),
+            eq(recurringBills.id, id),
+            isNull(recurringBills.archivedAt),
+          ),
+        )
+        .returning({ id: recurringBills.id });
+      return archived !== undefined;
+    },
+  };
+}

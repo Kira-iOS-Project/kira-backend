@@ -3,12 +3,13 @@ import type { AppEnv } from '../../lib/server/factory.ts';
 import type { listWalletsRoute } from './finance.routes.accounts.ts';
 import type {
   createBillRoute,
+  deleteBillRoute,
   getBillRoute,
   listBillsRoute,
   updateBillRoute,
 } from './finance.routes.bills.ts';
 import { listWallets } from './finance.accounts.service.ts';
-import { createBill, getBill, listBills, updateBill } from './finance.bills.service.ts';
+import { createBill, deleteBill, getBill, listBills, updateBill } from './finance.bills.service.ts';
 import type { currentBudgetRoute } from './finance.routes.budget.ts';
 import type { currentBudgetEditRoute, updateCurrentBudgetRoute } from './finance.routes.budget.ts';
 import {
@@ -31,6 +32,11 @@ export const getBillHandler: RouteHandler<typeof getBillRoute, AppEnv> = async (
 
 export const updateBillHandler: RouteHandler<typeof updateBillRoute, AppEnv> = async (c) =>
   c.json(await updateBill(c.get('userId'), c.req.valid('param').id, c.req.valid('json')), 200);
+
+export const deleteBillHandler: RouteHandler<typeof deleteBillRoute, AppEnv> = async (c) => {
+  await deleteBill(c.get('userId'), c.req.valid('param').id);
+  return c.body(null, 204);
+};
 
 export const currentBudgetHandler: RouteHandler<typeof currentBudgetRoute, AppEnv> = async (c) =>
   c.json(await getCurrentBudget(c.get('userId')), 200);

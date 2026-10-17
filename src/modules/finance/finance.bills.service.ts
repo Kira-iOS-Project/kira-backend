@@ -22,6 +22,8 @@ type EditDeps = Omit<ListDeps, 'repository'> & {
   repository?: Pick<FinanceRepository, 'listBills' | 'getBill' | 'updateBill'>;
 };
 
+type DeleteDeps = { repository?: Pick<FinanceRepository, 'deleteBill'> };
+
 function presentBill(row: BillRow, today: string) {
   const kind = row.linkedDebtAccountId ? BILL_KIND.debtInstallment : BILL_KIND.bill;
   const daysUntilDue = daysBetween(today, row.nextDueDate);
@@ -75,4 +77,9 @@ export async function updateBill(
   const today = wibDate((deps.now ?? (() => new Date()))());
   const listed = await listBills(userId, deps);
   return listed.items.find((item) => item.id === updated.id) ?? presentBill(updated, today);
+}
+
+export async function deleteBill(userId: string, id: string, deps: DeleteDeps = {}) {
+  const repository = deps.repository ?? billRepository;
+  if (!(await repository.deleteBill(userId, id))) throw new BillNotFoundError();
 }
