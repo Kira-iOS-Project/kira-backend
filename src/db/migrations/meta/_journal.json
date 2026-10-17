@@ -50,6 +50,13 @@
       "when": 1792196374657,
       "tag": "0006_payment_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792196554420,
+      "tag": "0007_score_history",
+      "breakpoints": true
     }
   ]
 }
