@@ -48,6 +48,18 @@ describe('Rencanaku', () => {
     expect((await res.json()).code).toBe('PAYOFF_EXTRA_TOO_HIGH');
   });
 
+  test('POST /api/payoff/plans answers 400 when there is no consumer debt to plan', async () => {
+    dbControl.respond = signedIn((query) =>
+      query.sql.includes('from "debt_accounts"') && query.sql.includes('"original_amount"')
+        ? []
+        : planned(query),
+    );
+    const res = await call('POST', '/api/payoff/plans', { method: 'snowball', extraPayment: 0 });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe('PAYOFF_NOTHING_TO_PLAN');
+  });
+
   test('GET /api/payoff/plans/active answers the plan, or 404 before one is made', async () => {
     dbControl.respond = signedIn(planned);
     const res = await call('GET', '/api/payoff/plans/active');
