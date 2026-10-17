@@ -5,36 +5,18 @@
 
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
-import { EMERGENCY_MILESTONE, GOAL_KIND } from '../../../lib/constants/plan.ts';
+import { EMERGENCY_MILESTONE } from '../../../lib/constants/plan.ts';
 import type { FakeQuery, FakeRow } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
-import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
-import { DEPOSIT_ID, GOAL_ID, goalDbRow } from './helpers.ts';
+import { signedIn } from '../../../test/session.ts';
+import { DEPOSIT_ID, EMERGENCY, GOAL_ID, goalDbRow, send } from './helpers.ts';
 
 beforeEach(() => resetExternalMocks());
-
-function send(method: string, path: string, body?: unknown) {
-  return app.request(path, {
-    method,
-    headers: { 'Content-Type': 'application/json', ...AUTH_HEADER },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  });
-}
 
 const reads = (query: FakeQuery) => query.sql.startsWith('select');
 /** Answers every read of "goals" with Dinda's emergency fund. */
 const withGoal = (query: FakeQuery): FakeRow[] =>
   reads(query) && query.sql.includes('from "goals"') ? [goalDbRow()] : [];
-
-const EMERGENCY = {
-  kind: GOAL_KIND.emergencyFund,
-  name: 'Dana Darurat',
-  inputs: { essentialExpense: 4_200_000, married: false, dependants: 0 },
-  initialAmount: 4_800_000,
-  monthlyDeposit: 650_000,
-  targetAmount: 25_200_000,
-  targetDate: '2029-04-25',
-};
 
 describe('the goal routes without a session', () => {
   test.each([
