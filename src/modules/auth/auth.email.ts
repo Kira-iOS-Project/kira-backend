@@ -16,7 +16,6 @@ export function loginCodeEmail(input: { to: string; code: string; name: string }
       { kind: 'code', code: input.code, validity: 'Berlaku 10 menit' },
       {
         kind: 'notice',
-        icon: 'lock',
         title: 'Jangan Bagikan Kode Ini',
         text: 'Kira tidak pernah meminta kode lewat telepon, chat, atau email, termasuk dari orang yang mengaku tim Kira.',
       },
