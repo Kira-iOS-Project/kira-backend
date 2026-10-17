@@ -5398,7 +5398,7 @@
         ],
         "operationId": "recordDebtPayment",
         "summary": "Mark a payment (Tandai Sudah Bayar)",
-        "description": "Records a payment against an open debt account. When it settles the account the response says so once, with the score the engine expects and the account the plan moves to next.",
+        "description": "Records a payment against an open debt account. When it settles the account the response says so once, with the score the engine expects and the account the plan moves to next. A repeat of the same paymentId (double tap, retry) answers 409 PAYOFF_PAYMENT_ALREADY_RECORDED: the payment is already saved.",
         "parameters": [
           {
             "schema": {
@@ -5453,6 +5453,16 @@
           },
           "404": {
             "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
             "content": {
               "application/problem+json": {
                 "schema": {

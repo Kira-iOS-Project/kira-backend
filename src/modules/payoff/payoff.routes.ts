@@ -88,11 +88,11 @@ export const recordPaymentRoute = createRoute({
   operationId: 'recordDebtPayment',
   summary: 'Mark a payment (Tandai Sudah Bayar)',
   description:
-    'Records a payment against an open debt account. When it settles the account the response says so once, with the score the engine expects and the account the plan moves to next.',
+    'Records a payment against an open debt account. When it settles the account the response says so once, with the score the engine expects and the account the plan moves to next. A repeat of the same paymentId (double tap, retry) answers 409 PAYOFF_PAYMENT_ALREADY_RECORDED: the payment is already saved.',
   request: { params: debtParamsSchema, body: { ...json(paymentBodySchema), required: true } },
   responses: {
     200: { ...json(paymentResultSchema), description: 'The account after the payment' },
-    ...errorResponses(400, 401, 404, 422),
+    ...errorResponses(400, 401, 404, 409, 422),
   },
 });
 
