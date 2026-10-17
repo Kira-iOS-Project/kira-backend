@@ -28,17 +28,25 @@ describe('profileOf', () => {
 
   test('the boundaries: 10 Konservatif, 11 Moderat, 15 Moderat, 16 Agresif', () => {
     /** Question 3 at "3 sampai 5 Tahun" (3 points) or more, so no cap applies. */
-    expect(profileOf([3, 3, 2, 0, 3])).toBe(conservative); // 1+1+3+1+4 = 10
-    expect(profileOf([0, 3, 2, 0, 3])).toBe(moderate); // 2+1+3+1+4 = 11
-    expect(profileOf([2, 2, 2, 0, 1])).toBe(moderate); // 4+4+3+1+2 = 14
-    expect(profileOf([2, 2, 2, 0, 2])).toBe(moderate); // 4+4+3+1+3 = 15
-    expect(profileOf([2, 2, 2, 1, 2])).toBe(aggressive); // 4+4+3+2+3 = 16
+    /** 1+1+3+1+4 = 10 */
+    expect(profileOf([3, 3, 2, 0, 3])).toBe(conservative);
+    /** 2+1+3+1+4 = 11 */
+    expect(profileOf([0, 3, 2, 0, 3])).toBe(moderate);
+    /** 4+4+3+1+2 = 14 */
+    expect(profileOf([2, 2, 2, 0, 1])).toBe(moderate);
+    /** 4+4+3+1+3 = 15 */
+    expect(profileOf([2, 2, 2, 0, 2])).toBe(moderate);
+    /** 4+4+3+2+3 = 16 */
+    expect(profileOf([2, 2, 2, 1, 2])).toBe(aggressive);
   });
 
   test('money needed within a year caps at Konservatif; 1 to 3 years at Moderat', () => {
-    expect(profileOf([2, 2, 0, 3, 3])).toBe(conservative); // 17 before the cap
-    expect(profileOf([2, 2, 1, 3, 3])).toBe(moderate); // 18 before the cap
-    expect(profileOf([0, 0, 1, 0, 0])).toBe(conservative); // 2+2+2+1+1 = 8: under the cap already
+    /** 17 before the cap */
+    expect(profileOf([2, 2, 0, 3, 3])).toBe(conservative);
+    /** 18 before the cap */
+    expect(profileOf([2, 2, 1, 3, 3])).toBe(moderate);
+    /** 2+2+2+1+1 = 8: under the cap already */
+    expect(profileOf([0, 0, 1, 0, 0])).toBe(conservative);
   });
 });
 
