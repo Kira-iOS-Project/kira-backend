@@ -102,6 +102,9 @@
               "COMMUNITY_PRODUCT_NOT_FOUND",
               "COMMUNITY_REPORT_DUPLICATE",
               "COMMUNITY_RULES_NOT_ACCEPTED",
+              "GOAL_NOT_FOUND",
+              "GOAL_EMERGENCY_EXISTS",
+              "GOAL_DEPOSIT_CONFLICT",
               "CARE_CHECK_IN_NOT_FOUND",
               "CARE_SAFETY_PLAN_NOT_FOUND",
               "ASSET_NOT_FOUND"
@@ -3508,6 +3511,547 @@
           "people",
           "professionals",
           "safePlace"
+        ]
+      },
+      "PlanOverview": {
+        "type": "object",
+        "properties": {
+          "ladder": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LadderStep"
+            }
+          },
+          "goals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoalSummary"
+            }
+          },
+          "riskProfile": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "conservative",
+              "moderate",
+              "aggressive",
+              null
+            ]
+          },
+          "prefill": {
+            "$ref": "#/components/schemas/PlanPrefill"
+          }
+        },
+        "required": [
+          "ladder",
+          "goals",
+          "riskProfile",
+          "prefill"
+        ]
+      },
+      "LadderStep": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "key": {
+            "type": "string",
+            "enum": [
+              "pay_off_debt",
+              "emergency_fund",
+              "protection",
+              "invest"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "done",
+              "current",
+              "todo"
+            ]
+          },
+          "detail": {
+            "type": "object",
+            "properties": {
+              "debtName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "amount": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "target": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "multiple": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "targetMultiple": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "health": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "incomeCover": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "debtName",
+              "amount",
+              "target",
+              "multiple",
+              "targetMultiple",
+              "health",
+              "incomeCover"
+            ]
+          }
+        },
+        "required": [
+          "step",
+          "key",
+          "status",
+          "detail"
+        ]
+      },
+      "GoalSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "emergency_fund",
+              "house_dp",
+              "education",
+              "wedding",
+              "retirement",
+              "vehicle",
+              "goods",
+              "other"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "targetAmount": {
+            "type": "integer"
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2029-04-25"
+          },
+          "monthlyDeposit": {
+            "type": "integer"
+          },
+          "savedAmount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "targetAmount",
+          "targetDate",
+          "monthlyDeposit",
+          "savedAmount"
+        ]
+      },
+      "PlanPrefill": {
+        "type": "object",
+        "properties": {
+          "essentialExpense": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "emergencyFund": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "married": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "dependants": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "monthlyIncome": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "essentialExpense",
+          "emergencyFund",
+          "married",
+          "dependants",
+          "monthlyIncome"
+        ]
+      },
+      "Goal": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GoalSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "inputs": {
+                "$ref": "#/components/schemas/GoalInputs"
+              },
+              "initialAmount": {
+                "type": "integer"
+              },
+              "inBudget": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "inputs",
+              "initialAmount",
+              "inBudget",
+              "createdAt",
+              "updatedAt"
+            ]
+          }
+        ]
+      },
+      "GoalInputs": {
+        "type": "object",
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 999999999999
+            },
+            {
+              "type": "string",
+              "maxLength": 80
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "CreateGoal": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "emergency_fund",
+              "house_dp",
+              "education",
+              "wedding",
+              "retirement",
+              "vehicle",
+              "goods",
+              "other"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/GoalInputs"
+          },
+          "initialAmount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999999999999
+          },
+          "monthlyDeposit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999999999999
+          },
+          "targetAmount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999999999999
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "inBudget": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "inputs",
+          "initialAmount",
+          "monthlyDeposit",
+          "targetAmount",
+          "targetDate"
+        ]
+      },
+      "GoalDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Goal"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "deposits": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "amount": {
+                      "type": "integer"
+                    },
+                    "depositedOn": {
+                      "type": "string",
+                      "format": "date",
+                      "example": "2029-04-25"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "amount",
+                    "depositedOn"
+                  ]
+                }
+              },
+              "milestones": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "one_week",
+                        "one_month",
+                        "three_months",
+                        "target"
+                      ]
+                    },
+                    "amount": {
+                      "type": "integer"
+                    },
+                    "reachedOn": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date",
+                      "example": "2029-04-25"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "amount",
+                    "reachedOn"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "deposits",
+              "milestones"
+            ]
+          }
+        ]
+      },
+      "UpdateGoal": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/GoalInputs"
+          },
+          "initialAmount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999999999999
+          },
+          "monthlyDeposit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999999999999
+          },
+          "targetAmount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999999999999
+          },
+          "targetDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "inBudget": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GoalDeposit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "depositedOn": {
+            "type": "string",
+            "format": "date",
+            "example": "2029-04-25"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "depositedOn"
+        ]
+      },
+      "GoalDepositInput": {
+        "type": "object",
+        "properties": {
+          "depositId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 999999999999
+          },
+          "depositedOn": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "depositId",
+          "amount",
+          "depositedOn"
+        ]
+      },
+      "RiskProfile": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "conservative",
+              "moderate",
+              "aggressive",
+              null
+            ]
+          },
+          "answers": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer"
+            }
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "profile",
+          "answers",
+          "updatedAt"
+        ]
+      },
+      "RiskProfileAnswers": {
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            }
+          }
+        },
+        "required": [
+          "answers"
         ]
       },
       "ChatMessagePage": {
@@ -7831,6 +8375,570 @@
           },
           "422": {
             "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plan": {
+      "get": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getPlan",
+        "summary": "Rencana",
+        "description": "Tangga Keuanganmu from the Kira Score engine, the goals, the risk profile and what the calculators start from.",
+        "responses": {
+          "200": {
+            "description": "The plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanOverview"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/goals": {
+      "get": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listGoals",
+        "summary": "The goals",
+        "description": "Every goal, the emergency fund first, then the newest.",
+        "responses": {
+          "200": {
+            "description": "The goals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "goals": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GoalSummary"
+                      }
+                    }
+                  },
+                  "required": [
+                    "goals"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createGoal",
+        "summary": "Simpan Tujuan",
+        "description": "Stores the goal as the app's calculator computed it, after checking its ranges; one emergency fund per person.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGoal"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/goals/{id}": {
+      "get": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getGoal",
+        "summary": "Detail Tujuan",
+        "description": "The goal, its deposits newest first and, for the emergency fund, its milestones.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The goal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateGoal",
+        "summary": "Ubah Tujuan",
+        "description": "Changes any of the goal's figures; an emergency fund's inputs must keep a positive essentialExpense (400).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGoal"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed goal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A business rule refused the request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/goals/{id}/deposits": {
+      "post": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "addGoalDeposit",
+        "summary": "Tambah Setoran",
+        "description": "Records a deposit. The same depositId again on this goal answers the stored deposit as it was first recorded (whatever amount the retry carries) and adds nothing; one used on another goal is refused.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalDepositInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalDeposit"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Resource conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/risk-profile": {
+      "put": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "saveRiskProfile",
+        "summary": "Kenali Profil Risikomu",
+        "description": "The five answers and the profile the server's fixed table gives them.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskProfileAnswers"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getRiskProfile",
+        "summary": "Hasil Risiko",
+        "description": "The saved profile and answers; every field null before the quiz.",
+        "responses": {
+          "200": {
+            "description": "The profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
             "content": {
               "application/problem+json": {
                 "schema": {

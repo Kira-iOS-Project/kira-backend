@@ -3,6 +3,7 @@
  * its focus to another account. A person has one active plan; a new one ends the old.
  */
 
+import { PAYOFF_METHOD } from '../../lib/constants/payoff.ts';
 import { wibDate } from '../../lib/time/wib.ts';
 import {
   PayoffDebtNotFoundError,
@@ -71,4 +72,22 @@ export async function setPlanFocus(
   await repository.setFocus(plan.id, focusDebtId);
   const paid = await repository.listPaidSince(userId, plan.createdAt);
   return planView({ ...plan, focusDebtId }, debts, today, paid);
+}
+
+/**
+ * The account being paid off now, for Rencana's first rung ("Sedang Berjalan · Paylater A"): the
+ * plan's, or without a plan the smallest consumer debt ("Mulai dari sisa yang paling kecil").
+ */
+export async function payingNowOf(
+  userId: string,
+  deps: Pick<PlanDeps, 'repository'> = {},
+): Promise<{ id: string; name: string } | null> {
+  const repository = deps.repository ?? planRepository;
+  const [plan, debts] = await Promise.all([
+    repository.findActive(userId),
+    repository.listDebts(userId),
+  ]);
+  const method = plan?.method ?? PAYOFF_METHOD.snowball;
+  const [first] = orderedConsumer(debts, method, plan?.focusDebtId ?? null);
+  return first ? { id: first.id, name: first.name } : null;
 }

@@ -31,6 +31,17 @@ export function snapshotOf(
   return { score, band, indicators: points, measures: labelsOf(evaluation), reason, periodStart };
 }
 
+/** The answers on file with the open debts, read only (no snapshot); null before the health check. */
+export async function findScoreInput(
+  userId: string,
+  deps: Pick<ScoreDeps, 'repository'> = {},
+): Promise<ScoreInput | null> {
+  const repository = deps.repository ?? scoreRepository;
+  const state = await repository.findState(userId);
+  if (!state?.input) return null;
+  return { ...state.input, debts: await repository.listOpenDebts(userId) };
+}
+
 /** Scores the answers on file, taking this period's snapshot if there is none yet; null before the quiz. */
 export async function scoreOf(userId: string, deps: ScoreDeps): Promise<Scored | null> {
   const repository = deps.repository ?? scoreRepository;

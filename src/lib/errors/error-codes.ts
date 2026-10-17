@@ -72,6 +72,11 @@ export const ERROR_CODES = [
   'COMMUNITY_REPORT_DUPLICATE',
   'COMMUNITY_RULES_NOT_ACCEPTED',
 
+  /** Rencana: goals, their deposits and the emergency fund (REN-02 to REN-05). */
+  'GOAL_NOT_FOUND',
+  'GOAL_EMERGENCY_EXISTS',
+  'GOAL_DEPOSIT_CONFLICT',
+
   /** Kira Peduli: check-ins and the safety plan (PED-05, PED-06, PED-10). */
   'CARE_CHECK_IN_NOT_FOUND',
   'CARE_SAFETY_PLAN_NOT_FOUND',

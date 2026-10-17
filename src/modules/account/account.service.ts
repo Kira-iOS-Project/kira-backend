@@ -13,6 +13,7 @@ import { activePlanOf, quotaPeriod, usageOf } from '../../lib/usage/plan-usage.t
 import { assetExportSections } from '../asset/index.ts';
 import { careExportSections } from '../care/index.ts';
 import { communityExportSections } from '../community/index.ts';
+import { goalExportSections, riskExportSections } from '../plan/index.ts';
 import { scoreExportSections } from '../score/index.ts';
 import { exportFileName, sectionsCsv, transactionsCsv } from './account.csv.ts';
 import { accountDeletedEmail, dataExportEmail } from './account.email.ts';
@@ -46,6 +47,8 @@ async function moduleExportSections(userId: string, scope: ExportScope): Promise
       communityExportSections(userId),
       careExportSections(userId, scope),
       assetExportSections(userId),
+      goalExportSections(userId),
+      riskExportSections(userId),
     ])
   ).flat();
 }

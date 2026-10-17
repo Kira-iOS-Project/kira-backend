@@ -64,6 +64,20 @@
       "when": 1792196711193,
       "tag": "0008_assets",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792203402994,
+      "tag": "0009_goals",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792203522029,
+      "tag": "0010_risk_profiles",
+      "breakpoints": true
     }
   ]
 }
