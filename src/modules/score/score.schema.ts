@@ -173,14 +173,17 @@ export const scoreHistorySchema = z
     current: z.object({
       score: z.number().int(),
       band: bandSchema,
-      /** Against the latest monthly point before this month; null when there is none. */
+      /**
+       * GET /score's `delta`: against the latest snapshot before the current payday period; null
+       * when there is none.
+       */
       deltaFromPrevious: z.number().int().nullable(),
-      /** That point's month; null when there is none. */
+      /** The month that snapshot stands for; null when there is none. */
       previousMonth: month.nullable(),
     }),
     /** One per month in the range, oldest first: the 25th's snapshot, or the first health check's. */
     points: z.array(z.object({ month, score: z.number().int() })),
-    /** The indicators whose points moved since `previousMonth`, in the score's order. */
+    /** The indicators whose points moved since that snapshot, in the score's order. */
     changes: z.array(
       z.object({
         indicator: indicatorKeySchema,
@@ -191,7 +194,7 @@ export const scoreHistorySchema = z
         toPoints: z.number().int(),
       }),
     ),
-    /** The indicators that did not move; 0 when there is no earlier month to compare with. */
+    /** The indicators that did not move; 0 when there is no earlier snapshot to compare with. */
     unchangedCount: z.number().int(),
   })
   .openapi('ScoreHistory');

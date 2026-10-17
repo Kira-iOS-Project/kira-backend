@@ -19,7 +19,8 @@ import { stepsFor } from './score.steps.ts';
 
 export type ScoreDeps = { repository?: ScoreRepository; now?: () => Date };
 
-export type Scored = { evaluation: Evaluation; report: ScoreReport };
+/** The evaluation, its report, and the first day of the payday period the delta is measured from. */
+export type Scored = { evaluation: Evaluation; report: ScoreReport; periodStart: string };
 
 export function snapshotOf(
   evaluation: Evaluation,
@@ -65,7 +66,7 @@ export async function scoreOf(userId: string, deps: ScoreDeps): Promise<Scored |
     steps: stepsFor(input, state.focus),
     cappedByConsumerDebt,
   };
-  return { evaluation, report };
+  return { evaluation, report, periodStart: period.start };
 }
 
 /** The score report, or null before the health check: Beranda shows no score card then. */

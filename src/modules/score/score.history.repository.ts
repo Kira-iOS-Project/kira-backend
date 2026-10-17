@@ -3,7 +3,7 @@
  * the monthly job still owes a point, that point's insert, and every snapshot for Unduh Datamu.
  */
 
-import { and, asc, eq, gt, gte, isNotNull, notExists } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, isNotNull, lt, notExists } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
 import {
@@ -36,6 +36,16 @@ type ExportSnapshot = {
   band: ScoreBand;
 };
 
+/** The columns a plotted snapshot is read with. */
+const HISTORY_COLUMNS = {
+  reason: scoreSnapshots.reason,
+  periodStart: scoreSnapshots.periodStart,
+  createdAt: scoreSnapshots.createdAt,
+  score: scoreSnapshots.score,
+  indicators: scoreSnapshots.indicators,
+  measures: scoreSnapshots.measures,
+};
+
 export type ScoreHistoryRepository = {
   /**
    * The monthly snapshots created since `since`, and the first health check's whenever it was,
@@ -51,6 +61,11 @@ export type ScoreHistoryRepository = {
     limit: number,
     afterId: string | null,
   ): Promise<string[]>;
+  /**
+   * The latest snapshot of any kind taken before `before`, the start of the current payday period:
+   * the one GET /score's delta is measured from, so both screens show the same "+N".
+   */
+  findPrevious(userId: string, before: Date): Promise<HistorySnapshot | null>;
   /** A second monthly snapshot for the same month is dropped by the monthly unique index. */
   insertMonthlySnapshot(userId: string, snapshot: NewSnapshot): Promise<boolean>;
   /** Every snapshot of a person, oldest first, for Unduh Datamu. */
@@ -62,17 +77,9 @@ export function createScoreHistoryRepository(
 ): ScoreHistoryRepository {
   return {
     async listHistory(userId, since) {
-      const columns = {
-        reason: scoreSnapshots.reason,
-        periodStart: scoreSnapshots.periodStart,
-        createdAt: scoreSnapshots.createdAt,
-        score: scoreSnapshots.score,
-        indicators: scoreSnapshots.indicators,
-        measures: scoreSnapshots.measures,
-      };
       const [monthly, first] = await Promise.all([
         client
-          .select(columns)
+          .select(HISTORY_COLUMNS)
           .from(scoreSnapshots)
           .where(
             and(
@@ -83,7 +90,7 @@ export function createScoreHistoryRepository(
           )
           .orderBy(asc(scoreSnapshots.createdAt)),
         client
-          .select(columns)
+          .select(HISTORY_COLUMNS)
           .from(scoreSnapshots)
           .where(
             and(
@@ -97,6 +104,16 @@ export function createScoreHistoryRepository(
       return [...first, ...monthly].toSorted(
         (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
       );
+    },
+
+    async findPrevious(userId, before) {
+      const [row] = await client
+        .select(HISTORY_COLUMNS)
+        .from(scoreSnapshots)
+        .where(and(eq(scoreSnapshots.userId, userId), lt(scoreSnapshots.createdAt, before)))
+        .orderBy(desc(scoreSnapshots.createdAt))
+        .limit(1);
+      return row ?? null;
     },
 
     async listMonthlyCandidates(periodStart, limit, afterId) {
