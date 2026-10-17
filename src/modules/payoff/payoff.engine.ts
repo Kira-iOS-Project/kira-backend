@@ -78,19 +78,17 @@ export function simulate(
   method: PayoffMethod,
   extraPayment: number,
 ): Simulation {
-  const order = payoffOrder(debts, method);
+  return simulateInOrder(payoffOrder(debts, method), extraPayment);
+}
+
+/** The simulation of accounts already in the order to pay them (Rencanaku's, focus first). */
+export function simulateInOrder(order: PayoffDebt[], extraPayment: number): Simulation {
   const balances = order.map((debt) => debt.remaining);
   const months: (number | null)[] = order.map(() => null);
   const interest = order.map(() => 0);
   const budget = order.reduce((sum, debt) => sum + debt.monthlyInstalment, 0) + extraPayment;
 
   for (let month = 1; month <= MAX_PAYOFF_MONTHS && months.includes(null); month += 1) {
-    order.forEach((debt, index) => {
-      const balance = balances[index] ?? 0;
-      const charge = balance > SETTLED ? (balance * rateOf(debt)) / 1200 : 0;
-      balances[index] = balance + charge;
-      interest[index] = (interest[index] ?? 0) + charge;
-    });
     /** Every open account gets its own instalment first (never more than it owes). */
     let spent = 0;
     order.forEach((debt, index) => {
@@ -103,6 +101,16 @@ export function simulate(
     payInOrder(balances, budget - spent);
     balances.forEach((balance, index) => {
       if (months[index] === null && balance <= SETTLED) months[index] = month;
+    });
+    /**
+     * Interest on what is still owed after this month's payment, due with the next one: "sisa"
+     * is today's balance, so a last payment equal to it settles the account this month.
+     */
+    order.forEach((debt, index) => {
+      const balance = balances[index] ?? 0;
+      const charge = balance > SETTLED ? (balance * rateOf(debt)) / 1200 : 0;
+      balances[index] = balance + charge;
+      interest[index] = (interest[index] ?? 0) + charge;
     });
   }
 

@@ -5,11 +5,18 @@
  */
 
 import { PAYOFF_METHOD } from '../../lib/constants/payoff.ts';
-import { addMonths, wibDate } from '../../lib/time/wib.ts';
+import { wibDate } from '../../lib/time/wib.ts';
 import { findRemainingMoney } from '../home/index.ts';
 import { isConsumerDebt } from '../score/index.ts';
-import { simulate, type PayoffMethod, type PayoffDebt, type Simulation } from './payoff.engine.ts';
+import {
+  simulate,
+  simulateInOrder,
+  type PayoffMethod,
+  type PayoffDebt,
+  type Simulation,
+} from './payoff.engine.ts';
 import { PayoffExtraTooHighError } from './payoff.errors.ts';
+import { paymentDate, paymentMonth } from './payoff.plan.view.ts';
 import { payoffRepository, type PayoffRepository } from './payoff.repository.ts';
 import type { PayoffPlan, SimulatePayoffBody } from './payoff.schema.ts';
 
@@ -52,6 +59,14 @@ export function remainingOf(
   return findRemainingMoney(userId, deps.now ? { now: deps.now } : {});
 }
 
+/** The payoff month, and the due date when the account has a due day (payoff.plan.view). */
+function dated(today: string, dueDay: number | null, months: number | null) {
+  return {
+    payoffMonth: paymentMonth(today, dueDay, months),
+    payoffDate: paymentDate(today, dueDay, months),
+  };
+}
+
 export async function simulatePayoff(
   userId: string,
   body: SimulatePayoffBody,
@@ -66,20 +81,23 @@ export async function simulatePayoff(
   if (body.extraPayment > maxExtraPayment) throw new PayoffExtraTooHighError();
 
   const consumer: PayoffDebt[] = open.filter(isConsumerDebt);
+  /** A productive debt carries on alone, on its own instalment, outside the plan. */
   const productive = open
     .filter((debt) => !isConsumerDebt(debt))
-    .map(({ id, kind, name, remaining, monthlyInstalment }) => ({
-      id,
-      kind,
-      name,
-      remaining,
-      monthlyInstalment,
-    }));
+    .map((debt) => {
+      const months = simulateInOrder([debt], 0).accounts[0]?.months ?? null;
+      const { id, kind, name, remaining, monthlyInstalment } = debt;
+      return Object.assign(
+        { id, kind, name, remaining, monthlyInstalment },
+        dated(today, debt.dueDay, months),
+      );
+    });
   const chosen = simulate(consumer, body.method, body.extraPayment);
   const other = simulate(consumer, otherOf(body.method), body.extraPayment);
   const hasRate = consumer.some((debt) => debt.annualInterestRate !== null);
-  const monthOf = (months: number | null) =>
-    months === null ? null : addMonths(today, months - 1).slice(0, 7);
+  const accounts = chosen.accounts.map((account) =>
+    Object.assign({}, account, dated(today, account.dueDay, account.months)),
+  );
 
   return {
     method: body.method,
@@ -88,14 +106,17 @@ export async function simulatePayoff(
     monthlyBudget:
       consumer.reduce((sum, debt) => sum + debt.monthlyInstalment, 0) + body.extraPayment,
     hasUnknownRate: consumer.some((debt) => debt.annualInterestRate === null),
-    accounts: chosen.accounts.map((account) => ({
-      ...account,
-      payoffMonth: monthOf(account.months),
-    })),
+    accounts,
     productive,
     totalInterest: chosen.totalInterest,
     allPaidMonths: chosen.allPaidMonths,
-    allPaidMonth: monthOf(chosen.allPaidMonths),
+    allPaidMonth:
+      chosen.allPaidMonths === null
+        ? null
+        : (accounts
+            .map((account) => account.payoffMonth ?? '')
+            .toSorted()
+            .at(-1) ?? null),
     comparison: consumer.length > 0 ? comparisonOf(chosen, other, body.method, hasRate) : null,
   };
 }

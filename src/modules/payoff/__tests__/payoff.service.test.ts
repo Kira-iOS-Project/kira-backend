@@ -28,6 +28,9 @@ describe('simulatePayoff', () => {
         name: 'Cicilan Motor',
         remaining: 13_000_000,
         monthlyInstalment: 850_000,
+        /** Alone on its own 850.000 at 12%, due on the 10th from 10 November 2026. */
+        payoffMonth: '2028-03',
+        payoffDate: '2028-03-10',
       },
     ]);
     expect(plan.monthlyBudget).toBe(500_000);
@@ -35,13 +38,17 @@ describe('simulatePayoff', () => {
     expect(plan.hasUnknownRate).toBe(false);
   });
 
-  test('names the payoff month from today in WIB, this month counted as 1', async () => {
+  test('names the payoff month from the due day, counted from this month without one', async () => {
     const plan = await simulatePayoff('user-1', snowball, deps());
     const [first] = plan.accounts;
 
+    /** Due on the 5th and today is 16 October: the payments fall on 5 November, December, January. */
     expect(first?.months).toBe(3);
-    expect(first?.payoffMonth).toBe('2026-12');
-    expect(plan.allPaidMonth).toBe(plan.accounts.at(-1)?.payoffMonth ?? null);
+    expect(first?.payoffMonth).toBe('2027-01');
+    expect(first?.payoffDate).toBe('2027-01-05');
+    /** Paylater B has no due day: counted from this month, no date. */
+    expect(plan.accounts[1]).toMatchObject({ payoffMonth: '2026-12', payoffDate: null });
+    expect(plan.allPaidMonth).toBe('2027-01');
     expect(plan.allPaidMonths).toBe(plan.accounts.at(-1)?.months ?? null);
   });
 
