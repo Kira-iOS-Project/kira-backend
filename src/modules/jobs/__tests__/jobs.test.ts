@@ -181,13 +181,15 @@ describe('exclusive', () => {
 });
 
 describe('scheduledJobs', () => {
-  test('rolls periods over before the reminders, reviews, takes the monthly score, cleans up', () => {
+  test('runs weekly summaries on their own exact deadline after routine jobs', () => {
     expect(scheduledJobs.map((job) => job.name)).toEqual([
       'subscription-rollover',
       'renewal-reminders',
       'scholarship-review',
       'score-monthly-snapshot',
       'auth-code-cleanup',
+      'weekly-summary-thursday',
     ]);
+    expect(scheduledJobs.at(-1)?.nextRunAt?.(NOW).toISOString()).toBe('2026-10-21T23:00:00.000Z');
   });
 });

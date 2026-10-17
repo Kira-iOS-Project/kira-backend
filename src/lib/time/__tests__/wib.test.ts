@@ -5,6 +5,7 @@ import {
   daysBetween,
   daysInMonth,
   monthStart,
+  nextThursdayAt0600Wib,
   paydayPeriod,
   wibDate,
   wibStartOfDay,
@@ -22,6 +23,20 @@ describe('wibTime', () => {
   test('writes the WIB clock as the app does', () => {
     expect(wibTime(new Date('2026-10-17T05:41:00.000Z'))).toBe('12.41');
     expect(wibTime(new Date('2026-10-16T17:05:00.000Z'))).toBe('00.05');
+  });
+});
+
+describe('nextThursdayAt0600Wib', () => {
+  test('uses the upcoming Thursday at 06:00 WIB and advances from the deadline', () => {
+    expect(nextThursdayAt0600Wib(new Date('2026-10-14T22:59:59.000Z')).toISOString()).toBe(
+      '2026-10-14T23:00:00.000Z',
+    );
+    expect(nextThursdayAt0600Wib(new Date('2026-10-14T23:00:00.000Z')).toISOString()).toBe(
+      '2026-10-21T23:00:00.000Z',
+    );
+    expect(nextThursdayAt0600Wib(new Date('2026-10-16T05:00:00.000Z')).toISOString()).toBe(
+      '2026-10-21T23:00:00.000Z',
+    );
   });
 });
 

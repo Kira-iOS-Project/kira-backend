@@ -8,6 +8,7 @@ import type {
   listBillsRoute,
   updateBillRoute,
 } from './finance.routes.bills.ts';
+import type { weeklySummaryRoute } from './finance.routes.weekly.ts';
 import { listWallets } from './finance.accounts.service.ts';
 import { createBill, deleteBill, getBill, listBills, updateBill } from './finance.bills.service.ts';
 import type { currentBudgetRoute } from './finance.routes.budget.ts';
@@ -17,6 +18,7 @@ import {
   getCurrentBudgetEdit,
   updateCurrentBudget,
 } from './finance.budget.service.ts';
+import { getWeeklySummary } from './finance.weekly.service.ts';
 
 export const listWalletsHandler: RouteHandler<typeof listWalletsRoute, AppEnv> = async (c) =>
   c.json(await listWallets(c.get('userId')), 200);
@@ -32,6 +34,9 @@ export const getBillHandler: RouteHandler<typeof getBillRoute, AppEnv> = async (
 
 export const updateBillHandler: RouteHandler<typeof updateBillRoute, AppEnv> = async (c) =>
   c.json(await updateBill(c.get('userId'), c.req.valid('param').id, c.req.valid('json')), 200);
+
+export const weeklySummaryHandler: RouteHandler<typeof weeklySummaryRoute, AppEnv> = async (c) =>
+  c.json(await getWeeklySummary(c.get('userId'), c.req.valid('query').week), 200);
 
 export const deleteBillHandler: RouteHandler<typeof deleteBillRoute, AppEnv> = async (c) => {
   await deleteBill(c.get('userId'), c.req.valid('param').id);

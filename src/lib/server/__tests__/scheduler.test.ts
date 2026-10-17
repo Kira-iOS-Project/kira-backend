@@ -1,16 +1,31 @@
 import { describe, expect, test } from 'bun:test';
-import { createScheduler, HOUR_MS, type ScheduledJob, type SchedulerTimer } from '../scheduler.ts';
+import {
+  createScheduler,
+  HOUR_MS,
+  type ScheduledJob,
+  type SchedulerTimeout,
+  type SchedulerTimer,
+} from '../scheduler.ts';
+import { nextThursdayAt0600Wib } from '../../time/wib.ts';
 
 const NOW = new Date('2026-10-16T05:00:00.000Z');
 
-function createHarness(jobs: ScheduledJob[]) {
+function createHarness(jobs: ScheduledJob[], now: () => Date = () => NOW) {
   const logged: { level: string; payload: unknown }[] = [];
   const ticks: { callback: () => void; ms: number; stopped: boolean }[] = [];
+  const timeouts: { callback: () => void; ms: number; stopped: boolean }[] = [];
   const timer: SchedulerTimer = (callback, ms) => {
     const tick = { callback, ms, stopped: false };
     ticks.push(tick);
     return () => {
       tick.stopped = true;
+    };
+  };
+  const timeout: SchedulerTimeout = (callback, ms) => {
+    const timeoutEntry = { callback, ms, stopped: false };
+    timeouts.push(timeoutEntry);
+    return () => {
+      timeoutEntry.stopped = true;
     };
   };
   const scheduler = createScheduler(jobs, {
@@ -19,9 +34,10 @@ function createHarness(jobs: ScheduledJob[]) {
       error: (payload: unknown) => logged.push({ level: 'error', payload }),
     } as never,
     timer,
-    now: () => NOW,
+    timeout,
+    now,
   });
-  return { scheduler, logged, ticks };
+  return { scheduler, logged, ticks, timeouts };
 }
 
 describe('createScheduler', () => {
@@ -97,5 +113,70 @@ describe('createScheduler', () => {
     scheduler.stop();
 
     expect(runs).toBeGreaterThan(1);
+  });
+
+  test('runs one-shot jobs at their deadline, reschedules them, and cancels the next deadline', async () => {
+    let clock = new Date('2026-10-14T22:00:00.000Z');
+    const seen: Date[] = [];
+    const { scheduler, timeouts, ticks } = createHarness(
+      [
+        {
+          name: 'weekly-summary',
+          run: async (now) => seen.push(now),
+          nextRunAt: nextThursdayAt0600Wib,
+        },
+      ],
+      () => clock,
+    );
+
+    scheduler.start();
+    await Bun.sleep(0);
+    expect(timeouts[0]?.ms).toBe(60 * 60 * 1000);
+    expect(seen).toEqual([]);
+    ticks[0]?.callback();
+    await Bun.sleep(0);
+    expect(seen).toEqual([]);
+
+    clock = new Date('2026-10-14T23:00:00.000Z');
+    timeouts[0]?.callback();
+    await Bun.sleep(0);
+    expect(seen).toEqual([clock]);
+    expect(timeouts[1]?.ms).toBe(7 * 24 * 60 * 60 * 1000);
+
+    scheduler.stop();
+    expect(timeouts[1]?.stopped).toBe(true);
+  });
+
+  test('uses the real one-shot timeout and cancels the future reschedule', async () => {
+    let scheduled = 0;
+    let runs = 0;
+    const clock = new Date('2026-10-14T22:00:00.000Z');
+    const ticks: { stopped: boolean }[] = [];
+    const scheduler = createScheduler(
+      [
+        {
+          name: 'weekly-summary',
+          run: async () => (runs += 1),
+          nextRunAt: (now) => (scheduled++ === 0 ? now : new Date(now.getTime() + 60_000)),
+        },
+      ],
+      {
+        logger: { info: () => undefined, error: () => undefined } as never,
+        timer: () => {
+          const tick = { stopped: false };
+          ticks.push(tick);
+          return () => {
+            tick.stopped = true;
+          };
+        },
+        now: () => clock,
+      },
+    );
+
+    scheduler.start();
+    await Bun.sleep(5);
+    scheduler.stop();
+    expect(runs).toBe(1);
+    expect(ticks[0]?.stopped).toBe(true);
   });
 });

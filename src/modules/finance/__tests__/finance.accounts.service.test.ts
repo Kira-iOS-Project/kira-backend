@@ -33,6 +33,12 @@ function repository(overrides: Partial<FinanceRepository> = {}): FinanceReposito
     getBill: async () => null,
     updateBill: async () => null,
     deleteBill: async () => false,
+    totals: async () => [],
+    categories: async () => [],
+    weeklyTotalsForUsers: async () => [],
+    weeklyCategoriesForUsers: async () => [],
+    optedInUsers: async () => [],
+    saveWeeklies: async () => undefined,
     ...overrides,
   };
 }

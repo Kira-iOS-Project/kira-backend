@@ -40,6 +40,21 @@ export type BillRow = {
   paidThisPeriod: boolean;
 };
 
+type ExpenseCategory = z.infer<typeof expenseCategorySchema>;
+
+export type WeeklyTotals = { date: string; expense: number; income: number }[];
+export type CategoryTotal = { category: ExpenseCategory; amount: number };
+export type WeeklyUserTotal = { userId: string; date: string; expense: number; income: number };
+export type WeeklyUserCategory = { userId: string; category: ExpenseCategory; amount: number };
+export type WeeklyOptInUser = { userId: string; granted: boolean };
+export type WeeklyWrite = {
+  userId: string;
+  weekStart: string;
+  expense: number;
+  income: number;
+  note: string | null;
+};
+
 export type FinanceRepository = {
   listWallets(userId: string): Promise<WalletRow[]>;
   listDebts(userId: string): Promise<DebtRow[]>;
@@ -48,4 +63,10 @@ export type FinanceRepository = {
   getBill(userId: string, id: string): Promise<BillRow | null>;
   updateBill(userId: string, id: string, body: UpdateBillBody): Promise<BillRow | null>;
   deleteBill(userId: string, id: string): Promise<boolean>;
+  totals(userId: string, from: Date, to: Date): Promise<WeeklyTotals>;
+  categories(userId: string, from: Date, to: Date): Promise<CategoryTotal[]>;
+  weeklyTotalsForUsers(userIds: string[], from: Date, to: Date): Promise<WeeklyUserTotal[]>;
+  weeklyCategoriesForUsers(userIds: string[], from: Date, to: Date): Promise<WeeklyUserCategory[]>;
+  optedInUsers(): Promise<WeeklyOptInUser[]>;
+  saveWeeklies(rows: WeeklyWrite[]): Promise<void>;
 };

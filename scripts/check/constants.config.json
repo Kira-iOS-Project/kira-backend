@@ -67,6 +67,10 @@
       {
         "path": "src/lib/constants/community.ts",
         "reason": "'other' there is a community category, not the fallback wallet type."
+      },
+      {
+        "path": "src/modules/finance/__tests__/finance.weekly",
+        "reason": "Weekly note assertions pin user-visible copy independently of the constant they verify."
       }
     ]
   },

@@ -18,6 +18,20 @@ export function wibTime(instant: Date): string {
   return new Date(instant.getTime() + WIB_OFFSET_MS).toISOString().slice(11, 16).replace(':', '.');
 }
 
+/** The next instant at 06:00 Thursday in fixed UTC+07 Western Indonesian Time. */
+export function nextThursdayAt0600Wib(now: Date): Date {
+  const today = wibDate(now);
+  const weekday = new Date(`${today}T00:00:00Z`).getUTCDay();
+  const daysUntilThursday = (4 - weekday + 7) % 7;
+  let nextDate = addDays(today, daysUntilThursday);
+  let target = new Date(`${nextDate}T06:00:00+07:00`);
+  if (target.getTime() <= now.getTime()) {
+    nextDate = addDays(nextDate, 7);
+    target = new Date(`${nextDate}T06:00:00+07:00`);
+  }
+  return target;
+}
+
 /** The instant a WIB calendar date begins. */
 export function wibStartOfDay(date: string): Date {
   return new Date(Date.parse(`${date}T00:00:00Z`) - WIB_OFFSET_MS);

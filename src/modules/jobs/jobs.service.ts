@@ -8,6 +8,7 @@ import type { ScheduledJob } from '../../lib/server/scheduler.ts';
 import { rollOverPeriods, sendRenewalReminders } from '../billing/index.ts';
 import { reviewScholarshipApplications } from '../scholarship/index.ts';
 import { takeMonthlySnapshots } from '../score/index.ts';
+import { generateWeeklySummaries, nextThursdayAt0600Wib } from '../finance/index.ts';
 import { type JobsRepository, jobsRepository } from './jobs.repository.ts';
 
 /** A code lives ten minutes; a day later it is only a record of an address, so it goes. */
@@ -46,10 +47,13 @@ export function exclusive(
 }
 
 /** Periods roll over first, so a renewed plan's reminder is counted from its new period. */
+const weeklySummaryJob = exclusive('weekly-summary-thursday', generateWeeklySummaries);
+
 export const scheduledJobs: readonly ScheduledJob[] = [
   exclusive('subscription-rollover', rollOverPeriods),
   exclusive('renewal-reminders', sendRenewalReminders),
   exclusive('scholarship-review', reviewScholarshipApplications),
   exclusive('score-monthly-snapshot', takeMonthlySnapshots),
   exclusive('auth-code-cleanup', deleteStaleAuthCodes),
+  { ...weeklySummaryJob, nextRunAt: nextThursdayAt0600Wib },
 ];

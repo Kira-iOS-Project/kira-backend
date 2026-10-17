@@ -99,6 +99,13 @@
       "when": 1792212646100,
       "tag": "0013_mysterious_rawhide_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792214138530,
+      "tag": "0014_common_prodigy",
+      "breakpoints": true
     }
   ]
 }

@@ -19,4 +19,5 @@ export * from './ledger.ts';
 export * from './payoff.ts';
 export * from './risk.ts';
 export * from './usage.ts';
+export * from './weekly-summaries.ts';
 export * from './wallets.ts';

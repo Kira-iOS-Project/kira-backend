@@ -5262,6 +5262,140 @@
           }
         }
       },
+      "WeeklySummary": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-15"
+              },
+              "to": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-15"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "expense": {
+                "type": "integer"
+              },
+              "income": {
+                "type": "integer"
+              },
+              "net": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "expense",
+              "income",
+              "net"
+            ]
+          },
+          "previous": {
+            "type": "object",
+            "properties": {
+              "expense": {
+                "type": "integer"
+              },
+              "income": {
+                "type": "integer"
+              },
+              "net": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "expense",
+              "income",
+              "net"
+            ]
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "example": "2026-10-15"
+                },
+                "expense": {
+                  "type": "integer"
+                },
+                "income": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "date",
+                "expense",
+                "income"
+              ]
+            }
+          },
+          "topCategories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                },
+                "amount": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "category",
+                "amount"
+              ]
+            },
+            "maxItems": 4
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "period",
+          "totals",
+          "previous",
+          "days",
+          "topCategories",
+          "note"
+        ]
+      },
       "CurrentBudget": {
         "type": "object",
         "properties": {
@@ -11146,6 +11280,74 @@
           },
           "404": {
             "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/summaries/weekly": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getWeeklySummary",
+        "summary": "Weekly Thursday to Wednesday spending summary",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-10-15"
+            },
+            "required": true,
+            "name": "week",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The selected week, previous week, daily totals, and top expense categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklySummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
             "content": {
               "application/problem+json": {
                 "schema": {
