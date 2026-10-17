@@ -47,17 +47,16 @@ describe('renderEmail', () => {
     );
 
     expect(html).toContain('381 427');
-    expect(html).toContain(`src="${BASE}/email/clock.png"`);
+    expect(html).not.toContain('clock.png');
     expect(text).toContain('381 427\nBerlaku 10 menit');
   });
 
-  test('draws a notice with its icon, title and text', () => {
+  test('draws a notice with its title and text, and no icon image', () => {
     const { html, text } = renderEmail(
       partsWith({
         blocks: [
           {
             kind: 'notice',
-            icon: 'lock',
             title: 'Jangan Bagikan Kode Ini',
             text: 'Kira tidak pernah meminta kode.',
           },
@@ -66,7 +65,7 @@ describe('renderEmail', () => {
       BASE,
     );
 
-    expect(html).toContain(`src="${BASE}/email/lock.png"`);
+    expect(html).not.toContain('lock.png');
     expect(text).toContain('Jangan Bagikan Kode Ini\nKira tidak pernah meminta kode.');
   });
 

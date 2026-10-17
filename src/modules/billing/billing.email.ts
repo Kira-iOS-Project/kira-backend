@@ -58,7 +58,6 @@ export function renewalReminderEmail(input: {
       },
       {
         kind: 'notice',
-        icon: 'calendar',
         title: 'Kuota Terisi Lagi',
         text: 'Kuota chat AI, scan struk, dan input suara terisi lagi pada tanggal perpanjangan.',
       },

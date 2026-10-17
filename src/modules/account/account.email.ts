@@ -55,7 +55,6 @@ export function dataExportEmail(input: {
       },
       {
         kind: 'notice',
-        icon: 'file',
         title: 'Simpan di Tempat yang Aman',
         text: 'File ini berisi catatan keuanganmu. Teruskan hanya ke orang yang kamu percaya.',
       },
@@ -85,7 +84,6 @@ export function accountDeletedEmail(input: { to: string; name: string; now: Date
       { kind: 'facts', rows: [{ label: 'Dihapus pada', value: wibMoment(input.now) }] },
       {
         kind: 'notice',
-        icon: 'shield',
         title: 'Langganan Ikut Berhenti',
         text: 'Langganan aktifmu dibatalkan otomatis. Kamu tidak akan ditagih lagi.',
       },

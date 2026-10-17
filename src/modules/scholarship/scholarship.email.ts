@@ -32,13 +32,11 @@ export function scholarshipAcceptedEmail(input: {
       },
       {
         kind: 'notice',
-        icon: 'calendar',
         title: 'Perpanjang 3 Bulan Lagi',
         text: `Kalau masih butuh, ajukan lagi mulai ${longDate(input.extensionFrom)}, paling lama total 6 bulan.`,
       },
       {
         kind: 'notice',
-        icon: 'gift',
         title: 'Dari Para Penraktir',
         text: 'Beasiswa ini ada karena pengguna lain mentraktir lewat Traktir Kira. Kamu tidak berutang apa pun.',
       },

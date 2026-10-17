@@ -48,7 +48,12 @@ export const app = createRouter();
      bodyLimit      refuse an oversized body before reading it
      timeout        cap the handler's total time (a 504 problem) */
 app.use('*', requestId());
-app.use('*', secureHeaders());
+/** The email images are loaded by mail clients from other origins, so they alone allow it. */
+const pageHeaders = secureHeaders();
+const emailImageHeaders = secureHeaders({ crossOriginResourcePolicy: 'cross-origin' });
+app.use('*', (c, next) =>
+  c.req.path.startsWith('/email/') ? emailImageHeaders(c, next) : pageHeaders(c, next),
+);
 app.use('*', cors({ origin: env.CORS_ORIGINS, exposeHeaders: ['X-Request-Id'], maxAge: 600 }));
 app.use('*', requestLogger);
 
