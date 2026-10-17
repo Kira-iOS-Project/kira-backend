@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { PAYOFF_ACCOUNT_STATUS, PAYOFF_METHOD } from '../../../lib/constants/payoff.ts';
 import type { PlanDeps } from '../payoff.plan.service.ts';
-import { createPlan, getActivePlan, setPlanFocus } from '../payoff.plan.service.ts';
+import { createPlan, getActivePlan, payingNowOf, setPlanFocus } from '../payoff.plan.service.ts';
 import {
   createPlanRepositoryMock,
   ID_A,
@@ -141,5 +141,26 @@ describe('setPlanFocus', () => {
         deps({ repository: createPlanRepositoryMock({ findActive: async () => null }) }),
       ),
     ).rejects.toMatchObject({ code: 'PAYOFF_PLAN_NOT_FOUND' });
+  });
+});
+
+describe('payingNowOf', () => {
+  test("the plan's account being paid off, or the smallest consumer debt without a plan", async () => {
+    const focused = createPlanRepositoryMock({
+      findActive: async () => ({ ...PAYOFF_PLAN, focusDebtId: B }),
+    });
+    expect(await payingNowOf('user-1', { repository: focused })).toEqual({
+      id: B,
+      name: 'Paylater B',
+    });
+
+    const none = createPlanRepositoryMock({ findActive: async () => null });
+    expect(await payingNowOf('user-1', { repository: none })).toEqual({
+      id: A,
+      name: 'Paylater A',
+    });
+
+    const clear = createPlanRepositoryMock({ listDebts: async () => [] });
+    expect(await payingNowOf('user-1', { repository: clear })).toBeNull();
   });
 });
