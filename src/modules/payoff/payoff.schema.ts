@@ -80,6 +80,8 @@ export const payoffPlanSchema = z
     totalInterest: rupiah.nullable(),
     allPaidMonths: z.number().int().min(1).nullable(),
     allPaidMonth: month.nullable(),
+    /** The date of the last payment (`YYYY-MM-DD`); null unless every account has a due day. */
+    allPaidDate: z.iso.date().nullable(),
     comparison: comparisonSchema.nullable(),
   })
   .openapi('PayoffPlan');

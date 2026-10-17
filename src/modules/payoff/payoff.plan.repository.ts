@@ -3,10 +3,10 @@
  * their progress, and the payments marked against an account. Each write is one transaction.
  */
 
-import { and, eq, gt, isNull } from 'drizzle-orm';
+import { and, eq, gt, gte, isNull } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
-import { debtAccounts, debtPayments, payoffPlans } from '../../db/schema/schema.ts';
+import { debtAccounts, debtPayments, payoffPlans, users } from '../../db/schema/schema.ts';
 import type { DEBT_PAYMENT_STATUS } from '../../lib/constants/profile.ts';
 import type { PayoffMethod } from './payoff.engine.ts';
 import type { OpenDebt } from './payoff.repository.ts';
@@ -31,7 +31,15 @@ export type PlanDebt = OpenDebt & {
 };
 
 /** A payment as the repository applies it: the balance it expects and the one it leaves. */
-export type Payment = { amount: number; from: number; to: number };
+export type Payment = { amount: number; from: number; to: number; paymentId: string };
+
+/** A consumer account the plan paid off, and when. */
+export type PaidDebt = PlanDebt & { paidOffAt: Date | null };
+/** What became of a payment: applied, refused as a repeat, or the balance changed meanwhile. */
+type PaymentOutcome = 'applied' | 'duplicate' | 'stale';
+
+/** Thrown inside the payment's transaction to roll its insert back when the balance moved. */
+const STALE_BALANCE = new Error('The balance changed meanwhile');
 
 /** At most this many accounts are read: the quiz accepts twenty. */
 const DEBT_LIMIT = 50;
@@ -51,8 +59,12 @@ export type PlanRepository = {
   /** Ends the active plan, if any, and stores the new one. */
   createPlan(userId: string, plan: NewPlan, now: Date): Promise<StoredPlan>;
   setFocus(planId: string, debtId: string): Promise<void>;
-  /** Applies a payment if the balance is still `from`; false when it changed meanwhile. */
-  recordPayment(userId: string, debtId: string, payment: Payment, now: Date): Promise<boolean>;
+  /** The accounts paid off since `since` (the plan's start), the first paid first. */
+  listPaidSince(userId: string, since: Date): Promise<PaidDebt[]>;
+  /** Whether this client payment id was recorded already. */
+  hasPayment(userId: string, paymentId: string): Promise<boolean>;
+  /** Applies a payment once per client payment id, if the balance is still `from`. */
+  recordPayment(userId: string, id: string, payment: Payment, now: Date): Promise<PaymentOutcome>;
 };
 
 const debtColumns = {
@@ -90,7 +102,16 @@ export function createPlanRepository(client: PostgresJsDatabase = db): PlanRepos
         .select(debtColumns)
         .from(debtAccounts)
         .where(isOpen(userId))
-        .orderBy(debtAccounts.createdAt)
+        .orderBy(debtAccounts.createdAt, debtAccounts.id)
+        .limit(DEBT_LIMIT);
+    },
+
+    listPaidSince(userId, since) {
+      return client
+        .select({ ...debtColumns, paidOffAt: debtAccounts.paidOffAt })
+        .from(debtAccounts)
+        .where(and(eq(debtAccounts.userId, userId), gte(debtAccounts.paidOffAt, since)))
+        .orderBy(debtAccounts.paidOffAt, debtAccounts.id)
         .limit(DEBT_LIMIT);
     },
 
@@ -105,6 +126,12 @@ export function createPlanRepository(client: PostgresJsDatabase = db): PlanRepos
 
     createPlan(userId, plan, now) {
       return client.transaction(async (tx) => {
+        /** The person's row, locked: a second Jadikan Rencanaku waits, then ends this plan. */
+        await tx
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.id, userId))
+          .for('no key update');
         await tx
           .update(payoffPlans)
           .set({ endedAt: now })
@@ -125,26 +152,47 @@ export function createPlanRepository(client: PostgresJsDatabase = db): PlanRepos
         .where(eq(payoffPlans.id, planId));
     },
 
-    recordPayment(userId, debtId, payment, now) {
-      return client.transaction(async (tx) => {
-        const updated = await tx
-          .update(debtAccounts)
-          .set({ remainingAmount: payment.to, paidOffAt: payment.to === 0 ? now : null })
-          .where(
-            and(
-              eq(debtAccounts.id, debtId),
-              eq(debtAccounts.userId, userId),
-              isNull(debtAccounts.paidOffAt),
-              eq(debtAccounts.remainingAmount, payment.from),
-            ),
-          )
-          .returning({ id: debtAccounts.id });
-        if (updated.length === 0) return false;
-        await tx
-          .insert(debtPayments)
-          .values({ debtId, userId, amount: payment.amount, paidAt: now });
-        return true;
-      });
+    async hasPayment(userId, paymentId) {
+      const mine = eq(debtPayments.userId, userId);
+      const where = and(mine, eq(debtPayments.clientPaymentId, paymentId));
+      const [row] = await client.select({ id: debtPayments.id }).from(debtPayments).where(where);
+      return row !== undefined;
+    },
+
+    async recordPayment(userId, debtId, payment, now) {
+      try {
+        return await client.transaction(async (tx) => {
+          const [inserted] = await tx
+            .insert(debtPayments)
+            .values({
+              debtId,
+              userId,
+              amount: payment.amount,
+              clientPaymentId: payment.paymentId,
+              paidAt: now,
+            })
+            .onConflictDoNothing({ target: [debtPayments.userId, debtPayments.clientPaymentId] })
+            .returning({ id: debtPayments.id });
+          if (!inserted) return 'duplicate';
+          const updated = await tx
+            .update(debtAccounts)
+            .set({ remainingAmount: payment.to, paidOffAt: payment.to === 0 ? now : null })
+            .where(
+              and(
+                eq(debtAccounts.id, debtId),
+                eq(debtAccounts.userId, userId),
+                isNull(debtAccounts.paidOffAt),
+                eq(debtAccounts.remainingAmount, payment.from),
+              ),
+            )
+            .returning({ id: debtAccounts.id });
+          if (updated.length === 0) throw STALE_BALANCE;
+          return 'applied';
+        });
+      } catch (error) {
+        if (error === STALE_BALANCE) return 'stale';
+        throw error;
+      }
     },
   };
 }

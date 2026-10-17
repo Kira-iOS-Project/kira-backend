@@ -15,7 +15,11 @@ export const setFocusBodySchema = z.object({ focusDebtId: z.uuid() }).openapi('S
 export const debtParamsSchema = z.object({ id: z.uuid() });
 
 export const paymentBodySchema = z
-  .object({ amount: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER) })
+  .object({
+    amount: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
+    /** Made once by the client per Tandai Sudah Bayar; a repeat answers 409. */
+    paymentId: z.uuid(),
+  })
   .openapi('RecordDebtPayment');
 
 const accountSchema = z
@@ -90,6 +94,8 @@ const scoreEstimateSchema = z
 export const paymentResultSchema = z
   .object({
     debtId: z.uuid(),
+    /** The paid account's instalment, freed once it is paid off (Cicilanmu turun). */
+    monthlyInstalment: rupiah,
     paid: rupiah,
     remaining: rupiah,
     progressPercent: z.number().int().min(0).max(100),

@@ -12,6 +12,8 @@ import { call, planned } from './routes-fixtures.ts';
 
 beforeEach(() => resetExternalMocks());
 
+const PAY = '00000000-0000-4000-8000-0000000000f1';
+
 describe('Rencanaku', () => {
   test('answers 401 without a session', async () => {
     for (const [method, path] of [
@@ -92,7 +94,10 @@ describe('Rencanaku', () => {
 
   test('POST /api/debts/{id}/payments records a part payment', async () => {
     dbControl.respond = signedIn(planned);
-    const res = await call('POST', `/api/debts/${ID_A}/payments`, { amount: 210_000 });
+    const res = await call('POST', `/api/debts/${ID_A}/payments`, {
+      amount: 210_000,
+      paymentId: PAY,
+    });
 
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
@@ -106,7 +111,10 @@ describe('Rencanaku', () => {
 
   test('POST /api/debts/{id}/payments announces the paid-off account once', async () => {
     dbControl.respond = signedIn(planned);
-    const res = await call('POST', `/api/debts/${ID_A}/payments`, { amount: 420_000 });
+    const res = await call('POST', `/api/debts/${ID_A}/payments`, {
+      amount: 420_000,
+      paymentId: PAY,
+    });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -121,7 +129,10 @@ describe('Rencanaku', () => {
 
   test('POST /api/debts/{id}/payments refuses what is not open, too high or malformed', async () => {
     dbControl.respond = signedIn(planned);
-    const high = await call('POST', `/api/debts/${ID_A}/payments`, { amount: 420_001 });
+    const high = await call('POST', `/api/debts/${ID_A}/payments`, {
+      amount: 420_001,
+      paymentId: PAY,
+    });
     expect(high.status).toBe(400);
     expect((await high.json()).code).toBe('PAYOFF_PAYMENT_TOO_HIGH');
 
@@ -133,10 +144,36 @@ describe('Rencanaku', () => {
     );
     const missing = await call('POST', '/api/debts/5b0a4c3e-9d7f-4a1e-8c2b-1f6e7d8c9b0a/payments', {
       amount: 1_000,
+      paymentId: PAY,
     });
     expect(missing.status).toBe(404);
     expect((await missing.json()).code).toBe('PAYOFF_DEBT_NOT_FOUND');
-    expect((await call('POST', `/api/debts/${ID_A}/payments`, { amount: 0 })).status).toBe(422);
-    expect((await call('POST', '/api/debts/not-a-uuid/payments', { amount: 1 })).status).toBe(422);
+    expect(
+      (await call('POST', `/api/debts/${ID_A}/payments`, { amount: 0, paymentId: PAY })).status,
+    ).toBe(422);
+    expect(
+      (await call('POST', '/api/debts/not-a-uuid/payments', { amount: 1, paymentId: PAY })).status,
+    ).toBe(422);
+  });
+
+  test('POST /api/payoff/plans answers 422 to a malformed plan', async () => {
+    dbControl.respond = signedIn(planned);
+    const res = await call('POST', '/api/payoff/plans', { method: 'fastest', extraPayment: -1 });
+    expect(res.status).toBe(422);
+  });
+
+  test('PATCH /api/payoff/plans/active: no plan, or another person’s account', async () => {
+    dbControl.respond = signedIn((query) =>
+      query.sql.includes('from "payoff_plans"') ? [] : planned(query),
+    );
+    const none = await call('PATCH', '/api/payoff/plans/active', { focusDebtId: ID_B });
+    expect(none.status).toBe(404);
+    expect((await none.json()).code).toBe('PAYOFF_PLAN_NOT_FOUND');
+
+    dbControl.respond = signedIn(planned);
+    const strangers = '5b0a4c3e-9d7f-4a1e-8c2b-1f6e7d8c9b0a';
+    const other = await call('PATCH', '/api/payoff/plans/active', { focusDebtId: strangers });
+    expect(other.status).toBe(404);
+    expect((await other.json()).code).toBe('PAYOFF_DEBT_NOT_FOUND');
   });
 });

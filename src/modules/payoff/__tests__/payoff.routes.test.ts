@@ -39,6 +39,12 @@ describe('POST /api/payoff/simulate', () => {
     });
     expect(body.accounts).toHaveLength(2);
     expect(body.productive).toHaveLength(1);
+    /** Paylater A is due on the 5th, Paylater B has no due day: no date for the whole plan. */
+    expect(body.accounts[0].payoffDate).toMatch(/^\d{4}-\d{2}-05$/);
+    expect(body.accounts[1].payoffDate).toBeNull();
+    expect(body.allPaidMonth).toMatch(/^\d{4}-\d{2}$/);
+    expect(body.allPaidDate).toBeNull();
+    expect(body.productive[0].payoffDate).toMatch(/^\d{4}-\d{2}-10$/);
   });
 
   test('answers 400 PAYOFF_EXTRA_TOO_HIGH above the money left', async () => {

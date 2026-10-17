@@ -13,8 +13,9 @@ export const PAYOFF_METHOD = {
 /** A simulation stops after this many months (the tenor ceiling of a debt account, 50 years). */
 export const MAX_PAYOFF_MONTHS = 600;
 
-/** The tag of an account on Rencanaku: Sedang dilunasi, Berikutnya, Jalan terus. */
+/** The tag of an account on Rencanaku: Lunas, Sedang dilunasi, Berikutnya, Jalan terus. */
 export const PAYOFF_ACCOUNT_STATUS = {
+  paidOff: 'paid_off',
   inProgress: 'in_progress',
   next: 'next',
   ongoing: 'ongoing',

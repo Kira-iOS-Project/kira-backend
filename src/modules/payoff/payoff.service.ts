@@ -59,6 +59,13 @@ export function remainingOf(
   return findRemainingMoney(userId, deps.now ? { now: deps.now } : {});
 }
 
+/** The latest of the values (ISO months or dates sort as text); null if any is missing or none. */
+function latestOf(values: (string | null)[]) {
+  const known = values.filter((value): value is string => value !== null);
+  if (known.length < values.length) return null;
+  return known.toSorted((a, b) => a.localeCompare(b)).at(-1) ?? null;
+}
+
 /** The payoff month, and the due date when the account has a due day (payoff.plan.view). */
 function dated(today: string, dueDay: number | null, months: number | null) {
   return {
@@ -110,13 +117,10 @@ export async function simulatePayoff(
     productive,
     totalInterest: chosen.totalInterest,
     allPaidMonths: chosen.allPaidMonths,
-    allPaidMonth:
-      chosen.allPaidMonths === null
-        ? null
-        : (accounts
-            .map((account) => account.payoffMonth ?? '')
-            .toSorted()
-            .at(-1) ?? null),
+    /** Accounts without a due day count from this month, so the latest month is the last one. */
+    allPaidMonth: latestOf(accounts.map((account) => account.payoffMonth)),
+    /** The date of the last payment; null unless every account has a due day. */
+    allPaidDate: latestOf(accounts.map((account) => account.payoffDate)),
     comparison: consumer.length > 0 ? comparisonOf(chosen, other, body.method, hasRate) : null,
   };
 }

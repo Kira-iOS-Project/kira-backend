@@ -42,6 +42,7 @@ export const ERROR_CODES = [
   'PAYOFF_PLAN_NOT_FOUND',
   'PAYOFF_DEBT_NOT_FOUND',
   'PAYOFF_PAYMENT_TOO_HIGH',
+  'PAYOFF_PAYMENT_ALREADY_RECORDED',
 
   /** Catat: chat, receipts, voice, manual entries and the transaction history. */
   'CHAT_AI_DISABLED',

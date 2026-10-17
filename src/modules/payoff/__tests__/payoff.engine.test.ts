@@ -34,6 +34,15 @@ describe('payoffOrder', () => {
     expect(payoffOrder([same, dear], PAYOFF_METHOD.avalanche).map((d) => d.id)).toEqual(['d', 'e']);
   });
 
+  test('a full tie falls to the account id, so the order never changes between calls', () => {
+    const first = payoffDebt({ id: 'f', remaining: 500_000, annualInterestRate: 20 });
+    const second = payoffDebt({ id: 'g', remaining: 500_000, annualInterestRate: 20 });
+    for (const method of [PAYOFF_METHOD.snowball, PAYOFF_METHOD.avalanche]) {
+      expect(payoffOrder([second, first], method).map((d) => d.id)).toEqual(['f', 'g']);
+      expect(payoffOrder([first, second], method).map((d) => d.id)).toEqual(['f', 'g']);
+    }
+  });
+
   test('does not reorder the input', () => {
     const input = [BIG, SMALL];
     payoffOrder(input, PAYOFF_METHOD.snowball);

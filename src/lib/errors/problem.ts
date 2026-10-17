@@ -47,6 +47,7 @@ const TITLES = {
   PAYOFF_PLAN_NOT_FOUND: 'No Active Plan',
   PAYOFF_DEBT_NOT_FOUND: 'Debt Account Not Found',
   PAYOFF_PAYMENT_TOO_HIGH: 'Payment Too High',
+  PAYOFF_PAYMENT_ALREADY_RECORDED: 'Payment Already Recorded',
   CHAT_AI_DISABLED: 'Kira AI Is Off',
   CHAT_MESSAGE_NOT_FOUND: 'Message Not Found',
   CHAT_DRAFTS_NOT_PENDING: 'Drafts Already Settled',

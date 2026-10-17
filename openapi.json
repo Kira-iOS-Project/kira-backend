@@ -79,6 +79,7 @@
               "PAYOFF_PLAN_NOT_FOUND",
               "PAYOFF_DEBT_NOT_FOUND",
               "PAYOFF_PAYMENT_TOO_HIGH",
+              "PAYOFF_PAYMENT_ALREADY_RECORDED",
               "CHAT_AI_DISABLED",
               "CHAT_MESSAGE_NOT_FOUND",
               "CHAT_DRAFTS_NOT_PENDING",
@@ -1258,6 +1259,13 @@
             "pattern": "^\\d{4}-\\d{2}$",
             "example": "2027-03"
           },
+          "allPaidDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
           "comparison": {
             "$ref": "#/components/schemas/PayoffComparison"
           }
@@ -1273,6 +1281,7 @@
           "totalInterest",
           "allPaidMonths",
           "allPaidMonth",
+          "allPaidDate",
           "comparison"
         ]
       },
@@ -1342,6 +1351,13 @@
             "pattern": "^\\d{4}-\\d{2}$",
             "example": "2027-03"
           },
+          "payoffDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
           "interest": {
             "type": [
               "integer",
@@ -1362,6 +1378,7 @@
           "position",
           "months",
           "payoffMonth",
+          "payoffDate",
           "interest"
         ]
       },
@@ -1395,6 +1412,21 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991
+          },
+          "payoffMonth": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-\\d{2}$",
+            "example": "2027-03"
+          },
+          "payoffDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
           }
         },
         "required": [
@@ -1402,7 +1434,9 @@
           "kind",
           "name",
           "remaining",
-          "monthlyInstalment"
+          "monthlyInstalment",
+          "payoffMonth",
+          "payoffDate"
         ]
       },
       "PayoffComparison": {
@@ -1560,10 +1594,32 @@
           "status": {
             "type": "string",
             "enum": [
+              "paid_off",
               "in_progress",
               "next",
               "ongoing"
             ]
+          },
+          "payoffMonth": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-\\d{2}$"
+          },
+          "payoffDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "startMonth": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\d{4}-\\d{2}$"
           }
         },
         "required": [
@@ -1576,7 +1632,10 @@
           "monthlyInstalment",
           "annualInterestRate",
           "dueDay",
-          "status"
+          "status",
+          "payoffMonth",
+          "payoffDate",
+          "startMonth"
         ]
       },
       "PayoffNextPayment": {
@@ -1593,6 +1652,16 @@
             "type": "string"
           },
           "amount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "instalment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "extra": {
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991
@@ -1616,6 +1685,8 @@
           "debtId",
           "name",
           "amount",
+          "instalment",
+          "extra",
           "dueDate",
           "daysLeft"
         ]
@@ -1660,6 +1731,11 @@
             "type": "string",
             "format": "uuid"
           },
+          "monthlyInstalment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
           "paid": {
             "type": "integer",
             "minimum": 0,
@@ -1703,6 +1779,7 @@
         },
         "required": [
           "debtId",
+          "monthlyInstalment",
           "paid",
           "remaining",
           "progressPercent",
@@ -1744,10 +1821,15 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 9007199254740991
+          },
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
-          "amount"
+          "amount",
+          "paymentId"
         ]
       },
       "Home": {

@@ -50,13 +50,15 @@ const SETTLED = 0.5;
 const rateOf = (debt: PayoffDebt) => debt.annualInterestRate ?? 0;
 const smallestFirst = (a: PayoffDebt, b: PayoffDebt) => a.remaining - b.remaining;
 const dearestFirst = (a: PayoffDebt, b: PayoffDebt) => rateOf(b) - rateOf(a);
+/** The last tie-break, so the order never changes between calls. */
+const byId = (a: PayoffDebt, b: PayoffDebt) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
-/** The order a method pays in; a tie keeps the order the accounts were added in. */
+/** The order a method pays in; a tie falls to the rate or balance, then the account id. */
 export function payoffOrder<T extends PayoffDebt>(debts: T[], method: PayoffMethod): T[] {
   const compare =
     method === PAYOFF_METHOD.snowball
-      ? (a: T, b: T) => smallestFirst(a, b) || dearestFirst(a, b)
-      : (a: T, b: T) => dearestFirst(a, b) || smallestFirst(a, b);
+      ? (a: T, b: T) => smallestFirst(a, b) || dearestFirst(a, b) || byId(a, b)
+      : (a: T, b: T) => dearestFirst(a, b) || smallestFirst(a, b) || byId(a, b);
   return debts.toSorted(compare);
 }
 

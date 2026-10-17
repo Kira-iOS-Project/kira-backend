@@ -49,7 +49,7 @@ export async function getActivePlan(userId: string, deps: PlanDeps = {}): Promis
     repository.listDebts(userId),
   ]);
   if (!plan) throw new PayoffPlanNotFoundError();
-  return planView(plan, debts, today);
+  return planView(plan, debts, today, await repository.listPaidSince(userId, plan.createdAt));
 }
 
 /** "Lanjut ke Paylater B": the plan's focus moves to another open consumer account. */
@@ -69,5 +69,6 @@ export async function setPlanFocus(
     throw new PayoffDebtNotFoundError();
   }
   await repository.setFocus(plan.id, focusDebtId);
-  return planView({ ...plan, focusDebtId }, debts, today);
+  const paid = await repository.listPaidSince(userId, plan.createdAt);
+  return planView({ ...plan, focusDebtId }, debts, today, paid);
 }
