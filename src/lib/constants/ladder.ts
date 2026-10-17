@@ -7,7 +7,8 @@
 import { EXPENSE_CATEGORY } from './money.ts';
 
 /**
- * The expense categories that count as pengeluaran pokok for the calculators' prefill: food,
+ * Our decision (approved by the coordinator; the boards and the contract name no categories): the
+ * expense categories that count as pengeluaran pokok for the calculators' prefill: food,
  * transport, bills, household, health, education and insurance. Instalments and savings deposits
  * are not spending; coffee, shopping and entertainment are not essential.
  */
@@ -21,5 +22,8 @@ export const ESSENTIAL_EXPENSE_CATEGORIES = [
   EXPENSE_CATEGORY.insurance,
 ] as const;
 
-/** Pengeluaran pokok is the average of this many whole months before the current one (WIB). */
+/**
+ * Our decision too (approved): pengeluaran pokok is the average of this many whole WIB months
+ * before the current one, over the months that have any essential spending.
+ */
 export const PREFILL_MONTHS = 3;
