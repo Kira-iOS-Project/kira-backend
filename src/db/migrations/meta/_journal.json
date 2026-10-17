@@ -57,6 +57,13 @@
       "when": 1792196554420,
       "tag": "0007_score_history",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792196580011,
+      "tag": "0008_assets",
+      "breakpoints": true
     }
   ]
 }
