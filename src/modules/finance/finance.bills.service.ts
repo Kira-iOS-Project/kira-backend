@@ -1,11 +1,12 @@
 import { daysBetween, wibDate } from '../../lib/time/wib.ts';
 import { BILL_KIND } from '../../lib/constants/ung.ts';
 import { PayoffDebtNotFoundError } from '../payoff/index.ts';
+import { BillNotFoundError } from './finance.bills.errors.ts';
 import { getCurrentPaydayPeriod } from './finance.budget.service.ts';
 import { budgetRepository, type BudgetRepository } from './finance.repository.budget.ts';
 import { billRepository } from './finance.repository.bills.ts';
 import type { BillRow, FinanceRepository } from './finance.repository.types.ts';
-import type { CreateBillBody } from './finance.bills.schema.ts';
+import type { CreateBillBody, UpdateBillBody } from './finance.bills.schema.ts';
 
 type ListDeps = {
   repository?: Pick<FinanceRepository, 'listBills'>;
@@ -15,6 +16,10 @@ type ListDeps = {
 
 type CreateDeps = Omit<ListDeps, 'repository'> & {
   repository?: Pick<FinanceRepository, 'listBills' | 'createBill'>;
+};
+
+type EditDeps = Omit<ListDeps, 'repository'> & {
+  repository?: Pick<FinanceRepository, 'listBills' | 'getBill' | 'updateBill'>;
 };
 
 function presentBill(row: BillRow, today: string) {
@@ -47,4 +52,27 @@ export async function createBill(userId: string, body: CreateBillBody, deps: Cre
   const today = wibDate((deps.now ?? (() => new Date()))());
   const listed = await listBills(userId, deps);
   return listed.items.find((item) => item.id === created.id) ?? presentBill(created, today);
+}
+
+export async function getBill(userId: string, id: string, deps: EditDeps = {}) {
+  const repository = deps.repository ?? billRepository;
+  const bill = await repository.getBill(userId, id);
+  if (!bill) throw new BillNotFoundError();
+  const today = wibDate((deps.now ?? (() => new Date()))());
+  const listed = await listBills(userId, deps);
+  return listed.items.find((item) => item.id === bill.id) ?? presentBill(bill, today);
+}
+
+export async function updateBill(
+  userId: string,
+  id: string,
+  body: UpdateBillBody,
+  deps: EditDeps = {},
+) {
+  const repository = deps.repository ?? billRepository;
+  const updated = await repository.updateBill(userId, id, body);
+  if (!updated) throw new BillNotFoundError();
+  const today = wibDate((deps.now ?? (() => new Date()))());
+  const listed = await listBills(userId, deps);
+  return listed.items.find((item) => item.id === updated.id) ?? presentBill(updated, today);
 }

@@ -62,3 +62,19 @@ export const createBillBodySchema = z
   .openapi('CreateBillInput');
 
 export type CreateBillBody = z.infer<typeof createBillBodySchema>;
+
+export const updateBillBodySchema = z
+  .object({
+    name: z.string().trim().min(1).max(80).optional(),
+    amount: amountSchema.optional(),
+    category: expenseCategorySchema.optional(),
+    nextDueDate: date.optional(),
+    repeatInterval: z.enum(enumValues(BILL_REPEAT_INTERVAL)).optional(),
+    linkedDebtAccountId: z.uuid().nullable().optional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, {
+    message: 'At least one future schedule field must be updated.',
+  })
+  .openapi('UpdateBillInput');
+
+export type UpdateBillBody = z.infer<typeof updateBillBodySchema>;

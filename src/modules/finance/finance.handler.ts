@@ -1,9 +1,14 @@
 import type { RouteHandler } from '@hono/zod-openapi';
 import type { AppEnv } from '../../lib/server/factory.ts';
 import type { listWalletsRoute } from './finance.routes.accounts.ts';
-import type { createBillRoute, listBillsRoute } from './finance.routes.bills.ts';
+import type {
+  createBillRoute,
+  getBillRoute,
+  listBillsRoute,
+  updateBillRoute,
+} from './finance.routes.bills.ts';
 import { listWallets } from './finance.accounts.service.ts';
-import { createBill, listBills } from './finance.bills.service.ts';
+import { createBill, getBill, listBills, updateBill } from './finance.bills.service.ts';
 import type { currentBudgetRoute } from './finance.routes.budget.ts';
 import type { currentBudgetEditRoute, updateCurrentBudgetRoute } from './finance.routes.budget.ts';
 import {
@@ -20,6 +25,12 @@ export const listBillsHandler: RouteHandler<typeof listBillsRoute, AppEnv> = asy
 
 export const createBillHandler: RouteHandler<typeof createBillRoute, AppEnv> = async (c) =>
   c.json(await createBill(c.get('userId'), c.req.valid('json')), 201);
+
+export const getBillHandler: RouteHandler<typeof getBillRoute, AppEnv> = async (c) =>
+  c.json(await getBill(c.get('userId'), c.req.valid('param').id), 200);
+
+export const updateBillHandler: RouteHandler<typeof updateBillRoute, AppEnv> = async (c) =>
+  c.json(await updateBill(c.get('userId'), c.req.valid('param').id, c.req.valid('json')), 200);
 
 export const currentBudgetHandler: RouteHandler<typeof currentBudgetRoute, AppEnv> = async (c) =>
   c.json(await getCurrentBudget(c.get('userId')), 200);

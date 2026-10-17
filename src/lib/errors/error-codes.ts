@@ -83,6 +83,9 @@ export const ERROR_CODES = [
 
   /** Portofolio Manual (REN-10, REN-11). */
   'ASSET_NOT_FOUND',
+
+  /** UNG recurring bill schedules. */
+  'BILL_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

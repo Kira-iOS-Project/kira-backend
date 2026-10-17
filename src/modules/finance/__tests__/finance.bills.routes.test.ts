@@ -102,4 +102,99 @@ describe('bill list route', () => {
 
     expect(response.status).toBe(422);
   });
+
+  test('GET /api/bills/{id} returns a bill owned by the signed-in user', async () => {
+    const schedule = {
+      id: '00000000-0000-4000-8000-000000000001',
+      name: 'Internet',
+      amount: 300_000,
+      category: EXPENSE_CATEGORY.bills,
+      nextDueDate: '2026-10-22',
+      repeatInterval: BILL_REPEAT_INTERVAL.monthly,
+      installmentsTotal: null,
+      installmentsRemaining: null,
+      linkedDebtAccountId: null,
+      linkedDebtName: null,
+    };
+    let billReads = 0;
+    dbControl.respond = signedIn((query) => {
+      if (query.sql.includes('from "recurring_bills"')) {
+        billReads += 1;
+        return [schedule];
+      }
+      if (query.sql.includes('from "users"'))
+        return [
+          {
+            income: 1_000_000,
+            paydayDay: null,
+            createdAt: new Date('2026-01-01T00:00:00Z'),
+            essentialMonthlyExpenses: null,
+            emergencyFund: null,
+            maritalStatus: null,
+            dependents: 0,
+          },
+        ];
+      return [];
+    });
+
+    const response = await app.request(`/api/bills/${schedule.id}`, { headers: AUTH_HEADER });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: schedule.id,
+      name: 'Internet',
+      kind: BILL_KIND.bill,
+    });
+    expect(billReads).toBe(2);
+  });
+
+  test('PATCH /api/bills/{id} updates schedule fields and rejects an empty patch', async () => {
+    const id = '00000000-0000-4000-8000-000000000001';
+    const schedule = {
+      id,
+      name: 'Internet',
+      amount: 300_000,
+      category: EXPENSE_CATEGORY.bills,
+      nextDueDate: '2026-10-22',
+      repeatInterval: BILL_REPEAT_INTERVAL.monthly,
+      installmentsTotal: null,
+      installmentsRemaining: null,
+      linkedDebtAccountId: null,
+      linkedDebtName: null,
+    };
+    let reads = 0;
+    dbControl.respond = signedIn((query) => {
+      if (query.sql.includes('from "recurring_bills"')) {
+        reads += 1;
+        return [reads === 1 ? schedule : { ...schedule, name: 'Internet baru' }];
+      }
+      if (query.sql.startsWith('update "recurring_bills"'))
+        return [{ ...schedule, name: 'Internet baru' }];
+      if (query.sql.includes('from "users"'))
+        return [
+          {
+            income: 1_000_000,
+            paydayDay: null,
+            createdAt: new Date('2026-01-01T00:00:00Z'),
+            essentialMonthlyExpenses: null,
+            emergencyFund: null,
+            maritalStatus: null,
+            dependents: 0,
+          },
+        ];
+      return [];
+    });
+    const headers = { ...AUTH_HEADER, 'Content-Type': 'application/json' };
+    const response = await app.request(`/api/bills/${id}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ name: 'Internet baru' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ id, name: 'Internet baru' });
+    expect(
+      (await app.request(`/api/bills/${id}`, { method: 'PATCH', headers, body: '{}' })).status,
+    ).toBe(422);
+  });
 });
