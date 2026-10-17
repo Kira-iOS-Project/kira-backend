@@ -5,7 +5,7 @@
  */
 
 import { EMERGENCY_MILESTONE, GOAL_KIND } from '../../lib/constants/plan.ts';
-import { ValidationError } from '../../lib/errors/errors.ts';
+import { UnprocessableError } from '../../lib/errors/errors.ts';
 import { wibDate } from '../../lib/time/wib.ts';
 import { GoalDepositConflictError, GoalNotFoundError } from './plan.errors.ts';
 import { goalRepository, type GoalRepository, type GoalRow } from './plan.goal.repository.ts';
@@ -63,7 +63,7 @@ export function milestonesOf(
     { key: EMERGENCY_MILESTONE.threeMonths, amount: essential * 3 },
     { key: EMERGENCY_MILESTONE.target, amount: row.targetAmount },
   ];
-  /** By day, so a deposit dated before the goal was made counts from its own day. */
+  /** By day; a deposit is never dated before its goal (addGoalDeposit refuses it). */
   const timeline = [{ day: wibDate(row.createdAt), amount: row.initialAmount }]
     .concat(
       depositsNewestFirst.toReversed().map((deposit) => ({
@@ -131,7 +131,7 @@ export async function updateGoal(
   const repository = deps.repository ?? goalRepository;
   const row = await requireGoal(repository, userId, id);
   if (row.kind === GOAL_KIND.emergencyFund && body.inputs && !hasEssentialExpense(body.inputs)) {
-    throw new ValidationError(
+    throw new UnprocessableError(
       `An emergency fund keeps inputs.${ESSENTIAL_EXPENSE_INPUT}, its monthly essential spending.`,
       undefined,
       'VALIDATION_FAILED',
@@ -152,7 +152,18 @@ export async function addGoalDeposit(
   deps: Deps = {},
 ): Promise<GoalDeposit> {
   const repository = deps.repository ?? goalRepository;
-  await requireGoal(repository, userId, id);
+  const row = await requireGoal(repository, userId, id);
+  /**
+   * Before the goal existed there was nothing to put money aside for. Checked before the insert:
+   * a retried id carries the day it was first accepted with, so a retry passes too.
+   */
+  if (body.depositedOn < wibDate(row.createdAt)) {
+    throw new UnprocessableError(
+      'A deposit cannot be dated before its goal was made.',
+      undefined,
+      'VALIDATION_FAILED',
+    );
+  }
   const stored = await repository.insertDeposit({
     id: body.depositId,
     goalId: id,

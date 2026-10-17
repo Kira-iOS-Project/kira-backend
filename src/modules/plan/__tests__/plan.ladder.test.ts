@@ -39,7 +39,11 @@ const DINDA: ScoreInput = {
 
 const NOW = new Date('2026-10-17T05:00:00.000Z');
 
-function deps(input: ScoreInput | null, months: { month: string; total: number }[] = []) {
+function deps(
+  input: ScoreInput | null,
+  months: { month: string; total: number }[] = [],
+  goal: { saved: number; target: number; essential: number | null } | null = null,
+) {
   const ranges: unknown[] = [];
   const repository: LadderRepository = {
     essentialByMonth: async (_userId, from, to) => {
@@ -50,6 +54,7 @@ function deps(input: ScoreInput | null, months: { month: string; total: number }
   const options: LadderDeps = {
     scoreInput: async () => input,
     payingNow: async () => ({ id: 'debt-a', name: 'Paylater A' }),
+    emergencyGoal: async () => goal,
     repository,
     now: () => NOW,
   };
@@ -92,6 +97,45 @@ describe('ladderOf', () => {
     expect(ladder.map((step) => step.status)).toEqual(['done', 'current', 'todo', 'todo']);
     expect(ladder[1]?.detail.multiple).toBeNull();
     expect(ladder[2]?.detail).toMatchObject({ health: false, incomeCover: false });
+  });
+
+  test('with a Dana Darurat goal the rung follows the goal: its saved amount, target and pokok', async () => {
+    const reached = { saved: 25_200_000, target: 25_200_000, essential: 4_200_000 };
+    expect((await ladderOf('user-1', deps(DINDA, [], reached).options))[1]).toMatchObject({
+      status: 'done',
+      detail: { amount: 25_200_000, target: 25_200_000, multiple: 6, targetMultiple: 6 },
+    });
+
+    /** The health check said Rp4.200.000 a month, the calculator Rp5.000.000: the goal wins. */
+    const typed = { saved: 6_000_000, target: 30_000_000, essential: 5_000_000 };
+    expect((await ladderOf('user-1', deps(DINDA, [], typed).options))[1]).toMatchObject({
+      status: 'todo',
+      detail: { amount: 6_000_000, target: 30_000_000, multiple: 1.2, targetMultiple: 6 },
+    });
+
+    /** A goal without the pokok input measures against the health check's. */
+    const untyped = { saved: 8_400_000, target: 25_200_000, essential: null };
+    expect((await ladderOf('user-1', deps(DINDA, [], untyped).options))[1]?.detail).toMatchObject({
+      multiple: 2,
+      targetMultiple: 6,
+    });
+
+    const saving = { saved: 5_450_000, target: 25_200_000, essential: 4_200_000 };
+    expect((await prefillOf('user-1', deps(DINDA, [], saving).options)).emergencyFund).toBe(
+      5_450_000,
+    );
+  });
+
+  test('only the first open rung is current: rung 3 before investing', async () => {
+    const unprotected = { ...DINDA, debts: [], emergencyFund: 25_200_000, protections: [] };
+    const ladder = await ladderOf('user-1', deps(unprotected).options);
+
+    expect(ladder.map((step) => step.status)).toEqual(['done', 'done', 'current', 'todo']);
+  });
+
+  test("reads the goals itself when not given them: no goal, the health check's fund", async () => {
+    const { emergencyGoal: _goal, ...withoutGoals } = deps(DINDA).options;
+    expect((await ladderOf('user-1', withoutGoals))[1]?.detail.amount).toBe(4_800_000);
   });
 
   test('before the health check every rung is ahead, with no detail', async () => {

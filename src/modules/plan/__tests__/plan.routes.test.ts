@@ -5,36 +5,32 @@
 
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
-import { EMERGENCY_MILESTONE, GOAL_KIND } from '../../../lib/constants/plan.ts';
+import { EMERGENCY_MILESTONE } from '../../../lib/constants/plan.ts';
 import type { FakeQuery, FakeRow } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
-import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
-import { DEPOSIT_ID, GOAL_ID, goalDbRow } from './helpers.ts';
+import { signedIn } from '../../../test/session.ts';
+import { DEPOSIT_ID, EMERGENCY, GOAL_ID, goalDbRow, send } from './helpers.ts';
 
 beforeEach(() => resetExternalMocks());
-
-function send(method: string, path: string, body?: unknown) {
-  return app.request(path, {
-    method,
-    headers: { 'Content-Type': 'application/json', ...AUTH_HEADER },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  });
-}
 
 const reads = (query: FakeQuery) => query.sql.startsWith('select');
 /** Answers every read of "goals" with Dinda's emergency fund. */
 const withGoal = (query: FakeQuery): FakeRow[] =>
   reads(query) && query.sql.includes('from "goals"') ? [goalDbRow()] : [];
 
-const EMERGENCY = {
-  kind: GOAL_KIND.emergencyFund,
-  name: 'Dana Darurat',
-  inputs: { essentialExpense: 4_200_000, married: false, dependants: 0 },
-  initialAmount: 4_800_000,
-  monthlyDeposit: 650_000,
-  targetAmount: 25_200_000,
-  targetDate: '2029-04-25',
-};
+describe('the goal routes without a session', () => {
+  test.each([
+    ['GET', '/api/goals'],
+    ['POST', '/api/goals'],
+    ['GET', `/api/goals/${GOAL_ID}`],
+    ['PATCH', `/api/goals/${GOAL_ID}`],
+    ['POST', `/api/goals/${GOAL_ID}/deposits`],
+  ])('%s %s answers 401', async (method, path) => {
+    const res = await app.request(path, { method });
+    expect(res.status).toBe(401);
+    expect((await res.json()).code).toBe('AUTH_UNAUTHENTICATED');
+  });
+});
 
 describe('GET /api/plan', () => {
   test('answers 401 without a session', async () => {
@@ -142,6 +138,13 @@ describe('PATCH /api/goals/{id}', () => {
     expect((await res.json()).code).toBe('GOAL_NOT_FOUND');
   });
 
+  test("refuses an emergency fund's inputs without its essential spending with a 422", async () => {
+    dbControl.respond = signedIn(withGoal);
+    const res = await send('PATCH', `/api/goals/${GOAL_ID}`, { inputs: { married: true } });
+    expect(res.status).toBe(422);
+    expect((await res.json()).code).toBe('VALIDATION_FAILED');
+  });
+
   test('refuses an empty change with a 422', async () => {
     dbControl.respond = signedIn();
     expect((await send('PATCH', `/api/goals/${GOAL_ID}`, {})).status).toBe(422);
@@ -174,6 +177,16 @@ describe('POST /api/goals/{id}/deposits', () => {
     const res = await send('POST', `/api/goals/${GOAL_ID}/deposits`, deposit);
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe('GOAL_DEPOSIT_CONFLICT');
+  });
+
+  test('refuses a deposit dated before the goal was made with a 422', async () => {
+    dbControl.respond = signedIn(withGoal);
+    const res = await send('POST', `/api/goals/${GOAL_ID}/deposits`, {
+      ...deposit,
+      depositedOn: '2026-06-30',
+    });
+    expect(res.status).toBe(422);
+    expect((await res.json()).code).toBe('VALIDATION_FAILED');
   });
 
   test('answers 404 GOAL_NOT_FOUND for an unknown goal', async () => {

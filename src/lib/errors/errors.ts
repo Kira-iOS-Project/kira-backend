@@ -58,6 +58,19 @@ export class ValidationError extends DomainError {
   }
 }
 
+/**
+ * 422: the input is well formed, but its values break a rule that needs stored data to check (an
+ * emergency fund's essential spending, a deposit dated before its goal), answered like the schema's
+ * own range failures.
+ */
+export class UnprocessableError extends DomainError {
+  override readonly statusCode = 422 as const;
+
+  constructor(userMessage: string, internalDetail: string | undefined, code: ErrorCode) {
+    super(userMessage, internalDetail, code);
+  }
+}
+
 /** 401: the request carries no valid session, or its token has expired. */
 export class UnauthorizedError extends DomainError {
   override readonly statusCode = 401 as const;

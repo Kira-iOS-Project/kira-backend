@@ -4,7 +4,9 @@
  * month) and a repository double.
  */
 
+import { app } from '../../../app.ts';
 import { GOAL_KIND } from '../../../lib/constants/plan.ts';
+import { AUTH_HEADER } from '../../../test/session.ts';
 import type { GoalRepository, GoalRow } from '../plan.goal.repository.ts';
 
 export const GOAL_ID = '5a1c2e3f-4b5d-4e6f-8a7b-9c0d1e2f3a4b';
@@ -51,3 +53,23 @@ export function createGoalRepositoryMock(overrides: Partial<GoalRepository> = {}
     ...overrides,
   };
 }
+
+/** A request to the app as the signed-in test person. */
+export function send(method: string, path: string, body?: unknown) {
+  return app.request(path, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...AUTH_HEADER },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+}
+
+/** Dinda's emergency fund as Tujuan Baru sends it. */
+export const EMERGENCY = {
+  kind: GOAL_KIND.emergencyFund,
+  name: 'Dana Darurat',
+  inputs: { essentialExpense: 4_200_000, married: false, dependants: 0 },
+  initialAmount: 4_800_000,
+  monthlyDeposit: 650_000,
+  targetAmount: 25_200_000,
+  targetDate: '2029-04-25',
+};
