@@ -27,11 +27,11 @@ describe('renderEmail', () => {
   test('lays the header image, the words and the footer out from the public base', () => {
     const { html, text } = renderEmail(partsWith(), BASE);
 
-    expect(html).toContain(`src="${BASE}/email/header-code.png"`);
+    expect(html).toContain(`src="${BASE}/email/header-code.png?v=2"`);
     expect(html).toContain('alt="Kira · Kode verifikasi"');
     expect(html).toContain('Ini Kode Masukmu');
-    expect(html).toContain(`src="${BASE}/email/mark.png"`);
-    expect(html).toContain(`src="${BASE}/email/tagline.png"`);
+    expect(html).toContain(`src="${BASE}/email/mark.png?v=2"`);
+    expect(html).toContain(`src="${BASE}/email/tagline.png?v=2"`);
     expect(html).toContain('Kode 381427 berlaku 10 menit.');
     expect(text).toBe(
       'Ini Kode Masukmu\n\nHai Dinda, masukkan kode di bawah ini.\n\n' +
