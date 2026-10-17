@@ -1,36 +1,23 @@
-/** Current UNG budget allocation and payday selection. */
+/**
+ * Atur Budget (UNG-05): one row per person with the limit set for each expense category. The income
+ * is the health check's and the payday the person's own (users), so Budget and Beranda share both.
+ */
 
-import { sql } from 'drizzle-orm';
-import { bigint, check, jsonb, pgTable, uuid } from 'drizzle-orm/pg-core';
+import { jsonb, pgTable, uuid } from 'drizzle-orm/pg-core';
 import type { z } from 'zod';
-import { expenseCategorySchema, MAX_AMOUNT } from '../../lib/money/money.schema.ts';
+import type { expenseCategorySchema } from '../../lib/money/money.schema.ts';
 import { users } from './accounts.ts';
-import { moment } from './columns.ts';
+import { timestamps } from './columns.ts';
 
 export type BudgetAllocation = {
   category: z.infer<typeof expenseCategorySchema>;
   amount: number;
 };
-export type PaydayChoice = { type: 'day'; day: number } | { type: 'endOfMonth' };
 
-export const budgets = pgTable(
-  'budgets',
-  {
-    userId: uuid('user_id')
-      .primaryKey()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    income: bigint('income', { mode: 'number' }).notNull(),
-    allocations: jsonb('allocations').$type<BudgetAllocation[]>().notNull(),
-    payday: jsonb('payday').$type<PaydayChoice>().notNull(),
-    updatedAt: moment('updated_at')
-      .defaultNow()
-      .notNull()
-      .$onUpdateFn(() => new Date()),
-  },
-  (table) => [
-    check(
-      'budgets_income_check',
-      sql`${table.income} between 0 and ${sql.raw(String(MAX_AMOUNT))}`,
-    ),
-  ],
-);
+export const budgets = pgTable('budgets', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  allocations: jsonb('allocations').$type<BudgetAllocation[]>().notNull(),
+  ...timestamps,
+});

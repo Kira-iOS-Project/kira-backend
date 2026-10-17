@@ -1,118 +1,92 @@
-import { addDays, daysBetween, daysInMonth, wibDate, wibStartOfDay } from '../../lib/time/wib.ts';
-import { INDICATOR } from '../../lib/constants/score.ts';
-import { targetMultipleOf } from '../score/index.ts';
+/**
+ * Budget per Kategori (UNG-04) and Atur Budget (UNG-05). The period is Beranda's payday period
+ * (coordinator's decision A: no weekend or holiday shift, so both screens always agree; moving a
+ * payday off a holiday is a follow-up, see Derry's 3a28735). Income is the health check's; the
+ * Dana Darurat pos is Rencana's goal ("Diambil dari tujuan Dana Darurat").
+ */
+
+import { addDays, paydayPeriod, wibDate, wibStartOfDay } from '../../lib/time/wib.ts';
+import { emergencyGoalOf, type EmergencyGoal } from '../plan/index.ts';
+import type { CurrentBudget, SaveBudgetBody } from './finance.budget.schema.ts';
 import { budgetRepository, type BudgetRepository } from './finance.repository.budget.ts';
-import { INDONESIAN_NATIONAL_HOLIDAYS } from './indonesian-holidays.ts';
-import type { PaydayChoice } from './finance.budget.schema.ts';
 
-type Deps = { repository?: BudgetRepository; now?: () => Date };
+/** Atur Budget's "Rata-rata 3 bulan" hint: this many payday periods before the current one. */
+const AVERAGE_PERIODS = 3;
 
-function paydayDate(
-  year: number,
-  month: number,
-  choice: PaydayChoice,
-  holidays: ReadonlySet<string>,
-) {
-  const lastDay = daysInMonth(year, month);
-  const day = choice.type === 'endOfMonth' ? lastDay : Math.min(choice.day, lastDay);
-  let date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  while (isNonBusinessDay(date, holidays)) date = addDays(date, -1);
-  return date;
-}
+type Deps = {
+  repository?: BudgetRepository;
+  emergencyGoal?: (userId: string) => Promise<EmergencyGoal | null>;
+  now?: () => Date;
+};
 
-function isNonBusinessDay(date: string, holidays: ReadonlySet<string>) {
-  const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
-  return weekday === 0 || weekday === 6 || holidays.has(date);
-}
+/** Spent at least 90% of the limit: Budget's kunyit tag ("Sisa Rp60.000,00"). */
+const isNearLimit = (spent: number, limit: number) => limit > 0 && spent * 10 >= limit * 9;
 
-function shiftedMonth(year: number, month: number, offset: number) {
-  const date = new Date(Date.UTC(year, month - 1 + offset, 1));
-  return [date.getUTCFullYear(), date.getUTCMonth() + 1] as const;
-}
-
-function currentPaydayPeriod(today: string, choice: PaydayChoice) {
-  const [year = 0, month = 1] = today.split('-').map(Number);
-  const holidaySet = new Set(INDONESIAN_NATIONAL_HOLIDAYS.map(({ date }) => date));
-  const candidates = [-1, 0, 1, 2]
-    .map((offset) => {
-      const [candidateYear, candidateMonth] = shiftedMonth(year, month, offset);
-      return paydayDate(candidateYear, candidateMonth, choice, holidaySet);
-    })
-    .toSorted();
-  const startIndex = candidates.reduce((last, date, index) => (date <= today ? index : last), -1);
-  const periodStart = candidates[startIndex] ?? candidates[0] ?? today;
-  const nextPayday = candidates.find((date) => date > today) ?? addDays(periodStart, 31);
-  return {
-    adjustedDate: periodStart,
-    periodStart,
-    periodEnd: addDays(nextPayday, -1),
-    nextPayday,
-    daysUntilPayday: daysBetween(today, nextPayday),
-  };
-}
-
-type GoalProfile = Awaited<ReturnType<BudgetRepository['getBudgetGoalProfile']>>;
-
-function goalPosts(profile: GoalProfile) {
-  const essential = profile?.essentialMonthlyExpenses ?? 0;
-  if (!profile || essential <= 0) return [];
-  const multiple = targetMultipleOf({
-    maritalStatus: profile.maritalStatus,
-    dependents: profile.dependents,
-  });
-  const currentAmount = profile.emergencyFund ?? 0;
-  const milestones = [1, multiple / 2, multiple].map((value) => {
-    const amount = Math.round(essential * value);
-    return {
-      amount,
-      label: `${String(value).replace('.', ',')}×`,
-      reached: currentAmount >= amount,
-    };
-  });
-  return [
-    {
-      category: INDICATOR.emergencyFund,
-      name: 'Dana Darurat',
-      currentAmount,
-      targetAmount: Math.round(essential * multiple),
-      milestones,
-    },
-  ];
-}
-
-export async function getCurrentBudget(userId: string, deps: Deps = {}) {
+export async function getCurrentBudget(userId: string, deps: Deps = {}): Promise<CurrentBudget> {
   const repository = deps.repository ?? budgetRepository;
-  const now = (deps.now ?? (() => new Date()))();
-  const saved = await repository.getBudget(userId);
-  const defaults = saved ?? { ...(await repository.getProfileBudget(userId)), allocations: [] };
-  const today = wibDate(now);
-  const payday = currentPaydayPeriod(today, defaults.payday);
-  const [spending, profile] = await Promise.all([
+  const today = wibDate((deps.now ?? (() => new Date()))());
+  const [saved, { income, payday }, goal, instalmentsMonthly] = await Promise.all([
+    repository.findAllocations(userId),
+    repository.findIncomeAndPayday(userId),
+    (deps.emergencyGoal ?? emergencyGoalOf)(userId),
+    repository.monthlyInstalments(userId),
+  ]);
+  const period = paydayPeriod(today, payday);
+  let earliest = period.start;
+  for (let index = 0; index < AVERAGE_PERIODS; index += 1) {
+    earliest = paydayPeriod(addDays(earliest, -1), payday).start;
+  }
+  const [spending, past] = await Promise.all([
     repository.spendingByCategory(
       userId,
-      wibStartOfDay(payday.periodStart),
+      wibStartOfDay(period.start),
       wibStartOfDay(addDays(today, 1)),
     ),
-    repository.getBudgetGoalProfile(userId),
+    repository.spendingByCategory(userId, wibStartOfDay(earliest), wibStartOfDay(period.start)),
   ]);
-  const spentByCategory = new Map(spending.map((row) => [row.category, row.amount]));
-  const totalSpent = spending.reduce((total, row) => total + row.amount, 0);
-  const totalAllocated = defaults.allocations.reduce((total, row) => total + row.amount, 0);
+  const spent = new Map(spending.map((row) => [row.category, row.amount]));
+  const allocations = saved ?? [];
+  const totalAllocated = allocations.reduce((sum, row) => sum + row.amount, 0);
   return {
     configured: saved !== null,
-    income: defaults.income,
-    remaining: defaults.income - totalSpent,
-    allocations: defaults.allocations.map((allocation) => {
-      const spent = spentByCategory.get(allocation.category) ?? 0;
-      return {
-        ...allocation,
-        spent,
-        nearLimit: allocation.amount > 0 && spent * 10 >= allocation.amount * 9,
-      };
+    income,
+    remaining: income - spending.reduce((sum, row) => sum + row.amount, 0),
+    allocations: allocations.map((row) => {
+      const used = spent.get(row.category) ?? 0;
+      return Object.assign({}, row, { spent: used, nearLimit: isNearLimit(used, row.amount) });
     }),
     totalAllocated,
-    overAllocated: totalAllocated > defaults.income,
-    goalPosts: goalPosts(profile),
-    payday: { requested: defaults.payday, ...payday },
+    overAllocated: totalAllocated > income,
+    averages: past.map((row) => ({
+      category: row.category,
+      amount: Math.round(row.amount / AVERAGE_PERIODS),
+    })),
+    instalmentsMonthly,
+    goalPost: goal
+      ? {
+          goalId: goal.id,
+          monthlyDeposit: goal.monthlyDeposit,
+          savedAmount: goal.saved,
+          targetAmount: goal.target,
+        }
+      : null,
+    payday: {
+      requested: payday,
+      periodStart: period.start,
+      periodEnd: period.end,
+      nextPayday: period.nextPayday,
+      daysUntilPayday: period.daysUntilPayday,
+    },
   };
+}
+
+/** Simpan Budget: stores the limits and the payday, then answers the budget as Budget shows it. */
+export async function saveCurrentBudget(
+  userId: string,
+  body: SaveBudgetBody,
+  deps: Deps = {},
+): Promise<CurrentBudget> {
+  const repository = deps.repository ?? budgetRepository;
+  await repository.save(userId, body.allocations, body.payday);
+  return getCurrentBudget(userId, deps);
 }

@@ -4,9 +4,10 @@ import {
   createDebtHandler,
   createWalletHandler,
   currentBudgetHandler,
+  saveBudgetHandler,
   listWalletsHandler,
 } from './finance.handler.ts';
-import { currentBudgetRoute } from './finance.routes.budget.ts';
+import { currentBudgetRoute, saveBudgetRoute } from './finance.routes.budget.ts';
 import { createDebtRoute, createWalletRoute, listWalletsRoute } from './finance.routes.accounts.ts';
 
 export const financeRouter = createRouter();
@@ -15,5 +16,6 @@ financeRouter.use('/debts', requireSession);
 financeRouter.openapi(listWalletsRoute, listWalletsHandler);
 financeRouter.use('/budgets/current', requireSession);
 financeRouter.openapi(currentBudgetRoute, currentBudgetHandler);
+financeRouter.openapi(saveBudgetRoute, saveBudgetHandler);
 financeRouter.openapi(createWalletRoute, createWalletHandler);
 financeRouter.openapi(createDebtRoute, createDebtHandler);

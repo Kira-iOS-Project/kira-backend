@@ -5030,7 +5030,8 @@
           },
           "income": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 10000000000000
           },
           "remaining": {
             "type": "integer"
@@ -5060,11 +5061,13 @@
                 },
                 "amount": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 10000000000000
                 },
                 "spent": {
                   "type": "integer",
-                  "minimum": 0
+                  "minimum": 0,
+                  "maximum": 10000000000000
                 },
                 "nearLimit": {
                   "type": "boolean"
@@ -5080,12 +5083,13 @@
           },
           "totalAllocated": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 10000000000000
           },
           "overAllocated": {
             "type": "boolean"
           },
-          "goalPosts": {
+          "averages": {
             "type": "array",
             "items": {
               "type": "object",
@@ -5093,98 +5097,93 @@
                 "category": {
                   "type": "string",
                   "enum": [
-                    "emergency_fund"
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
                   ]
                 },
-                "name": {
-                  "type": "string"
-                },
-                "currentAmount": {
+                "amount": {
                   "type": "integer",
-                  "minimum": 0
-                },
-                "targetAmount": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "milestones": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "amount": {
-                        "type": "integer",
-                        "minimum": 0
-                      },
-                      "label": {
-                        "type": "string"
-                      },
-                      "reached": {
-                        "type": "boolean"
-                      }
-                    },
-                    "required": [
-                      "amount",
-                      "label",
-                      "reached"
-                    ]
-                  }
+                  "minimum": 0,
+                  "maximum": 10000000000000
                 }
               },
               "required": [
                 "category",
-                "name",
-                "currentAmount",
-                "targetAmount",
-                "milestones"
+                "amount"
               ]
             }
+          },
+          "instalmentsMonthly": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000000
+          },
+          "goalPost": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "goalId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "monthlyDeposit": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              },
+              "savedAmount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              },
+              "targetAmount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              }
+            },
+            "required": [
+              "goalId",
+              "monthlyDeposit",
+              "savedAmount",
+              "targetAmount"
+            ]
           },
           "payday": {
             "type": "object",
             "properties": {
               "requested": {
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "day"
-                        ]
-                      },
-                      "day": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 31
-                      }
-                    },
-                    "required": [
-                      "type",
-                      "day"
-                    ]
+                "type": "object",
+                "properties": {
+                  "day": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 31,
+                    "default": null
                   },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "endOfMonth"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ]
+                  "endOfMonth": {
+                    "type": "boolean"
                   }
+                },
+                "required": [
+                  "endOfMonth"
                 ]
-              },
-              "adjustedDate": {
-                "type": "string",
-                "format": "date",
-                "example": "2026-10-17"
               },
               "periodStart": {
                 "type": "string",
@@ -5202,12 +5201,12 @@
                 "example": "2026-10-17"
               },
               "daysUntilPayday": {
-                "type": "integer"
+                "type": "integer",
+                "minimum": 0
               }
             },
             "required": [
               "requested",
-              "adjustedDate",
               "periodStart",
               "periodEnd",
               "nextPayday",
@@ -5222,7 +5221,74 @@
           "allocations",
           "totalAllocated",
           "overAllocated",
-          "goalPosts",
+          "averages",
+          "instalmentsMonthly",
+          "goalPost",
+          "payday"
+        ]
+      },
+      "SaveBudget": {
+        "type": "object",
+        "properties": {
+          "allocations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                },
+                "amount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10000000000000
+                }
+              },
+              "required": [
+                "category",
+                "amount"
+              ]
+            },
+            "maxItems": 13
+          },
+          "payday": {
+            "type": "object",
+            "properties": {
+              "day": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 31,
+                "default": null
+              },
+              "endOfMonth": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "endOfMonth"
+            ]
+          }
+        },
+        "required": [
+          "allocations",
           "payday"
         ]
       },
@@ -10716,10 +10782,11 @@
           }
         ],
         "operationId": "getCurrentBudget",
-        "summary": "Current budget and adjusted payday",
+        "summary": "Budget per Kategori: this payday period",
+        "description": "The payday period (Beranda's), income left, each category's limit and spending, the last three periods' averages and the Dana Darurat pos from Rencana.",
         "responses": {
           "200": {
-            "description": "Current budget, spending, goal posts and adjusted payday period",
+            "description": "The current budget",
             "content": {
               "application/json": {
                 "schema": {
@@ -10730,6 +10797,71 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "saveCurrentBudget",
+        "summary": "Simpan Budget: the limits per category and the payday",
+        "description": "Replaces the limits (each category at most once) and sets the payday Beranda also follows; answers the budget afterwards.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBudget"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The budget after saving",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentBudget"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {

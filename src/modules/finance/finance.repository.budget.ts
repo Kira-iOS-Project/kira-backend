@@ -1,57 +1,53 @@
-import { and, asc, eq, gte, lt, sql } from 'drizzle-orm';
+/**
+ * Budget's data access (AGENTS.md Rules 4 and 10), every read and write scoped to the person: the
+ * saved limits, the income and payday they share with Beranda, and the spending per category.
+ */
+
+import { and, eq, gt, gte, isNull, lt, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
-import { budgets, financialProfiles, transactions, users } from '../../db/schema/schema.ts';
+import {
+  budgets,
+  debtAccounts,
+  financialProfiles,
+  transactions,
+  users,
+  type BudgetAllocation,
+} from '../../db/schema/schema.ts';
 import { TRANSACTION_TYPE } from '../../lib/constants/money.ts';
 import { expenseCategorySchema } from '../../lib/money/money.schema.ts';
-import type { BudgetAllocationInput, PaydayChoice } from './finance.budget.schema.ts';
-import type { z } from 'zod';
+import type { Payday } from '../../lib/time/wib.ts';
 
-type ExpenseCategory = z.infer<typeof expenseCategorySchema>;
+type Spending = { category: BudgetAllocation['category']; amount: number };
 
-type BudgetRecord = {
-  income: number;
-  allocations: BudgetAllocationInput[];
-  payday: PaydayChoice;
-};
-type BudgetGoalProfile = {
-  createdAt: Date;
-  essentialMonthlyExpenses: number | null;
-  emergencyFund: number | null;
-  maritalStatus: (typeof financialProfiles.$inferSelect)['maritalStatus'];
-  dependents: number;
-};
 export type BudgetRepository = {
-  getBudget(userId: string): Promise<BudgetRecord | null>;
-  getProfileBudget(userId: string): Promise<{ income: number; payday: PaydayChoice }>;
-  getBudgetGoalProfile(userId: string): Promise<BudgetGoalProfile | null>;
-  spendingByCategory(
-    userId: string,
-    from: Date,
-    to: Date,
-  ): Promise<{ category: ExpenseCategory; amount: number }[]>;
+  findAllocations(userId: string): Promise<BudgetAllocation[] | null>;
+  /** The health check's income (0 before it) and the person's payday. */
+  findIncomeAndPayday(userId: string): Promise<{ income: number; payday: Payday }>;
+  spendingByCategory(userId: string, from: Date, to: Date): Promise<Spending[]>;
+  /** The monthly instalments of the open debt accounts, together. */
+  monthlyInstalments(userId: string): Promise<number>;
+  /** Stores the limits and the payday together. */
+  save(userId: string, allocations: BudgetAllocation[], payday: Payday): Promise<void>;
 };
 
-function createBudgetRepository(client: PostgresJsDatabase = db): BudgetRepository {
+export function createBudgetRepository(client: PostgresJsDatabase = db): BudgetRepository {
   return {
-    async getBudget(userId) {
+    async findAllocations(userId) {
       const [row] = await client
-        .select({
-          income: budgets.income,
-          allocations: budgets.allocations,
-          payday: budgets.payday,
-        })
+        .select({ allocations: budgets.allocations })
         .from(budgets)
         .where(eq(budgets.userId, userId))
         .limit(1);
-      return row ?? null;
+      return row?.allocations ?? null;
     },
 
-    async getProfileBudget(userId) {
+    async findIncomeAndPayday(userId) {
       const [row] = await client
         .select({
           income: financialProfiles.netMonthlyIncome,
-          paydayDay: users.paydayDay,
+          day: users.paydayDay,
+          endOfMonth: users.paydayEndOfMonth,
         })
         .from(users)
         .leftJoin(financialProfiles, eq(financialProfiles.userId, users.id))
@@ -59,31 +55,15 @@ function createBudgetRepository(client: PostgresJsDatabase = db): BudgetReposito
         .limit(1);
       return {
         income: row?.income ?? 0,
-        payday: row?.paydayDay ? { type: 'day', day: row.paydayDay } : { type: 'endOfMonth' },
+        payday: { day: row?.day ?? null, endOfMonth: row?.endOfMonth ?? false },
       };
-    },
-
-    async getBudgetGoalProfile(userId) {
-      const [row] = await client
-        .select({
-          createdAt: users.createdAt,
-          essentialMonthlyExpenses: financialProfiles.essentialMonthlyExpenses,
-          emergencyFund: financialProfiles.emergencyFund,
-          maritalStatus: financialProfiles.maritalStatus,
-          dependents: financialProfiles.dependents,
-        })
-        .from(users)
-        .leftJoin(financialProfiles, eq(financialProfiles.userId, users.id))
-        .where(eq(users.id, userId))
-        .limit(1);
-      return row?.createdAt ? { ...row, dependents: row.dependents ?? 0 } : null;
     },
 
     async spendingByCategory(userId, from, to) {
       const rows = await client
         .select({
           category: transactions.category,
-          amount: sql<number>`coalesce(sum(${transactions.amount}), 0)`.mapWith(Number),
+          amount: sql<number>`sum(${transactions.amount})`.mapWith(Number),
         })
         .from(transactions)
         .where(
@@ -94,12 +74,43 @@ function createBudgetRepository(client: PostgresJsDatabase = db): BudgetReposito
             lt(transactions.occurredAt, to),
           ),
         )
-        .groupBy(transactions.category)
-        .orderBy(asc(transactions.category))
-        .limit(30);
+        .groupBy(transactions.category);
+      /** An expense only ever carries an expense category; the parse keeps the type honest. */
       return rows.flatMap((row) => {
         const parsed = expenseCategorySchema.safeParse(row.category);
         return parsed.success ? [{ category: parsed.data, amount: row.amount }] : [];
+      });
+    },
+
+    async monthlyInstalments(userId) {
+      const [row] = await client
+        .select({
+          total: sql<number>`coalesce(sum(${debtAccounts.monthlyInstalment}), 0)`.mapWith(Number),
+        })
+        .from(debtAccounts)
+        .where(
+          and(
+            eq(debtAccounts.userId, userId),
+            isNull(debtAccounts.paidOffAt),
+            gt(debtAccounts.remainingAmount, 0),
+          ),
+        );
+      return row?.total ?? 0;
+    },
+
+    async save(userId, allocations, payday) {
+      await client.transaction(async (tx) => {
+        await tx
+          .update(users)
+          .set({ paydayDay: payday.day, paydayEndOfMonth: payday.endOfMonth })
+          .where(eq(users.id, userId));
+        await tx
+          .insert(budgets)
+          .values({ userId, allocations })
+          .onConflictDoUpdate({
+            target: budgets.userId,
+            set: { allocations, updatedAt: new Date() },
+          });
       });
     },
   };
