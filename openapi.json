@@ -2382,6 +2382,114 @@
           "daysUntilPayday"
         ]
       },
+      "WeeklySummary": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": "string",
+            "format": "date"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "previousTotal": {
+            "type": "integer"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "expense": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "date",
+                "expense"
+              ]
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                },
+                "amount": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "category",
+                "amount"
+              ]
+            }
+          },
+          "budget": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "amount": {
+                "type": "integer"
+              },
+              "spent": {
+                "type": "integer"
+              },
+              "periodStart": {
+                "type": "string",
+                "format": "date"
+              },
+              "periodEnd": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "required": [
+              "amount",
+              "spent",
+              "periodStart",
+              "periodEnd"
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "total",
+          "previousTotal",
+          "days",
+          "categories",
+          "budget"
+        ]
+      },
       "Plans": {
         "type": "object",
         "properties": {
@@ -7341,6 +7449,74 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/summary/weekly": {
+      "get": {
+        "operationId": "getWeeklySummary",
+        "tags": [
+          "Uang"
+        ],
+        "summary": "Ringkasan Mingguan",
+        "description": "The seven WIB days ending on `end` (today by default): expenses per day and per category, the week before, and the budget of the payday period. Numbers only; the app writes the sentences.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "name": "end",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The week",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklySummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {
