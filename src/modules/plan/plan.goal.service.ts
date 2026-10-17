@@ -5,6 +5,7 @@
  */
 
 import { EMERGENCY_MILESTONE, GOAL_KIND } from '../../lib/constants/plan.ts';
+import { ValidationError } from '../../lib/errors/errors.ts';
 import { wibDate } from '../../lib/time/wib.ts';
 import { GoalDepositConflictError, GoalNotFoundError } from './plan.errors.ts';
 import { goalRepository, type GoalRepository, type GoalRow } from './plan.goal.repository.ts';
@@ -20,6 +21,12 @@ import type {
 import { ESSENTIAL_EXPENSE_INPUT } from './plan.schema.ts';
 
 type Deps = { repository?: GoalRepository };
+
+/** Whether the inputs name a positive whole monthly essential spending. */
+function hasEssentialExpense(inputs: Goal['inputs']): boolean {
+  const essential = inputs[ESSENTIAL_EXPENSE_INPUT];
+  return typeof essential === 'number' && Number.isInteger(essential) && essential > 0;
+}
 
 function summaryOf(row: GoalRow): GoalSummary {
   const { id, kind, name, targetAmount, targetDate, monthlyDeposit, savedAmount } = row;
@@ -56,12 +63,15 @@ export function milestonesOf(
     { key: EMERGENCY_MILESTONE.threeMonths, amount: essential * 3 },
     { key: EMERGENCY_MILESTONE.target, amount: row.targetAmount },
   ];
-  const timeline = [{ day: wibDate(row.createdAt), amount: row.initialAmount }].concat(
-    depositsNewestFirst.toReversed().map((deposit) => ({
-      day: deposit.depositedOn,
-      amount: deposit.amount,
-    })),
-  );
+  /** By day, so a deposit dated before the goal was made counts from its own day. */
+  const timeline = [{ day: wibDate(row.createdAt), amount: row.initialAmount }]
+    .concat(
+      depositsNewestFirst.toReversed().map((deposit) => ({
+        day: deposit.depositedOn,
+        amount: deposit.amount,
+      })),
+    )
+    .toSorted((a, b) => a.day.localeCompare(b.day));
   let saved = 0;
   const totals = timeline.map(({ day, amount }) => {
     saved += amount;
@@ -119,6 +129,14 @@ export async function updateGoal(
   deps: Deps = {},
 ): Promise<Goal> {
   const repository = deps.repository ?? goalRepository;
+  const row = await requireGoal(repository, userId, id);
+  if (row.kind === GOAL_KIND.emergencyFund && body.inputs && !hasEssentialExpense(body.inputs)) {
+    throw new ValidationError(
+      `An emergency fund keeps inputs.${ESSENTIAL_EXPENSE_INPUT}, its monthly essential spending.`,
+      undefined,
+      'VALIDATION_FAILED',
+    );
+  }
   if (!(await repository.updateGoal(userId, id, body))) throw new GoalNotFoundError();
   return goalOf(await requireGoal(repository, userId, id));
 }

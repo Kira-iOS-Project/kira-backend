@@ -33,6 +33,14 @@ describe('milestonesOf', () => {
     expect(reached?.reachedOn).toBe('2026-09-25');
   });
 
+  test('counts a deposit dated before the goal was made from its own day', () => {
+    const early = [{ id: 'd0', amount: 100_000, depositedOn: '2026-06-01' }];
+    const row = goalRow({ initialAmount: 900_000 });
+    expect(milestonesOf(row, early)[0]?.reachedOn).toBe('2026-07-01');
+    const enough = [{ id: 'd0', amount: 1_000_000, depositedOn: '2026-06-01' }];
+    expect(milestonesOf(goalRow({ initialAmount: 0 }), enough)[0]?.reachedOn).toBe('2026-06-01');
+  });
+
   test('rounds 1 minggu to whole rupiah', () => {
     const row = goalRow({ inputs: { essentialExpense: 1_000_000 }, initialAmount: 0 });
     expect(milestonesOf(row, [])[0]?.amount).toBe(233_333);
@@ -93,6 +101,19 @@ describe('goals', () => {
     expect(getGoalDetail(USER, GOAL_ID, { repository: missing })).rejects.toMatchObject({
       code: 'GOAL_NOT_FOUND',
     });
+  });
+
+  test("refuses an emergency fund's inputs without its essential spending", async () => {
+    const repository = createGoalRepositoryMock();
+    expect(
+      updateGoal(USER, GOAL_ID, { inputs: { married: true } }, { repository }),
+    ).rejects.toMatchObject({ statusCode: 400, code: 'VALIDATION_FAILED' });
+    const other = createGoalRepositoryMock({
+      findGoal: async () => goalRow({ kind: GOAL_KIND.goods }),
+    });
+    expect((await updateGoal(USER, GOAL_ID, { inputs: {} }, { repository: other })).id).toBe(
+      GOAL_ID,
+    );
   });
 
   test('updates a goal, GOAL_NOT_FOUND when nothing matched', async () => {

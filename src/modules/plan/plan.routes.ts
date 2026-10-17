@@ -91,13 +91,15 @@ export const updateGoalRoute = createRoute({
   path: '/goals/{id}',
   operationId: 'updateGoal',
   summary: 'Ubah Tujuan',
+  description:
+    "Changes any of the goal's figures; an emergency fund's inputs must keep a positive essentialExpense (400).",
   request: {
     params: goalIdParamSchema,
     body: { ...json(updateGoalBodySchema), required: true },
   },
   responses: {
     200: { ...json(goalSchema), description: 'The changed goal' },
-    ...errorResponses(401, 404, 422),
+    ...errorResponses(400, 401, 404, 422),
   },
 });
 
@@ -108,7 +110,7 @@ export const addGoalDepositRoute = createRoute({
   operationId: 'addGoalDeposit',
   summary: 'Tambah Setoran',
   description:
-    'Records a deposit; the same depositId again on this goal answers the stored one and adds nothing, and one used on another goal is refused.',
+    'Records a deposit. The same depositId again on this goal answers the stored deposit as it was first recorded (whatever amount the retry carries) and adds nothing; one used on another goal is refused.',
   request: {
     params: goalIdParamSchema,
     body: { ...json(goalDepositBodySchema), required: true },
