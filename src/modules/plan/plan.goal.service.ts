@@ -145,6 +145,12 @@ export async function updateGoal(
  * Records the deposit once. The same id again on the same goal answers the stored deposit; an id
  * already used on another goal, anyone's, is refused without saying whose.
  */
+/** Hapus Tujuan: the goal and its deposits go; another person's or an unknown goal is 404. */
+export async function deleteGoal(userId: string, id: string, deps: Deps = {}): Promise<void> {
+  const repository = deps.repository ?? goalRepository;
+  if (!(await repository.deleteGoal(userId, id))) throw new GoalNotFoundError();
+}
+
 export async function addGoalDeposit(
   userId: string,
   id: string,
