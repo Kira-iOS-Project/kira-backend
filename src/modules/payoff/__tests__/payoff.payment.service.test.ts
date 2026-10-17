@@ -130,6 +130,17 @@ describe('recordPayment', () => {
       code: 'PAYOFF_PAYMENT_ALREADY_RECORDED',
     });
 
+    /** A retry after a lost answer: 210.000 is now more than what is left, still a repeat. */
+    const retried = setup({
+      repository: createPlanRepositoryMock({
+        findDebt: async () => Object.assign({}, PLAN_DEBTS[0], { remaining: 50_000 }),
+        hasPayment: async () => true,
+      }),
+    });
+    await expect(recordPayment('user-1', A, pay(210_000), retried.deps)).rejects.toMatchObject({
+      code: 'PAYOFF_PAYMENT_ALREADY_RECORDED',
+    });
+
     /** The repeat of the payment that settled the account finds it closed. */
     const settled = setup({
       repository: createPlanRepositoryMock({
