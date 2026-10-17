@@ -1,109 +1,9 @@
 {
-  "id": "b3fb8814-ab07-45e2-b3b1-ac355f6b3f0d",
+  "id": "9680832e-2966-4e21-b50d-09289a7d627c",
   "prevId": "797dbf01-27a8-4cd9-87ea-c644879ddbd4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.assets": {
-      "name": "assets",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "asset_class": {
-          "name": "asset_class",
-          "type": "asset_class",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "value": {
-          "name": "value",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "valued_on": {
-          "name": "valued_on",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "assets_user_idx": {
-          "name": "assets_user_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "assets_user_id_users_id_fk": {
-          "name": "assets_user_id_users_id_fk",
-          "tableFrom": "assets",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "assets_value_check": {
-          "name": "assets_value_check",
-          "value": "\"assets\".\"value\" between 1 and 999999999999"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.auth_codes": {
       "name": "auth_codes",
       "schema": "",
@@ -231,119 +131,8 @@
       },
       "isRLSEnabled": false
     },
-    "public.bank_import_rows": {
-      "name": "bank_import_rows",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "import_id": {
-          "name": "import_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "row_index": {
-          "name": "row_index",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "occurred_on": {
-          "name": "occurred_on",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "transaction_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "category": {
-          "name": "category",
-          "type": "transaction_category",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "is_duplicate": {
-          "name": "is_duplicate",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "bank_import_rows_import_idx": {
-          "name": "bank_import_rows_import_idx",
-          "columns": [
-            {
-              "expression": "import_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "row_index",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "bank_import_rows_import_id_bank_imports_id_fk": {
-          "name": "bank_import_rows_import_id_bank_imports_id_fk",
-          "tableFrom": "bank_import_rows",
-          "tableTo": "bank_imports",
-          "columnsFrom": [
-            "import_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "bank_import_rows_amount_check": {
-          "name": "bank_import_rows_amount_check",
-          "value": "\"bank_import_rows\".\"amount\" between 1 and 10000000000000"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.bank_imports": {
-      "name": "bank_imports",
+    "public.consents": {
+      "name": "consents",
       "schema": "",
       "columns": {
         "id": {
@@ -359,53 +148,256 @@
           "primaryKey": false,
           "notNull": true
         },
-        "file_name": {
-          "name": "file_name",
-          "type": "varchar(255)",
+        "purpose": {
+          "name": "purpose",
+          "type": "consent_purpose",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
-        "file_size": {
-          "name": "file_size",
-          "type": "integer",
+        "granted": {
+          "name": "granted",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true
         },
-        "row_count": {
-          "name": "row_count",
-          "type": "integer",
+        "policy_version": {
+          "name": "policy_version",
+          "type": "varchar(20)",
           "primaryKey": false,
           "notNull": true
         },
-        "date_from": {
-          "name": "date_from",
-          "type": "date",
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "consents_user_purpose_decided_idx": {
+          "name": "consents_user_purpose_decided_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "purpose",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "decided_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "consents_user_id_users_id_fk": {
+          "name": "consents_user_id_users_id_fk",
+          "tableFrom": "consents",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sessions": {
+      "name": "sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "date_to": {
-          "name": "date_to",
-          "type": "date",
+        "access_token_hash": {
+          "name": "access_token_hash",
+          "type": "varchar(64)",
           "primaryKey": false,
           "notNull": true
         },
-        "committed_at": {
-          "name": "committed_at",
+        "access_expires_at": {
+          "name": "access_expires_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "refresh_token_hash": {
+          "name": "refresh_token_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_refresh_token_hash": {
+          "name": "previous_refresh_token_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_expires_at": {
+          "name": "refresh_expires_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revoked_at": {
+          "name": "revoked_at",
           "type": "timestamp (3) with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "saved_count": {
-          "name": "saved_count",
-          "type": "integer",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "now()"
         },
-        "skipped_count": {
-          "name": "skipped_count",
-          "type": "integer",
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3) with time zone",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "sessions_user_idx": {
+          "name": "sessions_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "sessions_access_token_hash_idx": {
+          "name": "sessions_access_token_hash_idx",
+          "columns": [
+            {
+              "expression": "access_token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "sessions_refresh_token_hash_idx": {
+          "name": "sessions_refresh_token_hash_idx",
+          "columns": [
+            {
+              "expression": "refresh_token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "sessions_previous_refresh_token_hash_idx": {
+          "name": "sessions_previous_refresh_token_hash_idx",
+          "columns": [
+            {
+              "expression": "previous_refresh_token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sessions_user_id_users_id_fk": {
+          "name": "sessions_user_id_users_id_fk",
+          "tableFrom": "sessions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sign_in_attempts": {
+      "name": "sign_in_attempts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(320)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_ip": {
+          "name": "request_ip",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -416,8 +408,244 @@
         }
       },
       "indexes": {
-        "bank_imports_user_idx": {
-          "name": "bank_imports_user_idx",
+        "sign_in_attempts_email_created_idx": {
+          "name": "sign_in_attempts_email_created_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "sign_in_attempts_ip_created_idx": {
+          "name": "sign_in_attempts_ip_created_idx",
+          "columns": [
+            {
+              "expression": "request_ip",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "sign_in_attempts_created_idx": {
+          "name": "sign_in_attempts_created_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(320)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "varchar(60)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "focus": {
+          "name": "focus",
+          "type": "focus",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'track_spending'"
+        },
+        "payday_day": {
+          "name": "payday_day",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payday_end_of_month": {
+          "name": "payday_end_of_month",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "hide_balances": {
+          "name": "hide_balances",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "consented_at": {
+          "name": "consented_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "debt_emergency_mode_used_at": {
+          "name": "debt_emergency_mode_used_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "export_emailed_at": {
+          "name": "export_emailed_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "users_email_idx": {
+          "name": "users_email_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "users_payday_day_check": {
+          "name": "users_payday_day_check",
+          "value": "\"users\".\"payday_day\" between 1 and 31"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.assets": {
+      "name": "assets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "asset_class": {
+          "name": "asset_class",
+          "type": "asset_class",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valued_on": {
+          "name": "valued_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "assets_user_idx": {
+          "name": "assets_user_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -433,9 +661,9 @@
         }
       },
       "foreignKeys": {
-        "bank_imports_user_id_users_id_fk": {
-          "name": "bank_imports_user_id_users_id_fk",
-          "tableFrom": "bank_imports",
+        "assets_user_id_users_id_fk": {
+          "name": "assets_user_id_users_id_fk",
+          "tableFrom": "assets",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -451,15 +679,648 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "bank_imports_file_size_check": {
-          "name": "bank_imports_file_size_check",
-          "value": "\"bank_imports\".\"file_size\" between 1 and 10000000"
-        },
-        "bank_imports_dates_check": {
-          "name": "bank_imports_dates_check",
-          "value": "\"bank_imports\".\"date_to\" >= \"bank_imports\".\"date_from\""
+        "assets_value_check": {
+          "name": "assets_value_check",
+          "value": "\"assets\".\"value\" between 1 and 999999999999"
         }
       },
+      "isRLSEnabled": false
+    },
+    "public.gifts": {
+      "name": "gifts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "months": {
+          "name": "months",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "payment_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "gifts_user_idx": {
+          "name": "gifts_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gifts_created_idx": {
+          "name": "gifts_created_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "gifts_user_id_users_id_fk": {
+          "name": "gifts_user_id_users_id_fk",
+          "tableFrom": "gifts",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "gifts_months_check": {
+          "name": "gifts_months_check",
+          "value": "\"gifts\".\"months\" in (1, 3, 6)"
+        },
+        "gifts_amount_check": {
+          "name": "gifts_amount_check",
+          "value": "\"gifts\".\"amount\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.invoices": {
+      "name": "invoices",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "plan": {
+          "name": "plan",
+          "type": "plan",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period": {
+          "name": "period",
+          "type": "billing_period",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "payment_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_end": {
+          "name": "period_end",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "invoices_user_created_idx": {
+          "name": "invoices_user_created_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "invoices_subscription_idx": {
+          "name": "invoices_subscription_idx",
+          "columns": [
+            {
+              "expression": "subscription_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "invoices_user_id_users_id_fk": {
+          "name": "invoices_user_id_users_id_fk",
+          "tableFrom": "invoices",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "invoices_subscription_id_subscriptions_id_fk": {
+          "name": "invoices_subscription_id_subscriptions_id_fk",
+          "tableFrom": "invoices",
+          "tableTo": "subscriptions",
+          "columnsFrom": [
+            "subscription_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "invoices_amount_check": {
+          "name": "invoices_amount_check",
+          "value": "\"invoices\".\"amount\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.scholarship_applications": {
+      "name": "scholarship_applications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "situations": {
+          "name": "situations",
+          "type": "scholarship_situation[]",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "story": {
+          "name": "story",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "used_debt_emergency_mode": {
+          "name": "used_debt_emergency_mode",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "application_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "result_email_sent_at": {
+          "name": "result_email_sent_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "scholarship_applications_user_submitted_idx": {
+          "name": "scholarship_applications_user_submitted_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "submitted_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "scholarship_applications_status_submitted_idx": {
+          "name": "scholarship_applications_status_submitted_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "submitted_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "scholarship_applications_subscription_idx": {
+          "name": "scholarship_applications_subscription_idx",
+          "columns": [
+            {
+              "expression": "subscription_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "scholarship_applications_one_open_idx": {
+          "name": "scholarship_applications_one_open_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"scholarship_applications\".\"status\" in ('in_review', 'waitlisted')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "scholarship_applications_unsent_result_idx": {
+          "name": "scholarship_applications_unsent_result_idx",
+          "columns": [
+            {
+              "expression": "decided_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"scholarship_applications\".\"status\" = 'accepted' and \"scholarship_applications\".\"result_email_sent_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "scholarship_applications_user_id_users_id_fk": {
+          "name": "scholarship_applications_user_id_users_id_fk",
+          "tableFrom": "scholarship_applications",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "scholarship_applications_subscription_id_subscriptions_id_fk": {
+          "name": "scholarship_applications_subscription_id_subscriptions_id_fk",
+          "tableFrom": "scholarship_applications",
+          "tableTo": "subscriptions",
+          "columnsFrom": [
+            "subscription_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "scholarship_applications_situations_check": {
+          "name": "scholarship_applications_situations_check",
+          "value": "cardinality(\"scholarship_applications\".\"situations\") >= 1"
+        },
+        "scholarship_applications_story_check": {
+          "name": "scholarship_applications_story_check",
+          "value": "char_length(\"scholarship_applications\".\"story\") <= 16000"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.subscriptions": {
+      "name": "subscriptions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan": {
+          "name": "plan",
+          "type": "plan",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period": {
+          "name": "period",
+          "type": "billing_period",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "subscription_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "payment_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "subscription_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "current_period_start": {
+          "name": "current_period_start",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "current_period_end": {
+          "name": "current_period_end",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cancel_at_period_end": {
+          "name": "cancel_at_period_end",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "reminder_sent_at": {
+          "name": "reminder_sent_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "subscriptions_user_idx": {
+          "name": "subscriptions_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "subscriptions_one_active_idx": {
+          "name": "subscriptions_one_active_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"subscriptions\".\"status\" = 'active'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "subscriptions_status_period_end_idx": {
+          "name": "subscriptions_status_period_end_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "current_period_end",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "subscriptions_user_id_users_id_fk": {
+          "name": "subscriptions_user_id_users_id_fk",
+          "tableFrom": "subscriptions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.budgets": {
@@ -472,23 +1333,18 @@
           "primaryKey": true,
           "notNull": true
         },
-        "income": {
-          "name": "income",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
         "allocations": {
           "name": "allocations",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
         },
-        "payday": {
-          "name": "payday",
-          "type": "jsonb",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
@@ -517,12 +1373,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "budgets_income_check": {
-          "name": "budgets_income_check",
-          "value": "\"budgets\".\"income\" between 0 and 10000000000000"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.care_check_ins": {
@@ -764,177 +1615,6 @@
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.chat_messages": {
-      "name": "chat_messages",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sender": {
-          "name": "sender",
-          "type": "message_sender",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "message_kind",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "body": {
-          "name": "body",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "payload": {
-          "name": "payload",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "reply_to_id": {
-          "name": "reply_to_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "client_id": {
-          "name": "client_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "chat_messages_user_created_idx": {
-          "name": "chat_messages_user_created_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "chat_messages_reply_to_idx": {
-          "name": "chat_messages_reply_to_idx",
-          "columns": [
-            {
-              "expression": "reply_to_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "chat_messages_user_client_idx": {
-          "name": "chat_messages_user_client_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "client_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"chat_messages\".\"sender\" = 'person'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "chat_messages_user_id_users_id_fk": {
-          "name": "chat_messages_user_id_users_id_fk",
-          "tableFrom": "chat_messages",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "chat_messages_reply_to_id_chat_messages_id_fk": {
-          "name": "chat_messages_reply_to_id_chat_messages_id_fk",
-          "tableFrom": "chat_messages",
-          "tableTo": "chat_messages",
-          "columnsFrom": [
-            "reply_to_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -1684,100 +2364,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.consents": {
-      "name": "consents",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "purpose": {
-          "name": "purpose",
-          "type": "consent_purpose",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "granted": {
-          "name": "granted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "policy_version": {
-          "name": "policy_version",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "decided_at": {
-          "name": "decided_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "consents_user_purpose_decided_idx": {
-          "name": "consents_user_purpose_decided_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "purpose",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "decided_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "consents_user_id_users_id_fk": {
-          "name": "consents_user_id_users_id_fk",
-          "tableFrom": "consents",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.debt_accounts": {
       "name": "debt_accounts",
       "schema": "",
@@ -1928,154 +2514,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.debt_payments": {
-      "name": "debt_payments",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "debt_id": {
-          "name": "debt_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "client_payment_id": {
-          "name": "client_payment_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "paid_at": {
-          "name": "paid_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "debt_payments_debt_paid_idx": {
-          "name": "debt_payments_debt_paid_idx",
-          "columns": [
-            {
-              "expression": "debt_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "paid_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "debt_payments_user_idx": {
-          "name": "debt_payments_user_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "debt_payments_user_client_idx": {
-          "name": "debt_payments_user_client_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "client_payment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "debt_payments_debt_id_debt_accounts_id_fk": {
-          "name": "debt_payments_debt_id_debt_accounts_id_fk",
-          "tableFrom": "debt_payments",
-          "tableTo": "debt_accounts",
-          "columnsFrom": [
-            "debt_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "debt_payments_user_id_users_id_fk": {
-          "name": "debt_payments_user_id_users_id_fk",
-          "tableFrom": "debt_payments",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "debt_payments_amount_check": {
-          "name": "debt_payments_amount_check",
-          "value": "\"debt_payments\".\"amount\" > 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.financial_profiles": {
       "name": "financial_profiles",
       "schema": "",
@@ -2196,8 +2634,8 @@
       },
       "isRLSEnabled": false
     },
-    "public.gifts": {
-      "name": "gifts",
+    "public.score_snapshots": {
+      "name": "score_snapshots",
       "schema": "",
       "columns": {
         "id": {
@@ -2211,24 +2649,49 @@
           "name": "user_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "months": {
-          "name": "months",
+        "score": {
+          "name": "score",
           "type": "smallint",
           "primaryKey": false,
           "notNull": true
         },
-        "amount": {
-          "name": "amount",
-          "type": "bigint",
+        "band": {
+          "name": "band",
+          "type": "score_band",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
-        "payment_method": {
-          "name": "payment_method",
-          "type": "payment_method",
+        "indicators": {
+          "name": "indicators",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "measures": {
+          "name": "measures",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "monthly_on": {
+          "name": "monthly_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "snapshot_reason",
           "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "date",
           "primaryKey": false,
           "notNull": true
         },
@@ -2241,14 +2704,20 @@
         }
       },
       "indexes": {
-        "gifts_user_idx": {
-          "name": "gifts_user_idx",
+        "score_snapshots_user_created_idx": {
+          "name": "score_snapshots_user_created_idx",
           "columns": [
             {
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
             }
           ],
           "isUnique": false,
@@ -2256,26 +2725,54 @@
           "method": "btree",
           "with": {}
         },
-        "gifts_created_idx": {
-          "name": "gifts_created_idx",
+        "score_snapshots_user_period_recompute_idx": {
+          "name": "score_snapshots_user_period_recompute_idx",
           "columns": [
             {
-              "expression": "created_at",
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "period_start",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
-          "isUnique": false,
+          "isUnique": true,
+          "where": "\"score_snapshots\".\"reason\" = 'recompute'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "score_snapshots_user_monthly_idx": {
+          "name": "score_snapshots_user_monthly_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "monthly_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "gifts_user_id_users_id_fk": {
-          "name": "gifts_user_id_users_id_fk",
-          "tableFrom": "gifts",
+        "score_snapshots_user_id_users_id_fk": {
+          "name": "score_snapshots_user_id_users_id_fk",
+          "tableFrom": "score_snapshots",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -2283,7 +2780,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -2291,13 +2788,9 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "gifts_months_check": {
-          "name": "gifts_months_check",
-          "value": "\"gifts\".\"months\" in (1, 3, 6)"
-        },
-        "gifts_amount_check": {
-          "name": "gifts_amount_check",
-          "value": "\"gifts\".\"amount\" > 0"
+        "score_snapshots_score_check": {
+          "name": "score_snapshots_score_check",
+          "value": "\"score_snapshots\".\"score\" between 0 and 100"
         }
       },
       "isRLSEnabled": false
@@ -2533,8 +3026,8 @@
       },
       "isRLSEnabled": false
     },
-    "public.invoices": {
-      "name": "invoices",
+    "public.bank_import_rows": {
+      "name": "bank_import_rows",
       "schema": "",
       "columns": {
         "id": {
@@ -2544,28 +3037,33 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "user_id": {
-          "name": "user_id",
+        "import_id": {
+          "name": "import_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "subscription_id": {
-          "name": "subscription_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "plan": {
-          "name": "plan",
-          "type": "plan",
-          "typeSchema": "public",
+        "row_index": {
+          "name": "row_index",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "period": {
-          "name": "period",
-          "type": "billing_period",
+        "occurred_on": {
+          "name": "occurred_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "transaction_type",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -2576,60 +3074,32 @@
           "primaryKey": false,
           "notNull": true
         },
-        "payment_method": {
-          "name": "payment_method",
-          "type": "payment_method",
+        "category": {
+          "name": "category",
+          "type": "transaction_category",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
-        "period_start": {
-          "name": "period_start",
-          "type": "timestamp (3) with time zone",
+        "is_duplicate": {
+          "name": "is_duplicate",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true
-        },
-        "period_end": {
-          "name": "period_end",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         }
       },
       "indexes": {
-        "invoices_user_created_idx": {
-          "name": "invoices_user_created_idx",
+        "bank_import_rows_import_idx": {
+          "name": "bank_import_rows_import_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "import_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "invoices_subscription_idx": {
-          "name": "invoices_subscription_idx",
-          "columns": [
-            {
-              "expression": "subscription_id",
+              "expression": "row_index",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2642,30 +3112,17 @@
         }
       },
       "foreignKeys": {
-        "invoices_user_id_users_id_fk": {
-          "name": "invoices_user_id_users_id_fk",
-          "tableFrom": "invoices",
-          "tableTo": "users",
+        "bank_import_rows_import_id_bank_imports_id_fk": {
+          "name": "bank_import_rows_import_id_bank_imports_id_fk",
+          "tableFrom": "bank_import_rows",
+          "tableTo": "bank_imports",
           "columnsFrom": [
-            "user_id"
+            "import_id"
           ],
           "columnsTo": [
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "invoices_subscription_id_subscriptions_id_fk": {
-          "name": "invoices_subscription_id_subscriptions_id_fk",
-          "tableFrom": "invoices",
-          "tableTo": "subscriptions",
-          "columnsFrom": [
-            "subscription_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -2673,15 +3130,15 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "invoices_amount_check": {
-          "name": "invoices_amount_check",
-          "value": "\"invoices\".\"amount\" >= 0"
+        "bank_import_rows_amount_check": {
+          "name": "bank_import_rows_amount_check",
+          "value": "\"bank_import_rows\".\"amount\" between 1 and 10000000000000"
         }
       },
       "isRLSEnabled": false
     },
-    "public.payoff_plans": {
-      "name": "payoff_plans",
+    "public.bank_imports": {
+      "name": "bank_imports",
       "schema": "",
       "columns": {
         "id": {
@@ -2697,28 +3154,51 @@
           "primaryKey": false,
           "notNull": true
         },
-        "method": {
-          "name": "method",
-          "type": "payoff_method",
-          "typeSchema": "public",
+        "file_name": {
+          "name": "file_name",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
-        "extra_payment": {
-          "name": "extra_payment",
-          "type": "bigint",
+        "file_size": {
+          "name": "file_size",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "focus_debt_id": {
-          "name": "focus_debt_id",
-          "type": "uuid",
+        "row_count": {
+          "name": "row_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_from": {
+          "name": "date_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_to": {
+          "name": "date_to",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "committed_at": {
+          "name": "committed_at",
+          "type": "timestamp (3) with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "ended_at": {
-          "name": "ended_at",
-          "type": "timestamp (3) with time zone",
+        "saved_count": {
+          "name": "saved_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skipped_count": {
+          "name": "skipped_count",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -2728,33 +3208,11 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         }
       },
       "indexes": {
-        "payoff_plans_focus_debt_idx": {
-          "name": "payoff_plans_focus_debt_idx",
-          "columns": [
-            {
-              "expression": "focus_debt_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "payoff_plans_user_active_idx": {
-          "name": "payoff_plans_user_active_idx",
+        "bank_imports_user_idx": {
+          "name": "bank_imports_user_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -2763,95 +3221,16 @@
               "nulls": "last"
             }
           ],
-          "isUnique": true,
-          "where": "\"payoff_plans\".\"ended_at\" is null",
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "payoff_plans_user_id_users_id_fk": {
-          "name": "payoff_plans_user_id_users_id_fk",
-          "tableFrom": "payoff_plans",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "payoff_plans_focus_debt_id_debt_accounts_id_fk": {
-          "name": "payoff_plans_focus_debt_id_debt_accounts_id_fk",
-          "tableFrom": "payoff_plans",
-          "tableTo": "debt_accounts",
-          "columnsFrom": [
-            "focus_debt_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "payoff_plans_extra_check": {
-          "name": "payoff_plans_extra_check",
-          "value": "\"payoff_plans\".\"extra_payment\" >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.risk_profiles": {
-      "name": "risk_profiles",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "answers": {
-          "name": "answers",
-          "type": "smallint[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "profile": {
-          "name": "profile",
-          "type": "risk_profile",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "risk_profiles_user_id_users_id_fk": {
-          "name": "risk_profiles_user_id_users_id_fk",
-          "tableFrom": "risk_profiles",
+        "bank_imports_user_id_users_id_fk": {
+          "name": "bank_imports_user_id_users_id_fk",
+          "tableFrom": "bank_imports",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -2867,15 +3246,19 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "risk_profiles_answers_check": {
-          "name": "risk_profiles_answers_check",
-          "value": "cardinality(\"risk_profiles\".\"answers\") = 5"
+        "bank_imports_file_size_check": {
+          "name": "bank_imports_file_size_check",
+          "value": "\"bank_imports\".\"file_size\" between 1 and 10000000"
+        },
+        "bank_imports_dates_check": {
+          "name": "bank_imports_dates_check",
+          "value": "\"bank_imports\".\"date_to\" >= \"bank_imports\".\"date_from\""
         }
       },
       "isRLSEnabled": false
     },
-    "public.scholarship_applications": {
-      "name": "scholarship_applications",
+    "public.chat_messages": {
+      "name": "chat_messages",
       "schema": "",
       "columns": {
         "id": {
@@ -2891,54 +3274,42 @@
           "primaryKey": false,
           "notNull": true
         },
-        "situations": {
-          "name": "situations",
-          "type": "scholarship_situation[]",
+        "sender": {
+          "name": "sender",
+          "type": "message_sender",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
-        "story": {
-          "name": "story",
+        "kind": {
+          "name": "kind",
+          "type": "message_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "used_debt_emergency_mode": {
-          "name": "used_debt_emergency_mode",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "application_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "submitted_at": {
-          "name": "submitted_at",
-          "type": "timestamp (3) with time zone",
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": true,
-          "default": "now()"
+          "default": "'{}'::jsonb"
         },
-        "decided_at": {
-          "name": "decided_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "subscription_id": {
-          "name": "subscription_id",
+        "reply_to_id": {
+          "name": "reply_to_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "result_email_sent_at": {
-          "name": "result_email_sent_at",
-          "type": "timestamp (3) with time zone",
+        "client_id": {
+          "name": "client_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -2958,8 +3329,8 @@
         }
       },
       "indexes": {
-        "scholarship_applications_user_submitted_idx": {
-          "name": "scholarship_applications_user_submitted_idx",
+        "chat_messages_user_created_idx": {
+          "name": "chat_messages_user_created_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -2968,7 +3339,13 @@
               "nulls": "last"
             },
             {
-              "expression": "submitted_at",
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
               "isExpression": false,
               "asc": false,
               "nulls": "first"
@@ -2979,17 +3356,11 @@
           "method": "btree",
           "with": {}
         },
-        "scholarship_applications_status_submitted_idx": {
-          "name": "scholarship_applications_status_submitted_idx",
+        "chat_messages_reply_to_idx": {
+          "name": "chat_messages_reply_to_idx",
           "columns": [
             {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "submitted_at",
+              "expression": "reply_to_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3000,58 +3371,33 @@
           "method": "btree",
           "with": {}
         },
-        "scholarship_applications_subscription_idx": {
-          "name": "scholarship_applications_subscription_idx",
-          "columns": [
-            {
-              "expression": "subscription_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "scholarship_applications_one_open_idx": {
-          "name": "scholarship_applications_one_open_idx",
+        "chat_messages_user_client_idx": {
+          "name": "chat_messages_user_client_idx",
           "columns": [
             {
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"scholarship_applications\".\"status\" in ('in_review', 'waitlisted')",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "scholarship_applications_unsent_result_idx": {
-          "name": "scholarship_applications_unsent_result_idx",
-          "columns": [
+            },
             {
-              "expression": "decided_at",
+              "expression": "client_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
-          "isUnique": false,
-          "where": "\"scholarship_applications\".\"status\" = 'accepted' and \"scholarship_applications\".\"result_email_sent_at\" is null",
+          "isUnique": true,
+          "where": "\"chat_messages\".\"sender\" = 'person'",
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "scholarship_applications_user_id_users_id_fk": {
-          "name": "scholarship_applications_user_id_users_id_fk",
-          "tableFrom": "scholarship_applications",
+        "chat_messages_user_id_users_id_fk": {
+          "name": "chat_messages_user_id_users_id_fk",
+          "tableFrom": "chat_messages",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -3062,602 +3408,17 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "scholarship_applications_subscription_id_subscriptions_id_fk": {
-          "name": "scholarship_applications_subscription_id_subscriptions_id_fk",
-          "tableFrom": "scholarship_applications",
-          "tableTo": "subscriptions",
+        "chat_messages_reply_to_id_chat_messages_id_fk": {
+          "name": "chat_messages_reply_to_id_chat_messages_id_fk",
+          "tableFrom": "chat_messages",
+          "tableTo": "chat_messages",
           "columnsFrom": [
-            "subscription_id"
+            "reply_to_id"
           ],
           "columnsTo": [
             "id"
           ],
           "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "scholarship_applications_situations_check": {
-          "name": "scholarship_applications_situations_check",
-          "value": "cardinality(\"scholarship_applications\".\"situations\") >= 1"
-        },
-        "scholarship_applications_story_check": {
-          "name": "scholarship_applications_story_check",
-          "value": "char_length(\"scholarship_applications\".\"story\") <= 16000"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.score_snapshots": {
-      "name": "score_snapshots",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "score": {
-          "name": "score",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "band": {
-          "name": "band",
-          "type": "score_band",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "indicators": {
-          "name": "indicators",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "measures": {
-          "name": "measures",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "monthly_on": {
-          "name": "monthly_on",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reason": {
-          "name": "reason",
-          "type": "snapshot_reason",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "period_start": {
-          "name": "period_start",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "score_snapshots_user_created_idx": {
-          "name": "score_snapshots_user_created_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "score_snapshots_user_period_recompute_idx": {
-          "name": "score_snapshots_user_period_recompute_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "period_start",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"score_snapshots\".\"reason\" = 'recompute'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "score_snapshots_user_monthly_idx": {
-          "name": "score_snapshots_user_monthly_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "monthly_on",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "score_snapshots_user_id_users_id_fk": {
-          "name": "score_snapshots_user_id_users_id_fk",
-          "tableFrom": "score_snapshots",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "score_snapshots_score_check": {
-          "name": "score_snapshots_score_check",
-          "value": "\"score_snapshots\".\"score\" between 0 and 100"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.sessions": {
-      "name": "sessions",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "access_token_hash": {
-          "name": "access_token_hash",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "access_expires_at": {
-          "name": "access_expires_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "refresh_token_hash": {
-          "name": "refresh_token_hash",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "previous_refresh_token_hash": {
-          "name": "previous_refresh_token_hash",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "refresh_expires_at": {
-          "name": "refresh_expires_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "sessions_user_idx": {
-          "name": "sessions_user_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "sessions_access_token_hash_idx": {
-          "name": "sessions_access_token_hash_idx",
-          "columns": [
-            {
-              "expression": "access_token_hash",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "sessions_refresh_token_hash_idx": {
-          "name": "sessions_refresh_token_hash_idx",
-          "columns": [
-            {
-              "expression": "refresh_token_hash",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "sessions_previous_refresh_token_hash_idx": {
-          "name": "sessions_previous_refresh_token_hash_idx",
-          "columns": [
-            {
-              "expression": "previous_refresh_token_hash",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "sessions_user_id_users_id_fk": {
-          "name": "sessions_user_id_users_id_fk",
-          "tableFrom": "sessions",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.sign_in_attempts": {
-      "name": "sign_in_attempts",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(320)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "request_ip": {
-          "name": "request_ip",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "sign_in_attempts_email_created_idx": {
-          "name": "sign_in_attempts_email_created_idx",
-          "columns": [
-            {
-              "expression": "email",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "sign_in_attempts_ip_created_idx": {
-          "name": "sign_in_attempts_ip_created_idx",
-          "columns": [
-            {
-              "expression": "request_ip",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "first"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "sign_in_attempts_created_idx": {
-          "name": "sign_in_attempts_created_idx",
-          "columns": [
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.subscriptions": {
-      "name": "subscriptions",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "plan": {
-          "name": "plan",
-          "type": "plan",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "period": {
-          "name": "period",
-          "type": "billing_period",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source": {
-          "name": "source",
-          "type": "subscription_source",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "payment_method": {
-          "name": "payment_method",
-          "type": "payment_method",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "subscription_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "current_period_start": {
-          "name": "current_period_start",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "current_period_end": {
-          "name": "current_period_end",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cancel_at_period_end": {
-          "name": "cancel_at_period_end",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "reminder_sent_at": {
-          "name": "reminder_sent_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "subscriptions_user_idx": {
-          "name": "subscriptions_user_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "subscriptions_one_active_idx": {
-          "name": "subscriptions_one_active_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"subscriptions\".\"status\" = 'active'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "subscriptions_status_period_end_idx": {
-          "name": "subscriptions_status_period_end_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "current_period_end",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "subscriptions_user_id_users_id_fk": {
-          "name": "subscriptions_user_id_users_id_fk",
-          "tableFrom": "subscriptions",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -3927,6 +3688,348 @@
       },
       "isRLSEnabled": false
     },
+    "public.debt_payments": {
+      "name": "debt_payments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "debt_id": {
+          "name": "debt_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_payment_id": {
+          "name": "client_payment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "paid_at": {
+          "name": "paid_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "debt_payments_debt_paid_idx": {
+          "name": "debt_payments_debt_paid_idx",
+          "columns": [
+            {
+              "expression": "debt_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "paid_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "debt_payments_user_idx": {
+          "name": "debt_payments_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "debt_payments_user_client_idx": {
+          "name": "debt_payments_user_client_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "client_payment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "debt_payments_debt_id_debt_accounts_id_fk": {
+          "name": "debt_payments_debt_id_debt_accounts_id_fk",
+          "tableFrom": "debt_payments",
+          "tableTo": "debt_accounts",
+          "columnsFrom": [
+            "debt_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "debt_payments_user_id_users_id_fk": {
+          "name": "debt_payments_user_id_users_id_fk",
+          "tableFrom": "debt_payments",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "debt_payments_amount_check": {
+          "name": "debt_payments_amount_check",
+          "value": "\"debt_payments\".\"amount\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.payoff_plans": {
+      "name": "payoff_plans",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "method": {
+          "name": "method",
+          "type": "payoff_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "extra_payment": {
+          "name": "extra_payment",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "focus_debt_id": {
+          "name": "focus_debt_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "payoff_plans_focus_debt_idx": {
+          "name": "payoff_plans_focus_debt_idx",
+          "columns": [
+            {
+              "expression": "focus_debt_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "payoff_plans_user_active_idx": {
+          "name": "payoff_plans_user_active_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"payoff_plans\".\"ended_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "payoff_plans_user_id_users_id_fk": {
+          "name": "payoff_plans_user_id_users_id_fk",
+          "tableFrom": "payoff_plans",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "payoff_plans_focus_debt_id_debt_accounts_id_fk": {
+          "name": "payoff_plans_focus_debt_id_debt_accounts_id_fk",
+          "tableFrom": "payoff_plans",
+          "tableTo": "debt_accounts",
+          "columnsFrom": [
+            "focus_debt_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "payoff_plans_extra_check": {
+          "name": "payoff_plans_extra_check",
+          "value": "\"payoff_plans\".\"extra_payment\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.risk_profiles": {
+      "name": "risk_profiles",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "answers": {
+          "name": "answers",
+          "type": "smallint[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "profile": {
+          "name": "profile",
+          "type": "risk_profile",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3) with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "risk_profiles_user_id_users_id_fk": {
+          "name": "risk_profiles_user_id_users_id_fk",
+          "tableFrom": "risk_profiles",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "risk_profiles_answers_check": {
+          "name": "risk_profiles_answers_check",
+          "value": "cardinality(\"risk_profiles\".\"answers\") = 5"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.usage_counters": {
       "name": "usage_counters",
       "schema": "",
@@ -4003,119 +4106,6 @@
         "usage_counters_counts_check": {
           "name": "usage_counters_counts_check",
           "value": "\"usage_counters\".\"ai_messages\" >= 0 and \"usage_counters\".\"receipts\" >= 0 and \"usage_counters\".\"voice_seconds\" >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.users": {
-      "name": "users",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(320)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "display_name": {
-          "name": "display_name",
-          "type": "varchar(60)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "focus": {
-          "name": "focus",
-          "type": "focus",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'track_spending'"
-        },
-        "payday_day": {
-          "name": "payday_day",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "payday_end_of_month": {
-          "name": "payday_end_of_month",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "hide_balances": {
-          "name": "hide_balances",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "consented_at": {
-          "name": "consented_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "debt_emergency_mode_used_at": {
-          "name": "debt_emergency_mode_used_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "export_emailed_at": {
-          "name": "export_emailed_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp (3) with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "users_email_idx": {
-          "name": "users_email_idx",
-          "columns": [
-            {
-              "expression": "email",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "users_payday_day_check": {
-          "name": "users_payday_day_check",
-          "value": "\"users\".\"payday_day\" between 1 and 31"
         }
       },
       "isRLSEnabled": false
@@ -4222,14 +4212,21 @@
     }
   },
   "enums": {
-    "public.application_status": {
-      "name": "application_status",
+    "public.consent_purpose": {
+      "name": "consent_purpose",
       "schema": "public",
       "values": [
-        "in_review",
-        "waitlisted",
-        "accepted",
-        "withdrawn"
+        "core",
+        "ai_processing",
+        "weekly_summary"
+      ]
+    },
+    "public.focus": {
+      "name": "focus",
+      "schema": "public",
+      "values": [
+        "track_spending",
+        "debt_free"
       ]
     },
     "public.asset_class": {
@@ -4245,12 +4242,66 @@
         "other"
       ]
     },
+    "public.application_status": {
+      "name": "application_status",
+      "schema": "public",
+      "values": [
+        "in_review",
+        "waitlisted",
+        "accepted",
+        "withdrawn"
+      ]
+    },
     "public.billing_period": {
       "name": "billing_period",
       "schema": "public",
       "values": [
         "monthly",
         "yearly"
+      ]
+    },
+    "public.payment_method": {
+      "name": "payment_method",
+      "schema": "public",
+      "values": [
+        "qris",
+        "app_store"
+      ]
+    },
+    "public.plan": {
+      "name": "plan",
+      "schema": "public",
+      "values": [
+        "free",
+        "young",
+        "plus"
+      ]
+    },
+    "public.scholarship_situation": {
+      "name": "scholarship_situation",
+      "schema": "public",
+      "values": [
+        "instalments_piling_up",
+        "chased_by_lender",
+        "income_stopped",
+        "medical_costs",
+        "other_hardship"
+      ]
+    },
+    "public.subscription_source": {
+      "name": "subscription_source",
+      "schema": "public",
+      "values": [
+        "purchase",
+        "scholarship"
+      ]
+    },
+    "public.subscription_status": {
+      "name": "subscription_status",
+      "schema": "public",
+      "values": [
+        "active",
+        "ended"
       ]
     },
     "public.care_signal_level": {
@@ -4335,15 +4386,6 @@
         "reviewed"
       ]
     },
-    "public.consent_purpose": {
-      "name": "consent_purpose",
-      "schema": "public",
-      "values": [
-        "core",
-        "ai_processing",
-        "weekly_summary"
-      ]
-    },
     "public.debt_kind": {
       "name": "debt_kind",
       "schema": "public",
@@ -4365,79 +4407,12 @@
         "overdue"
       ]
     },
-    "public.focus": {
-      "name": "focus",
-      "schema": "public",
-      "values": [
-        "track_spending",
-        "debt_free"
-      ]
-    },
-    "public.goal_kind": {
-      "name": "goal_kind",
-      "schema": "public",
-      "values": [
-        "emergency_fund",
-        "house_dp",
-        "education",
-        "wedding",
-        "retirement",
-        "vehicle",
-        "goods",
-        "other"
-      ]
-    },
     "public.marital_status": {
       "name": "marital_status",
       "schema": "public",
       "values": [
         "single",
         "married"
-      ]
-    },
-    "public.message_kind": {
-      "name": "message_kind",
-      "schema": "public",
-      "values": [
-        "person_text",
-        "person_receipt",
-        "drafts",
-        "manual_saved",
-        "remaining",
-        "no_drafts"
-      ]
-    },
-    "public.message_sender": {
-      "name": "message_sender",
-      "schema": "public",
-      "values": [
-        "person",
-        "kira"
-      ]
-    },
-    "public.payment_method": {
-      "name": "payment_method",
-      "schema": "public",
-      "values": [
-        "qris",
-        "app_store"
-      ]
-    },
-    "public.payoff_method": {
-      "name": "payoff_method",
-      "schema": "public",
-      "values": [
-        "snowball",
-        "avalanche"
-      ]
-    },
-    "public.plan": {
-      "name": "plan",
-      "schema": "public",
-      "values": [
-        "free",
-        "young",
-        "plus"
       ]
     },
     "public.protection": {
@@ -4448,26 +4423,6 @@
         "bpjs_employment",
         "life_insurance",
         "private_health"
-      ]
-    },
-    "public.risk_profile": {
-      "name": "risk_profile",
-      "schema": "public",
-      "values": [
-        "conservative",
-        "moderate",
-        "aggressive"
-      ]
-    },
-    "public.scholarship_situation": {
-      "name": "scholarship_situation",
-      "schema": "public",
-      "values": [
-        "instalments_piling_up",
-        "chased_by_lender",
-        "income_stopped",
-        "medical_costs",
-        "other_hardship"
       ]
     },
     "public.score_band": {
@@ -4488,20 +4443,38 @@
         "monthly"
       ]
     },
-    "public.subscription_source": {
-      "name": "subscription_source",
+    "public.goal_kind": {
+      "name": "goal_kind",
       "schema": "public",
       "values": [
-        "purchase",
-        "scholarship"
+        "emergency_fund",
+        "house_dp",
+        "education",
+        "wedding",
+        "retirement",
+        "vehicle",
+        "goods",
+        "other"
       ]
     },
-    "public.subscription_status": {
-      "name": "subscription_status",
+    "public.message_kind": {
+      "name": "message_kind",
       "schema": "public",
       "values": [
-        "active",
-        "ended"
+        "person_text",
+        "person_receipt",
+        "drafts",
+        "manual_saved",
+        "remaining",
+        "no_drafts"
+      ]
+    },
+    "public.message_sender": {
+      "name": "message_sender",
+      "schema": "public",
+      "values": [
+        "person",
+        "kira"
       ]
     },
     "public.transaction_category": {
@@ -4543,6 +4516,23 @@
       "values": [
         "expense",
         "income"
+      ]
+    },
+    "public.payoff_method": {
+      "name": "payoff_method",
+      "schema": "public",
+      "values": [
+        "snowball",
+        "avalanche"
+      ]
+    },
+    "public.risk_profile": {
+      "name": "risk_profile",
+      "schema": "public",
+      "values": [
+        "conservative",
+        "moderate",
+        "aggressive"
       ]
     },
     "public.wallet_type": {
