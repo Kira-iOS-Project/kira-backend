@@ -23,7 +23,24 @@ type DebtRow = {
   paymentStatus: Values<typeof DEBT_PAYMENT_STATUS>;
 };
 
+type CreateWalletBody = {
+  name: string;
+  type: Values<typeof WALLET_TYPE>;
+  openingBalance: number;
+};
+
+type CreateDebtBody = {
+  name: string;
+  kind: Values<typeof DEBT_KIND>;
+  amount: number;
+  monthlyInstallment: number;
+  remainingTenorMonths: number | null;
+  dueDay: number | null;
+};
+
 export type FinanceRepository = {
   listWallets(userId: string): Promise<WalletRow[]>;
+  createWallet(userId: string, body: CreateWalletBody, now: Date): Promise<WalletRow>;
   listDebts(userId: string): Promise<DebtRow[]>;
+  createDebt(userId: string, body: CreateDebtBody, now: Date): Promise<DebtRow>;
 };
