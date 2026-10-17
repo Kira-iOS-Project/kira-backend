@@ -1,0 +1,754 @@
+[
+  {
+    "company": "PT Pasar Dana Pinjaman",
+    "app": "Danamas",
+    "license": "KEP-49/D.05/2017",
+    "licensedOn": "2017-07-06",
+    "type": "conventional",
+    "website": "https://p2p.danamas.co.id/"
+  },
+  {
+    "company": "PT Amartha Mikro Fintek",
+    "app": "Amartha",
+    "license": "KEP-46/D.05/2019",
+    "licensedOn": "2019-05-13",
+    "type": "conventional",
+    "website": "https://amartha.com/"
+  },
+  {
+    "company": "PT Indo Fin Tek",
+    "app": "Dompet Kilat",
+    "license": "KEP-47/D.05/2019",
+    "licensedOn": "2019-05-13",
+    "type": "conventional",
+    "website": "https://dompetkilat.co.id/"
+  },
+  {
+    "company": "PT Creative Mobile Adventure",
+    "app": "Boost",
+    "license": "KEP-48/D.05/2019",
+    "licensedOn": "2019-05-13",
+    "type": "conventional",
+    "website": "https://www.myboost.co.id"
+  },
+  {
+    "company": "PT Toko Modal Mitra Usaha",
+    "app": "Tokomodal",
+    "license": "KEP-49/D.05/2019",
+    "licensedOn": "2019-05-24",
+    "type": "conventional",
+    "website": "https://www.tokomodal.co.id/"
+  },
+  {
+    "company": "PT Mitrausaha Indonesia Grup",
+    "app": "Modalku",
+    "license": "KEP-81/D.05/2019",
+    "licensedOn": "2019-09-30",
+    "type": "conventional",
+    "website": "https://modalku.co.id/"
+  },
+  {
+    "company": "PT Pendanaan Teknologi Nusa",
+    "app": "KTA Kilat",
+    "license": "KEP-82/D.05/2019",
+    "licensedOn": "2019-09-30",
+    "type": "conventional",
+    "website": "https://www.pendanaan.com/"
+  },
+  {
+    "company": "PT Kredit Pintar Indonesia",
+    "app": "Kredit Pintar",
+    "license": "KEP-83/D.05/2019",
+    "licensedOn": "2019-09-30",
+    "type": "conventional",
+    "website": "https://www.kreditpintar.com/"
+  },
+  {
+    "company": "PT Oriente Mas Sejahtera",
+    "app": "Finmas",
+    "license": "KEP-85/D.05/2019",
+    "licensedOn": "2019-09-30",
+    "type": "conventional",
+    "website": "https://www.finmas.co.id"
+  },
+  {
+    "company": "PT Aman Cermat Cepat",
+    "app": "KlikA2C",
+    "license": "KEP-87/D.05/2019",
+    "licensedOn": "2019-09-30",
+    "type": "conventional",
+    "website": "https://klika2c.co.id"
+  },
+  {
+    "company": "PT Akseleran Keuangan Inklusif Indonesia",
+    "app": "Akseleran",
+    "license": "KEP-122/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://www.akseleran.co.id/"
+  },
+  {
+    "company": "PT Ammana Fintek Syariah",
+    "app": "Ammana",
+    "license": "KEP-123/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "sharia",
+    "website": "https://ammana.id/"
+  },
+  {
+    "company": "PT Dana Pinjaman Inklusif",
+    "app": "PinjamanGo",
+    "license": "KEP-124/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://pinjamango.co.id"
+  },
+  {
+    "company": "PT Lunaria Annua Teknologi",
+    "app": "KoinP2P",
+    "license": "KEP-125/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://koinp2p.com/"
+  },
+  {
+    "company": "PT Pohon Dana Indonesia",
+    "app": "Pohondana",
+    "license": "KEP-126/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://pohondana.id/"
+  },
+  {
+    "company": "PT Mekar Investama Teknologi",
+    "app": "Mekar",
+    "license": "KEP-127/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://mekar.id"
+  },
+  {
+    "company": "PT Pembiayaan Digital Indonesia",
+    "app": "AdaKami",
+    "license": "KEP-128/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://www.adakami.id/"
+  },
+  {
+    "company": "PT Esta Kapital Fintek",
+    "app": "Esta Kapital",
+    "license": "KEP-129/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://www.estakapital.co.id"
+  },
+  {
+    "company": "PT Tri Digi Fin",
+    "app": "KreditPro",
+    "license": "KEP-130/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://www.kreditpro.id"
+  },
+  {
+    "company": "PT Fintegra Homido Indonesia",
+    "app": "FINTAG",
+    "license": "KEP-131/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://fintag.id"
+  },
+  {
+    "company": "PT Kredit Utama Fintech Indonesia",
+    "app": "RupiahCepat",
+    "license": "KEP-132/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://www.rupiahcepat.co.id/"
+  },
+  {
+    "company": "PT Mediator Komunitas Indonesia",
+    "app": "Crowdo",
+    "license": "KEP-133/D.05/2019",
+    "licensedOn": "2019-12-13",
+    "type": "conventional",
+    "website": "https://crowdo.co.id/"
+  },
+  {
+    "company": "PT Artha Dana Teknologi",
+    "app": "Indodana",
+    "license": "KEP-15/D.05/2020",
+    "licensedOn": "2020-05-19",
+    "type": "conventional",
+    "website": "https://www.indodanafintech.co.id/"
+  },
+  {
+    "company": "PT JULO Teknologi Finansial",
+    "app": "JULO",
+    "license": "KEP-16/D.05/2020",
+    "licensedOn": "2020-05-19",
+    "type": "conventional",
+    "website": "https://www.julo.co.id/"
+  },
+  {
+    "company": "PT Progo Puncak Group",
+    "app": "Pinjamin",
+    "license": "KEP-17/D.05/2020",
+    "licensedOn": "2020-05-19",
+    "type": "conventional",
+    "website": "https://pinjamwinwin.com/"
+  },
+  {
+    "company": "PT Pindar Berbagi Bersama",
+    "app": "DanaKredi",
+    "license": "KEP-18/D.05/2020",
+    "licensedOn": "2020-05-19",
+    "type": "conventional",
+    "website": "https://www.danakredi.com/"
+  },
+  {
+    "company": "PT Indonusa Bara Sejahtera",
+    "app": "OVO Finansial",
+    "license": "KEP-19/D.05/2020",
+    "licensedOn": "2020-05-19",
+    "type": "conventional",
+    "website": "https://ovofinansial.com"
+  },
+  {
+    "company": "PT Finansial Integrasi Teknologi",
+    "app": "PinjamModal",
+    "license": "KEP-20/D.05/2020",
+    "licensedOn": "2020-05-19",
+    "type": "conventional",
+    "website": "https://pinjammodal.id/"
+  },
+  {
+    "company": "PT Alami Fintek Sharia",
+    "app": "Alami",
+    "license": "KEP-21/D.05/2020",
+    "licensedOn": "2020-05-27",
+    "type": "sharia",
+    "website": "https://alamisharia.co.id/"
+  },
+  {
+    "company": "PT Simplefi Teknologi Indonesia",
+    "app": "AwanTunai",
+    "license": "KEP-22/D.05/2020",
+    "licensedOn": "2020-05-27",
+    "type": "conventional",
+    "website": "https://awantunai.co.id/"
+  },
+  {
+    "company": "PT Dana Kini Indonesia",
+    "app": "BantuFazz",
+    "license": "KEP-46/D.05/2020",
+    "licensedOn": "2020-10-16",
+    "type": "conventional",
+    "website": "https://www.bantufazz.id"
+  },
+  {
+    "company": "PT Abadi Sejahtera Finansindo",
+    "app": "Singa",
+    "license": "KEP-47/D.05/2020",
+    "licensedOn": "2020-10-16",
+    "type": "conventional",
+    "website": "https://singa.id/"
+  },
+  {
+    "company": "PT Intekno Raya",
+    "app": "Danamerdeka",
+    "license": "KEP-48/D.05/2020",
+    "licensedOn": "2020-10-16",
+    "type": "conventional",
+    "website": "https://danamerdeka.co.id"
+  },
+  {
+    "company": "PT Indonesia Fintopia Technology",
+    "app": "Easycash",
+    "license": "KEP-49/D.05/2020",
+    "licensedOn": "2020-10-16",
+    "type": "conventional",
+    "website": "https://www.easycash.id/"
+  },
+  {
+    "company": "PT Kuaikuai Tech Indonesia",
+    "app": "Pinjamyuk",
+    "license": "KEP-2/D.05/2021",
+    "licensedOn": "2021-01-06",
+    "type": "conventional",
+    "website": "https://www.pinjamyuk.co.id/"
+  },
+  {
+    "company": "PT Rezeki Bersama Teknologi",
+    "app": "Finplus",
+    "license": "KEP-3/D.05/2021",
+    "licensedOn": "2021-01-06",
+    "type": "conventional",
+    "website": "https://finplus.co.id/"
+  },
+  {
+    "company": "PT Uangme Fintek Indonesia",
+    "app": "Uangme",
+    "license": "KEP-4/D.05/2021",
+    "licensedOn": "2021-01-06",
+    "type": "conventional",
+    "website": "https://www.uangme.id/"
+  },
+  {
+    "company": "PT Stanford Teknologi Indonesia",
+    "app": "PinjamDuit",
+    "license": "KEP-5/D.05/2021",
+    "licensedOn": "2021-01-06",
+    "type": "conventional",
+    "website": "https://pinjamduit.co.id/"
+  },
+  {
+    "company": "PT Dana Syariah Indonesia",
+    "app": "DANA SYARIAH",
+    "license": "KEP-10/D.05/2021",
+    "licensedOn": "2021-02-23",
+    "type": "sharia",
+    "website": "http://danasyariah.id"
+  },
+  {
+    "company": "PT Berdayakan Usaha Indonesia",
+    "app": "BATUMBU",
+    "license": "KEP-11/D.05/2021",
+    "licensedOn": "2021-02-23",
+    "type": "conventional",
+    "website": "https://www.batumbu.id"
+  },
+  {
+    "company": "PT Artha Permata Makmur",
+    "app": "Cashcepat",
+    "license": "KEP-12/D.05/2021",
+    "licensedOn": "2021-02-23",
+    "type": "conventional",
+    "website": "http://cashcepat.id"
+  },
+  {
+    "company": "PT Pinjaman Kemakmuran Rakyat",
+    "app": "klikUMKM",
+    "license": "KEP-13/D.05/2021",
+    "licensedOn": "2021-02-23",
+    "type": "conventional",
+    "website": "https://www.klikUMKM.co.id"
+  },
+  {
+    "company": "PT Kredit Plus Teknologi",
+    "app": "Pinjam Gampang",
+    "license": "KEP-16/D.05/2021",
+    "licensedOn": "2021-03-16",
+    "type": "conventional",
+    "website": "http://www.kreditplusteknologi.id"
+  },
+  {
+    "company": "PT Cicil Solusi Mitra Teknologi",
+    "app": "cicil",
+    "license": "KEP-20/D.05/2021",
+    "licensedOn": "2021-04-14",
+    "type": "conventional",
+    "website": "https://www.cicil.co.id"
+  },
+  {
+    "company": "PT Lumbung Dana Indonesia",
+    "app": "RpDana",
+    "license": "KEP-21/D.05/2021",
+    "licensedOn": "2021-04-14",
+    "type": "conventional",
+    "website": "https://www.rpdana.co.id/"
+  },
+  {
+    "company": "PT Inovasi Terdepan Nusantara",
+    "app": "KrediOne",
+    "license": "KEP-22/D.05/2021",
+    "licensedOn": "2021-04-14",
+    "type": "conventional",
+    "website": "https://www.360kredi.id"
+  },
+  {
+    "company": "PT Kreditku Teknologi Indonesia",
+    "app": "Kredinesia",
+    "license": "KEP-25/D.05/2021",
+    "licensedOn": "2021-04-21",
+    "type": "conventional",
+    "website": "https://www.kredinesia.id"
+  },
+  {
+    "company": "PT Pinduit Teknologi Indonesia",
+    "app": "Pintek",
+    "license": "KEP-26/D.05/2021",
+    "licensedOn": "2021-04-21",
+    "type": "conventional",
+    "website": "http://pintek.id"
+  },
+  {
+    "company": "PT Modal Rakyat Indonesia",
+    "app": "ModalRakyat",
+    "license": "KEP-27/D.05/2021",
+    "licensedOn": "2021-04-21",
+    "type": "conventional",
+    "website": "http://modalrakyat.id"
+  },
+  {
+    "company": "PT Anugerah Digital Indonesia",
+    "app": "SOLUSIKU",
+    "license": "KEP-28/D.05/2021",
+    "licensedOn": "2021-04-21",
+    "type": "conventional",
+    "website": "https://www.solusi-ku.id"
+  },
+  {
+    "company": "PT Idana Solusi Sejahtera",
+    "app": "Cairin",
+    "license": "KEP-29/D.05/2021",
+    "licensedOn": "2021-04-21",
+    "type": "conventional",
+    "website": "https://www.cairin.id"
+  },
+  {
+    "company": "PT Trust Teknologi Finansial",
+    "app": "Danaku",
+    "license": "KEP-30/D.05/2021",
+    "licensedOn": "2021-04-21",
+    "type": "conventional",
+    "website": "http://danaku.id"
+  },
+  {
+    "company": "PT Harapan Fintech Indonesia",
+    "app": "KLIK KAMI",
+    "license": "KEP-31/D.05/2021",
+    "licensedOn": "2021-04-21",
+    "type": "conventional",
+    "website": "https://www.klikkami.co.id"
+  },
+  {
+    "company": "PT Duha Madani Syariah",
+    "app": "Duha SYARIAH",
+    "license": "KEP-32/D.05/2021",
+    "licensedOn": "2021-04-21",
+    "type": "sharia",
+    "website": "https://www.duhasyariah.com"
+  },
+  {
+    "company": "PT Sol Mitra Fintec",
+    "app": "Invoila",
+    "license": "KEP-39/D.05/2021",
+    "licensedOn": "2021-05-11",
+    "type": "conventional",
+    "website": "https://Android"
+  },
+  {
+    "company": "PT Satustop Finansial Solusi",
+    "app": "Sanders One Stop Solution",
+    "license": "KEP-40/D.05/2021",
+    "licensedOn": "2021-05-11",
+    "type": "conventional",
+    "website": "http://sanders.co.id"
+  },
+  {
+    "company": "PT Dana Bagus Indonesia",
+    "app": "DanaBagus",
+    "license": "KEP-41/D.05/2021",
+    "licensedOn": "2021-05-11",
+    "type": "conventional",
+    "website": "https://www.danabagus.id"
+  },
+  {
+    "company": "PT Teknologi Merlin Sejahtera",
+    "app": "UKU",
+    "license": "KEP-46/D.05/2021",
+    "licensedOn": "2021-06-02",
+    "type": "conventional",
+    "website": "https://ukuindo.com"
+  },
+  {
+    "company": "PT Fintek Digital Indonesia",
+    "app": "KREDITO",
+    "license": "KEP-47/D.05/2021",
+    "licensedOn": "2021-06-02",
+    "type": "conventional",
+    "website": "https://kredito.id"
+  },
+  {
+    "company": "PT Info Tekno Siaga",
+    "app": "AdaPundi",
+    "license": "KEP-48/D.05/2021",
+    "licensedOn": "2021-06-02",
+    "type": "conventional",
+    "website": "https://www.adapundi.com"
+  },
+  {
+    "company": "PT Lentera Dana Nusantara",
+    "app": "Lentera Dana Nusantara",
+    "license": "KEP-49/D.05/2021",
+    "licensedOn": "2021-06-02",
+    "type": "conventional",
+    "website": "https://www.lenteradana.co.id/lender/"
+  },
+  {
+    "company": "PT Solusi Teknologi Finansial",
+    "app": "Modal Nasional",
+    "license": "KEP-50/D.05/2021",
+    "licensedOn": "2021-06-02",
+    "type": "conventional",
+    "website": "https://www.modalnasional.co.id"
+  },
+  {
+    "company": "PT Komunal Finansial Indonesia",
+    "app": "Komunal",
+    "license": "KEP-51/D.05/2021",
+    "licensedOn": "2021-06-02",
+    "type": "conventional",
+    "website": "https://www.komunal.co.id"
+  },
+  {
+    "company": "PT Cerita Teknologi Indonesia",
+    "app": "Restock.ID",
+    "license": "KEP-52/D.05/2021",
+    "licensedOn": "2021-06-02",
+    "type": "conventional",
+    "website": "https://www.restock.id"
+  },
+  {
+    "company": "PT Grha Dana Bersama",
+    "app": "Avantee",
+    "license": "KEP-66/D.05/2021",
+    "licensedOn": "2021-08-02",
+    "type": "conventional",
+    "website": "https://www.avantee.co.id"
+  },
+  {
+    "company": "PT Gradana Teknoruci Indonesia",
+    "app": "Gradana",
+    "license": "KEP-67/D.05/2021",
+    "licensedOn": "2021-08-02",
+    "type": "conventional",
+    "website": "https://gradana.co.id"
+  },
+  {
+    "company": "PT Inclusive Finance Group",
+    "app": "Danacita",
+    "license": "KEP-68/D.05/2021",
+    "licensedOn": "2021-08-02",
+    "type": "conventional",
+    "website": "https://www.danacita.co.id"
+  },
+  {
+    "company": "PT IKI Karunia Indonesia",
+    "app": "Pijar",
+    "license": "KEP-69/D.05/2021",
+    "licensedOn": "2021-08-02",
+    "type": "conventional",
+    "website": "https://www.pijar.com"
+  },
+  {
+    "company": "PT Finansia Aira Teknologi",
+    "app": "Ivoji",
+    "license": "KEP-73/D.05/2021",
+    "licensedOn": "2021-08-19",
+    "type": "conventional",
+    "website": "https://www.ivoji.id"
+  },
+  {
+    "company": "PT Bursa Akselerasi Indonesia",
+    "app": "Indofund.id",
+    "license": "KEP-74/D.05/2021",
+    "licensedOn": "2021-08-19",
+    "type": "conventional",
+    "website": "https://indofund.id"
+  },
+  {
+    "company": "PT LinkAja Modalin Nusantara",
+    "app": "iGrow",
+    "license": "KEP-75/D.05/2021",
+    "licensedOn": "2021-08-19",
+    "type": "conventional",
+    "website": "https://igrow.asia"
+  },
+  {
+    "company": "PT Adiwisista Finansial Teknologi",
+    "app": "Danai.id",
+    "license": "KEP-76/D.05/2021",
+    "licensedOn": "2021-08-19",
+    "type": "conventional",
+    "website": "http://danai.id"
+  },
+  {
+    "company": "PT Fidac Inovasi Teknologi",
+    "app": "DUMI",
+    "license": "KEP-78/D.05/2021",
+    "licensedOn": "2021-08-24",
+    "type": "conventional",
+    "website": "https://minjem.com"
+  },
+  {
+    "company": "PT Lampung Berkah Finansial Teknologi",
+    "app": "LAHAN SIKAM",
+    "license": "KEP-79/D.05/2021",
+    "licensedOn": "2021-08-24",
+    "type": "conventional",
+    "website": "https://www.lahansikam.co.id"
+  },
+  {
+    "company": "PT Qazwa Mitra Hasanah",
+    "app": "qazwa.id",
+    "license": "KEP-80/D.05/2021",
+    "licensedOn": "2021-08-24",
+    "type": "sharia",
+    "website": "https://qazwa.id"
+  },
+  {
+    "company": "PT KrediFazz Digital Indonesia",
+    "app": "KrediFazz",
+    "license": "KEP-81/D.05/2021",
+    "licensedOn": "2021-08-24",
+    "type": "conventional",
+    "website": "https://www.kredifazz.id"
+  },
+  {
+    "company": "PT Doeku Peduli Indonesia",
+    "app": "KreditOK",
+    "license": "KEP-82/D.05/2021",
+    "licensedOn": "2021-08-24",
+    "type": "conventional",
+    "website": "https://kreditok.id"
+  },
+  {
+    "company": "PT Aktivaku Investama Teknologi",
+    "app": "Aktivaku",
+    "license": "KEP-83/D.05/2021",
+    "licensedOn": "2021-08-24",
+    "type": "conventional",
+    "website": "https://aktivaku.com"
+  },
+  {
+    "company": "PT Mulia Inovasi Digital",
+    "app": "Danain",
+    "license": "KEP-84/D.05/2021",
+    "licensedOn": "2021-08-24",
+    "type": "conventional",
+    "website": "https://www.danain.co.id"
+  },
+  {
+    "company": "PT Indosaku Digital Teknologi",
+    "app": "Indosaku",
+    "license": "KEP-86/D.05/2021",
+    "licensedOn": "2021-08-31",
+    "type": "conventional",
+    "website": "https://indosaku.id"
+  },
+  {
+    "company": "PT Fintech Bina Bangsa",
+    "app": "EDUFUND",
+    "license": "KEP-88/D.05/2021",
+    "licensedOn": "2021-09-08",
+    "type": "conventional",
+    "website": "https://www.edufund.co.id"
+  },
+  {
+    "company": "PT Kreasi Anak Indonesia",
+    "app": "GandengTangan",
+    "license": "KEP-89/D.05/2021",
+    "licensedOn": "2021-09-08",
+    "type": "conventional",
+    "website": "https://www.gandengtangan.co.id"
+  },
+  {
+    "company": "PT Piranti Alphabet Perkasa",
+    "app": "PAPITUPI SYARIAH",
+    "license": "KEP-90/D.05/2021",
+    "licensedOn": "2021-09-08",
+    "type": "sharia",
+    "website": "https://www.papitupisyariah.com"
+  },
+  {
+    "company": "PT Smartec Teknologi Indonesia",
+    "app": "BantuSaku",
+    "license": "KEP-91/D.05/2021",
+    "licensedOn": "2021-09-08",
+    "type": "conventional",
+    "website": "https://bantusaku.id"
+  },
+  {
+    "company": "PT Digital Micro Indonesia",
+    "app": "danabijak",
+    "license": "KEP-92/D.05/2021",
+    "licensedOn": "2021-09-08",
+    "type": "conventional",
+    "website": "https://danabijak.com"
+  },
+  {
+    "company": "PT Solid Fintek Indonesia",
+    "app": "AdaModal",
+    "license": "KEP-94/D.05/2021",
+    "licensedOn": "2021-09-08",
+    "type": "conventional",
+    "website": "https://www.adamodal.co.id"
+  },
+  {
+    "company": "PT Sejahtera Sama Kita",
+    "app": "SamaKita",
+    "license": "KEP-95/D.05/2021",
+    "licensedOn": "2021-09-08",
+    "type": "conventional",
+    "website": "https://samakita.co.id"
+  },
+  {
+    "company": "PT Kawan Cicil Teknologi Utama",
+    "app": "KawanCicil",
+    "license": "KEP-101/D.05/2021",
+    "licensedOn": "2021-09-17",
+    "type": "conventional",
+    "website": "https://kawancicil.co.id"
+  },
+  {
+    "company": "PT Klikcair Magga Jaya",
+    "app": "KlikCair",
+    "license": "KEP-103/D.05/2021",
+    "licensedOn": "2021-09-17",
+    "type": "conventional",
+    "website": "https://klikcair.com"
+  },
+  {
+    "company": "PT Ethis Fintek Indonesia",
+    "app": "ETHIS",
+    "license": "KEP-104/D.05/2021",
+    "licensedOn": "2021-09-17",
+    "type": "sharia",
+    "website": "https://ethis.co.id"
+  },
+  {
+    "company": "PT Sahabat Mikro Fintek",
+    "app": "SAMIR",
+    "license": "KEP-105/D.05/2021",
+    "licensedOn": "2021-09-17",
+    "type": "conventional",
+    "website": "https://www.samir.co.id"
+  },
+  {
+    "company": "PT Plus Ultra Abadi",
+    "app": "UATAS",
+    "license": "KEP-106/D.05/2021",
+    "licensedOn": "2021-09-17",
+    "type": "conventional",
+    "website": "https://www.uatas.id"
+  },
+  {
+    "company": "PT Pintar Inovasi Digital",
+    "app": "Asetku",
+    "license": "KEP-123/D.05/2021",
+    "licensedOn": "2021-12-23",
+    "type": "conventional",
+    "website": "https://www.asetku.co.id"
+  },
+  {
+    "company": "PT Mapan Global Reksa",
+    "app": "Findaya",
+    "license": "KEP-124/D.05/2021",
+    "licensedOn": "2021-12-23",
+    "type": "conventional",
+    "website": "https://www.findaya.co.id"
+  }
+]
