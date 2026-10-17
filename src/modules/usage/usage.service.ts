@@ -3,7 +3,7 @@
  * chat and bank-import modules read it before spending a quota or opening a Kira Plus feature.
  */
 
-import { PLAN_TERMS } from '../../lib/constants/plans.ts';
+import { PLAN_FEATURES, PLAN_TERMS, type PlanFeature } from '../../lib/constants/plans.ts';
 import { wibDate } from '../../lib/time/wib.ts';
 import {
   type ActivePlan,
@@ -36,4 +36,15 @@ export async function getUsage(userId: string, deps: UsageDeps = {}): Promise<Us
 /** Refuses voice input and bank imports outside Kira Plus. */
 export function requireVoiceAndImport(plan: ActivePlan, feature: string): void {
   if (!PLAN_TERMS[plan.id].voiceAndImport) throw new PlanFeatureUnavailableError(feature);
+}
+
+/** Refuses a Kira Plus feature (Riwayat Skor, Portofolio) to a plan without it: one read, no counters. */
+export async function requirePlanFeature(
+  userId: string,
+  feature: PlanFeature,
+  deps: UsageDeps = {},
+): Promise<void> {
+  const repository = deps.repository ?? usageRepository;
+  const plan = activePlanOf(await repository.findActiveSubscriptions(userId));
+  if (!PLAN_FEATURES[plan.id].includes(feature)) throw new PlanFeatureUnavailableError(feature);
 }

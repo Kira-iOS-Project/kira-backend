@@ -1,7 +1,9 @@
 import { createRoute } from '@hono/zod-openapi';
 import { errorResponses } from '../../lib/errors/problem.ts';
 import { createRouter } from '../../lib/server/factory.ts';
+import { PLAN_FEATURE } from '../../lib/constants/plans.ts';
 import { requireSession } from '../auth/index.ts';
+import { planFeatureGate } from '../usage/index.ts';
 import {
   getIndicatorHandler,
   getScoreHandler,
@@ -69,11 +71,11 @@ export const getScoreHistoryRoute = createRoute({
   operationId: 'getScoreHistory',
   summary: 'Riwayat Kira Score',
   description:
-    'The score now against last month, a point per month (taken on the 25th, WIB, and at the first health check) and the indicators that changed.',
+    'The score now against last month, a point per month (taken on the 25th, WIB, and at the first health check) and the indicators that changed. Kira Plus only: other plans get 403 PLAN_FEATURE_UNAVAILABLE.',
   request: { query: scoreHistoryQuerySchema },
   responses: {
     200: { ...json(scoreHistorySchema), description: 'The score history over the range' },
-    ...errorResponses(401, 404, 422),
+    ...errorResponses(401, 403, 404, 422),
   },
 });
 
@@ -85,6 +87,7 @@ healthCheckRouter.openapi(saveHealthCheckRoute, saveHealthCheckHandler);
 /** Mounted at /api/score. */
 export const scoreRouter = createRouter();
 scoreRouter.use('*', requireSession);
+scoreRouter.use('/history', planFeatureGate(PLAN_FEATURE.scoreHistory));
 scoreRouter.openapi(getScoreRoute, getScoreHandler);
 scoreRouter.openapi(getScoreHistoryRoute, getScoreHistoryHandler);
 scoreRouter.openapi(getIndicatorRoute, getIndicatorHandler);

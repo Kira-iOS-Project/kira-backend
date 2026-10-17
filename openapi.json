@@ -5299,7 +5299,7 @@
         ],
         "operationId": "getScoreHistory",
         "summary": "Riwayat Kira Score",
-        "description": "The score now against last month, a point per month (taken on the 25th, WIB, and at the first health check) and the indicators that changed.",
+        "description": "The score now against last month, a point per month (taken on the 25th, WIB, and at the first health check) and the indicators that changed. Kira Plus only: other plans get 403 PLAN_FEATURE_UNAVAILABLE.",
         "parameters": [
           {
             "schema": {
@@ -5328,6 +5328,16 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5872,6 +5882,16 @@
               }
             }
           },
+          "403": {
+            "description": "Action not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "Any other problem: a server failure, a timeout, a body too large",
             "content": {
@@ -5919,6 +5939,16 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5996,6 +6026,16 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Action not allowed",
             "content": {
               "application/problem+json": {
                 "schema": {
