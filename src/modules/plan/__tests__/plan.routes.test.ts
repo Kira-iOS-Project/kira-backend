@@ -5,7 +5,7 @@
 
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
-import { GOAL_KIND } from '../../../lib/constants/plan.ts';
+import { EMERGENCY_MILESTONE, GOAL_KIND } from '../../../lib/constants/plan.ts';
 import type { FakeQuery, FakeRow } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
 import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
@@ -108,12 +108,9 @@ describe('GET /api/goals/{id}', () => {
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.deposits).toEqual([]);
-    expect(body.milestones.map((milestone: { key: string }) => milestone.key)).toEqual([
-      'one_week',
-      'one_month',
-      'three_months',
-      'target',
-    ]);
+    expect(body.milestones.map((milestone: { key: string }) => milestone.key)).toEqual(
+      Object.values(EMERGENCY_MILESTONE),
+    );
   });
 
   test('answers 404 GOAL_NOT_FOUND for a goal that is not theirs', async () => {

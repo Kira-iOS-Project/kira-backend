@@ -9,7 +9,7 @@ import type { GoalRepository, GoalRow } from '../plan.goal.repository.ts';
 
 export const GOAL_ID = '5a1c2e3f-4b5d-4e6f-8a7b-9c0d1e2f3a4b';
 export const DEPOSIT_ID = '6b2d3f40-5c6e-4f70-9b8c-0d1e2f3a4b5c';
-export const CREATED_AT = new Date('2026-07-01T03:00:00.000Z');
+const CREATED_AT = new Date('2026-07-01T03:00:00.000Z');
 
 export function goalRow(overrides: Partial<GoalRow> = {}): GoalRow {
   return {

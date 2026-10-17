@@ -29,9 +29,9 @@ export type GoalRow = {
   savedAmount: number;
 };
 
-export type NewGoal = Omit<GoalRow, 'id' | 'createdAt' | 'updatedAt' | 'savedAmount'>;
-export type GoalPatch = { [K in keyof Omit<NewGoal, 'kind'>]?: NewGoal[K] | undefined };
-export type DepositRow = { id: string; goalId: string; amount: number; depositedOn: string };
+type NewGoal = Omit<GoalRow, 'id' | 'createdAt' | 'updatedAt' | 'savedAmount'>;
+type GoalPatch = { [K in keyof Omit<NewGoal, 'kind'>]?: NewGoal[K] | undefined };
+type DepositRow = { id: string; goalId: string; amount: number; depositedOn: string };
 
 export type GoalRepository = {
   /** The emergency fund first, then the newest. */

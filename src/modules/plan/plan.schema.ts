@@ -38,7 +38,7 @@ const futureDay = z.iso
   .refine((value) => value > wibDate(new Date()), { message: 'The date must be in the future' });
 
 /** One step of Tangga Keuanganmu, with the figures the app words it from. */
-export const ladderStepSchema = z
+const ladderStepSchema = z
   .object({
     step: z.number().int().min(1).max(4),
     key: z.enum(enumValues(PLAN_LADDER_STEP)),
@@ -64,7 +64,7 @@ export const ladderStepSchema = z
   .openapi('LadderStep');
 
 /** What the calculators start from, each null when it is not known. */
-export const planPrefillSchema = z
+const planPrefillSchema = z
   .object({
     /** The last three months' recorded essential spending, averaged; else the health check's. */
     essentialExpense: z.number().int().nullable(),
