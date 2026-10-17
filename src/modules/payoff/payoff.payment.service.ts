@@ -57,13 +57,15 @@ export async function recordPayment(
 ): Promise<PaymentResult> {
   const repository = deps.repository ?? planRepository;
   const now = (deps.now ?? (() => new Date()))();
-  const debt = await repository.findDebt(userId, debtId);
-  if (!debt) {
-    /** A repeat of the payment that settled the account finds it closed: still a repeat. */
-    if (await repository.hasPayment(userId, paymentId))
-      throw new PayoffPaymentAlreadyRecordedError();
-    throw new PayoffDebtNotFoundError();
+  /**
+   * A repeat (a retry after a lost answer) is recognised before anything else: the balance it would
+   * be checked against has moved, and the account may be closed by the payment being repeated.
+   */
+  if (await repository.hasPayment(userId, paymentId)) {
+    throw new PayoffPaymentAlreadyRecordedError();
   }
+  const debt = await repository.findDebt(userId, debtId);
+  if (!debt) throw new PayoffDebtNotFoundError();
   if (amount > debt.remaining) throw new PayoffPaymentTooHighError();
   const remaining = debt.remaining - amount;
   const outcome = await repository.recordPayment(

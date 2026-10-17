@@ -40,6 +40,20 @@ describe('Tandai Sudah Bayar', () => {
     expect((await res.json()).code).toBe('PAYOFF_PAYMENT_TOO_HIGH');
   });
 
+  test('POST /api/debts/{id}/payments: a later retry is the repeat, not too high', async () => {
+    /** Paylater A has 420.000 left: a retry of an earlier 500.000 is a repeat, not too high. */
+    dbControl.respond = signedIn((query) => {
+      if (query.sql.includes('from "debt_payments"')) return [{ id: 'payment-1' }];
+      return planned(query);
+    });
+    const res = await call('POST', `/api/debts/${ID_A}/payments`, {
+      amount: 500_000,
+      paymentId: PAY,
+    });
+    expect(res.status).toBe(409);
+    expect((await res.json()).code).toBe('PAYOFF_PAYMENT_ALREADY_RECORDED');
+  });
+
   test('POST /api/debts/{id}/payments: a paid account is not open, unless it is the repeat', async () => {
     const closed = (paid: boolean) =>
       signedIn((query) => {
