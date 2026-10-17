@@ -5,6 +5,7 @@ import { requireSession } from '../auth/index.ts';
 import {
   addGoalDepositHandler,
   createGoalHandler,
+  deleteGoalHandler,
   getGoalHandler,
   getPlanHandler,
   getRiskProfileHandler,
@@ -103,6 +104,21 @@ export const updateGoalRoute = createRoute({
   },
 });
 
+export const deleteGoalRoute = createRoute({
+  ...common,
+  method: 'delete',
+  path: '/goals/{id}',
+  operationId: 'deleteGoal',
+  summary: 'Hapus Tujuan',
+  description:
+    'Deletes the goal with its deposits. An unknown goal, or one another person owns, is 404.',
+  request: { params: goalIdParamSchema },
+  responses: {
+    204: { description: 'Deleted' },
+    ...errorResponses(401, 404, 422),
+  },
+});
+
 export const addGoalDepositRoute = createRoute({
   ...common,
   method: 'post',
@@ -158,6 +174,7 @@ planRouter.openapi(listGoalsRoute, listGoalsHandler);
 planRouter.openapi(createGoalRoute, createGoalHandler);
 planRouter.openapi(getGoalRoute, getGoalHandler);
 planRouter.openapi(updateGoalRoute, updateGoalHandler);
+planRouter.openapi(deleteGoalRoute, deleteGoalHandler);
 planRouter.openapi(addGoalDepositRoute, addGoalDepositHandler);
 planRouter.openapi(saveRiskProfileRoute, saveRiskProfileHandler);
 planRouter.openapi(getRiskProfileRoute, getRiskProfileHandler);
