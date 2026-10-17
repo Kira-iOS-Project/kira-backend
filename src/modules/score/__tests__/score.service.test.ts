@@ -5,6 +5,7 @@ import type { NewSnapshot } from '../score.repository.ts';
 import type { HealthCheckBody } from '../score.schema.ts';
 import {
   estimateScoreChange,
+  findScoreInput,
   findScoreReport,
   getIndicatorDetail,
   getScoreReport,
@@ -189,5 +190,18 @@ describe('estimateScoreChange', () => {
       }),
     });
     expect(await estimateScoreChange('user-1', paylaterA, { repository })).toBeNull();
+  });
+});
+
+describe('findScoreInput', () => {
+  test('the answers on file with the open debts, read only; null before the health check', async () => {
+    const repository = createScoreRepositoryMock();
+    const input = await findScoreInput('user-1', { repository });
+    expect(input?.income).toBeGreaterThan(0);
+    expect(Array.isArray(input?.debts)).toBe(true);
+
+    const none = createScoreRepositoryMock({ findState: async () => null });
+    expect(await findScoreInput('user-1', { repository: none })).toBeNull();
+    expect(await findScoreInput('user-1')).toBeNull();
   });
 });
