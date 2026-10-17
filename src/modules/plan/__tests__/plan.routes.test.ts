@@ -36,6 +36,20 @@ const EMERGENCY = {
   targetDate: '2029-04-25',
 };
 
+describe('the goal routes without a session', () => {
+  test.each([
+    ['GET', '/api/goals'],
+    ['POST', '/api/goals'],
+    ['GET', `/api/goals/${GOAL_ID}`],
+    ['PATCH', `/api/goals/${GOAL_ID}`],
+    ['POST', `/api/goals/${GOAL_ID}/deposits`],
+  ])('%s %s answers 401', async (method, path) => {
+    const res = await app.request(path, { method });
+    expect(res.status).toBe(401);
+    expect((await res.json()).code).toBe('AUTH_UNAUTHENTICATED');
+  });
+});
+
 describe('GET /api/plan', () => {
   test('answers 401 without a session', async () => {
     expect((await app.request('/api/plan')).status).toBe(401);
@@ -142,6 +156,13 @@ describe('PATCH /api/goals/{id}', () => {
     expect((await res.json()).code).toBe('GOAL_NOT_FOUND');
   });
 
+  test("refuses an emergency fund's inputs without its essential spending with a 422", async () => {
+    dbControl.respond = signedIn(withGoal);
+    const res = await send('PATCH', `/api/goals/${GOAL_ID}`, { inputs: { married: true } });
+    expect(res.status).toBe(422);
+    expect((await res.json()).code).toBe('VALIDATION_FAILED');
+  });
+
   test('refuses an empty change with a 422', async () => {
     dbControl.respond = signedIn();
     expect((await send('PATCH', `/api/goals/${GOAL_ID}`, {})).status).toBe(422);
@@ -174,6 +195,16 @@ describe('POST /api/goals/{id}/deposits', () => {
     const res = await send('POST', `/api/goals/${GOAL_ID}/deposits`, deposit);
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe('GOAL_DEPOSIT_CONFLICT');
+  });
+
+  test('refuses a deposit dated before the goal was made with a 422', async () => {
+    dbControl.respond = signedIn(withGoal);
+    const res = await send('POST', `/api/goals/${GOAL_ID}/deposits`, {
+      ...deposit,
+      depositedOn: '2026-06-30',
+    });
+    expect(res.status).toBe(422);
+    expect((await res.json()).code).toBe('VALIDATION_FAILED');
   });
 
   test('answers 404 GOAL_NOT_FOUND for an unknown goal', async () => {

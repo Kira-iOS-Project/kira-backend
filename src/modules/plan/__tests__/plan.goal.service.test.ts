@@ -107,7 +107,7 @@ describe('goals', () => {
     const repository = createGoalRepositoryMock();
     expect(
       updateGoal(USER, GOAL_ID, { inputs: { married: true } }, { repository }),
-    ).rejects.toMatchObject({ statusCode: 400, code: 'VALIDATION_FAILED' });
+    ).rejects.toMatchObject({ statusCode: 422, code: 'VALIDATION_FAILED' });
     const other = createGoalRepositoryMock({
       findGoal: async () => goalRow({ kind: GOAL_KIND.goods }),
     });
@@ -130,6 +130,19 @@ describe('goals', () => {
     expect(updateGoal(USER, GOAL_ID, { name: 'X' }, { repository: none })).rejects.toMatchObject({
       code: 'GOAL_NOT_FOUND',
     });
+  });
+
+  test('refuses a deposit dated before the goal was made, accepts its creation day', async () => {
+    const repository = createGoalRepositoryMock();
+    const early = { depositId: DEPOSIT_ID, amount: 650_000, depositedOn: '2026-06-30' };
+    expect(addGoalDeposit(USER, GOAL_ID, early, { repository })).rejects.toMatchObject({
+      statusCode: 422,
+      code: 'VALIDATION_FAILED',
+    });
+    const sameDay = { ...early, depositedOn: '2026-07-01' };
+    expect((await addGoalDeposit(USER, GOAL_ID, sameDay, { repository })).depositedOn).toBe(
+      '2026-07-01',
+    );
   });
 
   test('records a deposit once, refusing an id that belongs to another goal', async () => {
