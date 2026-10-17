@@ -34,6 +34,15 @@ describe('payoffOrder', () => {
     expect(payoffOrder([same, dear], PAYOFF_METHOD.avalanche).map((d) => d.id)).toEqual(['d', 'e']);
   });
 
+  test('a full tie falls to the account id, so the order never changes between calls', () => {
+    const first = payoffDebt({ id: 'f', remaining: 500_000, annualInterestRate: 20 });
+    const second = payoffDebt({ id: 'g', remaining: 500_000, annualInterestRate: 20 });
+    for (const method of [PAYOFF_METHOD.snowball, PAYOFF_METHOD.avalanche]) {
+      expect(payoffOrder([second, first], method).map((d) => d.id)).toEqual(['f', 'g']);
+      expect(payoffOrder([first, second], method).map((d) => d.id)).toEqual(['f', 'g']);
+    }
+  });
+
   test('does not reorder the input', () => {
     const input = [BIG, SMALL];
     payoffOrder(input, PAYOFF_METHOD.snowball);
@@ -81,9 +90,12 @@ describe('simulate', () => {
       monthlyInstalment: 1_000_000,
       annualInterestRate: 12,
     });
-    /** Month 1: 1,000,000 + 1% = 1,010,000, so one instalment of 1,000,000 leaves 10,000. */
+    /** A last payment equal to the balance settles it this month, with no interest. */
     const result = simulate([debt], PAYOFF_METHOD.avalanche, 0);
-    expect(result.accounts[0]).toMatchObject({ months: 2, interest: 10_100 });
+    expect(result.accounts[0]).toMatchObject({ months: 1, interest: 0 });
+    /** 1,000,000 at 1% a month paid 600,000: 400,000 left + 4,000 interest, paid next month. */
+    const two = simulate([{ ...debt, monthlyInstalment: 600_000 }], PAYOFF_METHOD.avalanche, 0);
+    expect(two.accounts[0]).toMatchObject({ months: 2, interest: 4_000 });
   });
 
   test('avalanche costs no more interest than snowball', () => {

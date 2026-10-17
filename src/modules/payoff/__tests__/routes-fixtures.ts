@@ -47,7 +47,7 @@ const PLAN_ROW = {
 };
 
 /** The account rows in the column order Rencanaku selects them. */
-const PLAN_DEBT_ROWS = PLAN_DEBTS.map((d) => ({
+export const PLAN_DEBT_ROWS = PLAN_DEBTS.map((d) => ({
   id: d.id,
   kind: d.kind,
   name: d.name,
@@ -63,6 +63,9 @@ const PLAN_DEBT_ROWS = PLAN_DEBTS.map((d) => ({
 export function planned(query: FakeQuery): FakeRow[] {
   if (query.sql.includes('from "payoff_plans"')) return [PLAN_ROW];
   if (query.sql.startsWith('insert into "payoff_plans"')) return [PLAN_ROW];
+  if (query.sql.startsWith('insert into "debt_payments"')) return [{ id: 'payment-1' }];
+  /** No account paid off since the plan began, unless a test says so. */
+  if (query.sql.includes('"paid_off_at" >=')) return [];
   if (query.sql.includes('from "debt_accounts"') && query.sql.includes('"original_amount"')) {
     return PLAN_DEBT_ROWS;
   }

@@ -24,8 +24,35 @@ describe('planView', () => {
       debtId: A,
       name: 'Paylater A',
       amount: 210_000,
+      instalment: 210_000,
+      extra: 0,
       dueDate: '2026-11-05',
       daysLeft: 20,
+    });
+  });
+
+  test('adds the plan’s extra to the instalment, no more than the account still needs', async () => {
+    const withExtra = (extraPayment: number) =>
+      getActivePlan(
+        'user-1',
+        deps({
+          repository: createPlanRepositoryMock({
+            findActive: async () => ({ ...PAYOFF_PLAN, extraPayment }),
+          }),
+        }),
+      );
+
+    /** The board's Pembayaran Berikutnya: Cicilan Rp210.000 + Tambahan Rp210.000 = Rp420.000. */
+    expect((await withExtra(210_000)).nextPayment).toMatchObject({
+      amount: 420_000,
+      instalment: 210_000,
+      extra: 210_000,
+    });
+    /** Paylater A has Rp420.000 left: a larger extra stops there. */
+    expect((await withExtra(500_000)).nextPayment).toMatchObject({
+      amount: 420_000,
+      instalment: 210_000,
+      extra: 210_000,
     });
   });
 

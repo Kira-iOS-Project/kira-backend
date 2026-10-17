@@ -31,6 +31,9 @@ export const setFocusHandler: RouteHandler<typeof setFocusRoute, AppEnv> = async
 };
 
 export const recordPaymentHandler: RouteHandler<typeof recordPaymentRoute, AppEnv> = async (c) => {
-  const { amount } = c.req.valid('json');
-  return c.json(await recordPayment(c.get('userId'), c.req.valid('param').id, amount), 200);
+  const { amount, paymentId } = c.req.valid('json');
+  return c.json(
+    await recordPayment(c.get('userId'), c.req.valid('param').id, { amount, paymentId }),
+    200,
+  );
 };

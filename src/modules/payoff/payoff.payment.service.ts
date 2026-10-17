@@ -10,7 +10,11 @@ import {
   type DebtInput,
   type ScoreEstimate,
 } from '../score/index.ts';
-import { PayoffDebtNotFoundError, PayoffPaymentTooHighError } from './payoff.errors.ts';
+import {
+  PayoffDebtNotFoundError,
+  PayoffPaymentAlreadyRecordedError,
+  PayoffPaymentTooHighError,
+} from './payoff.errors.ts';
 import { planRepository, type PlanDebt } from './payoff.plan.repository.ts';
 import type { PaymentResult } from './payoff.plan.schema.ts';
 import { orderedConsumer, progressOf } from './payoff.plan.view.ts';
@@ -20,7 +24,7 @@ export type PaymentDeps = PlanDeps & {
   estimateScore?: (userId: string, paid: DebtInput) => Promise<ScoreEstimate | null>;
 };
 
-/** The account the plan pays next: the first other open consumer account in its order. */
+/** The account the plan pays next: the first other open consumer account, the focus leading. */
 async function nextAccountOf(
   userId: string,
   paidId: string,
@@ -31,7 +35,9 @@ async function nextAccountOf(
     repository.listDebts(userId),
   ]);
   if (!plan) return null;
-  const next = orderedConsumer(debts, plan.method, null).find((debt) => debt.id !== paidId);
+  const next = orderedConsumer(debts, plan.method, plan.focusDebtId).find(
+    (debt) => debt.id !== paidId,
+  );
   return next ? { id: next.id, name: next.name } : null;
 }
 
@@ -46,26 +52,34 @@ const inputOf = (debt: PlanDebt): DebtInput => ({
 export async function recordPayment(
   userId: string,
   debtId: string,
-  amount: number,
+  { amount, paymentId }: { amount: number; paymentId: string },
   deps: PaymentDeps = {},
 ): Promise<PaymentResult> {
   const repository = deps.repository ?? planRepository;
   const now = (deps.now ?? (() => new Date()))();
   const debt = await repository.findDebt(userId, debtId);
-  if (!debt) throw new PayoffDebtNotFoundError();
+  if (!debt) {
+    /** A repeat of the payment that settled the account finds it closed: still a repeat. */
+    if (await repository.hasPayment(userId, paymentId))
+      throw new PayoffPaymentAlreadyRecordedError();
+    throw new PayoffDebtNotFoundError();
+  }
   if (amount > debt.remaining) throw new PayoffPaymentTooHighError();
   const remaining = debt.remaining - amount;
-  const applied = await repository.recordPayment(
+  const outcome = await repository.recordPayment(
     userId,
     debtId,
-    { amount, from: debt.remaining, to: remaining },
+    { amount, from: debt.remaining, to: remaining, paymentId },
     now,
   );
-  if (!applied) throw new PayoffPaymentTooHighError();
+  if (outcome === 'duplicate') throw new PayoffPaymentAlreadyRecordedError();
+  /** The balance moved since it was read (another payment landed): this one may be too high. */
+  if (outcome === 'stale') throw new PayoffPaymentTooHighError();
   const paidOff = remaining === 0;
   const estimate = deps.estimateScore ?? estimateScoreChange;
   return {
     debtId,
+    monthlyInstalment: debt.monthlyInstalment,
     paid: amount,
     remaining,
     progressPercent: progressOf({ original: debt.original, remaining }),
