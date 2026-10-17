@@ -62,8 +62,11 @@ function spacedCode(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
 }
 
+/** Bumped whenever the images or their headers change, so CDN copies cached before are skipped. */
+const IMAGE_VERSION = '2';
+
 function image(base: string, name: string, width: number, height: number, alt: string): string {
-  return `<img src="${base}/email/${name}.png" width="${width}" height="${height}" alt="${escapeHtml(alt)}" style="display:block;border:0;outline:none;">`;
+  return `<img src="${base}/email/${name}.png?v=${IMAGE_VERSION}" width="${width}" height="${height}" alt="${escapeHtml(alt)}" style="display:block;border:0;outline:none;">`;
 }
 
 function blockHtml(block: EmailBlock): string {
