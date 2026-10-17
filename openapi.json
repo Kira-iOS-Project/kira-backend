@@ -5226,6 +5226,150 @@
           "payday"
         ]
       },
+      "BudgetEdit": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CurrentBudget"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "averagePeriods": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3
+              },
+              "averages": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "category": {
+                      "type": "string",
+                      "enum": [
+                        "food",
+                        "coffee",
+                        "transport",
+                        "shopping",
+                        "bills",
+                        "paylater_instalment",
+                        "savings_deposit",
+                        "insurance",
+                        "entertainment",
+                        "health",
+                        "education",
+                        "household",
+                        "other_expense"
+                      ]
+                    },
+                    "amount": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "category",
+                    "amount"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "averagePeriods",
+              "averages"
+            ]
+          }
+        ]
+      },
+      "UpdateCurrentBudgetInput": {
+        "type": "object",
+        "properties": {
+          "income": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000000
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                },
+                "amount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10000000000000
+                }
+              },
+              "required": [
+                "category",
+                "amount"
+              ]
+            },
+            "maxItems": 30
+          },
+          "payday": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "day"
+                    ]
+                  },
+                  "day": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 31
+                  }
+                },
+                "required": [
+                  "type",
+                  "day"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "endOfMonth"
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "income",
+          "allocations",
+          "payday"
+        ]
+      },
       "BankImport": {
         "type": "object",
         "properties": {
@@ -10460,6 +10604,116 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CurrentBudget"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateCurrentBudget",
+        "summary": "Save budget allocations and payday",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentBudgetInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved current budget with spending and adjusted payday period",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentBudget"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/budgets/current/edit": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getCurrentBudgetEdit",
+        "summary": "Budget editor with up to three prior-period averages",
+        "responses": {
+          "200": {
+            "description": "Current budget and averages from completed periods",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetEdit"
                 }
               }
             }

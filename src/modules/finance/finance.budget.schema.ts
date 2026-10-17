@@ -49,5 +49,26 @@ export const budgetSchema = z
   })
   .openapi('CurrentBudget');
 
+const budgetAverageSchema = z.object({
+  category: expenseCategorySchema,
+  amount: z.number().int().min(0),
+});
+
+export const budgetEditSchema = budgetSchema
+  .extend({
+    averagePeriods: z.number().int().min(0).max(3),
+    averages: z.array(budgetAverageSchema),
+  })
+  .openapi('BudgetEdit');
+
+export const updateBudgetBodySchema = z
+  .object({
+    income: z.number().int().min(0).max(10_000_000_000_000),
+    allocations: z.array(budgetAllocationSchema).max(30),
+    payday: paydayChoiceSchema,
+  })
+  .openapi('UpdateCurrentBudgetInput');
+
 export type PaydayChoice = z.infer<typeof paydayChoiceSchema>;
 export type BudgetAllocationInput = z.infer<typeof budgetAllocationSchema>;
+export type UpdateBudgetInput = z.infer<typeof updateBudgetBodySchema>;

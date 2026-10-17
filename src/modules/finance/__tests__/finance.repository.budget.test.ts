@@ -6,6 +6,19 @@ import { budgetRepository } from '../finance.repository.budget.ts';
 beforeEach(() => resetExternalMocks());
 
 describe('budget repository', () => {
+  test('upserts the owner budget and payday selection', async () => {
+    dbControl.respond = () => [];
+    await budgetRepository.saveBudget('owner-1', {
+      income: 300_000,
+      allocations: [{ category: EXPENSE_CATEGORY.bills, amount: 120_000 }],
+      payday: { type: 'endOfMonth' },
+    });
+
+    expect(dbControl.queries.at(-1)?.sql).toContain('insert into "budgets"');
+    expect(dbControl.queries.at(-1)?.sql).toContain('on conflict');
+    expect(dbControl.queries.at(-1)?.sql).toContain('"payday"');
+  });
+
   test('groups only expense categories for the owner and bounds the query', async () => {
     dbControl.respond = (query) =>
       query.sql.includes('from "transactions"')

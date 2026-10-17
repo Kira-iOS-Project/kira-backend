@@ -4,7 +4,11 @@ import { db } from '../../db/client/index.ts';
 import { budgets, financialProfiles, transactions, users } from '../../db/schema/schema.ts';
 import { TRANSACTION_TYPE } from '../../lib/constants/money.ts';
 import { expenseCategorySchema } from '../../lib/money/money.schema.ts';
-import type { BudgetAllocationInput, PaydayChoice } from './finance.budget.schema.ts';
+import type {
+  BudgetAllocationInput,
+  PaydayChoice,
+  UpdateBudgetInput,
+} from './finance.budget.schema.ts';
 import type { z } from 'zod';
 
 type ExpenseCategory = z.infer<typeof expenseCategorySchema>;
@@ -25,6 +29,7 @@ export type BudgetRepository = {
   getBudget(userId: string): Promise<BudgetRecord | null>;
   getProfileBudget(userId: string): Promise<{ income: number; payday: PaydayChoice }>;
   getBudgetGoalProfile(userId: string): Promise<BudgetGoalProfile | null>;
+  saveBudget(userId: string, body: UpdateBudgetInput): Promise<void>;
   spendingByCategory(
     userId: string,
     from: Date,
@@ -77,6 +82,21 @@ function createBudgetRepository(client: PostgresJsDatabase = db): BudgetReposito
         .where(eq(users.id, userId))
         .limit(1);
       return row?.createdAt ? { ...row, dependents: row.dependents ?? 0 } : null;
+    },
+
+    async saveBudget(userId, body) {
+      await client
+        .insert(budgets)
+        .values({ userId, ...body })
+        .onConflictDoUpdate({
+          target: budgets.userId,
+          set: {
+            income: body.income,
+            allocations: body.allocations,
+            payday: body.payday,
+            updatedAt: new Date(),
+          },
+        });
     },
 
     async spendingByCategory(userId, from, to) {
