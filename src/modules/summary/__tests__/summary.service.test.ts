@@ -72,4 +72,10 @@ describe('getWeeklySummary', () => {
     expect(onLast.budget?.periodStart).toBe('2026-09-30');
     expect(onLast.budget?.periodEnd).toBe('2026-10-30');
   });
+
+  test('without `end` or a clock, the week ends today', async () => {
+    const week = await getWeeklySummary('user-1', {}, { repository: repositoryOf().repository });
+    expect(week.days).toHaveLength(7);
+    expect(week.end >= '2026-10-17').toBe(true);
+  });
 });

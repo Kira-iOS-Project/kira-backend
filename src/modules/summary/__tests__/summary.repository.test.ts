@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { EXPENSE_CATEGORY } from '../../../lib/constants/money.ts';
+import { EXPENSE_CATEGORY, TRANSACTION_TYPE } from '../../../lib/constants/money.ts';
 import { createFakeDb, inOrder } from '../../../test/fake-postgres.ts';
 import { createSummaryRepository } from '../summary.repository.ts';
 
@@ -26,7 +26,7 @@ describe('createSummaryRepository', () => {
     ]);
     expect(fake.queries[0]?.sql).toContain("at time zone 'Asia/Jakarta'");
     expect(fake.queries[1]?.sql).toContain('group by "transactions"."category"');
-    expect(fake.queries[1]?.params).toContain('expense');
+    expect(fake.queries[1]?.params).toContain(TRANSACTION_TYPE.expense);
   });
 
   test('totals a range, 0 when empty; reads the budget, or none', async () => {
@@ -34,7 +34,12 @@ describe('createSummaryRepository', () => {
       inOrder(
         [{ total: '1505000' }],
         [],
-        [{ allocations: '[{"category":"food","amount":1}]', payday: '{"type":"day","day":25}' }],
+        [
+          {
+            allocations: JSON.stringify([{ category: EXPENSE_CATEGORY.food, amount: 1 }]),
+            payday: '{"type":"day","day":25}',
+          },
+        ],
         [],
       ),
     );
@@ -42,7 +47,7 @@ describe('createSummaryRepository', () => {
     expect(await repository.expenseTotal('user-1', FROM, TO)).toBe(1_505_000);
     expect(await repository.expenseTotal('user-1', FROM, TO)).toBe(0);
     expect(await repository.findBudget('user-1')).toEqual({
-      allocations: [{ category: 'food', amount: 1 }],
+      allocations: [{ category: EXPENSE_CATEGORY.food, amount: 1 }],
       payday: { type: 'day', day: 25 },
     });
     expect(await repository.findBudget('user-1')).toBeNull();
