@@ -7,6 +7,7 @@
 import type { ScheduledJob } from '../../lib/server/scheduler.ts';
 import { rollOverPeriods, sendRenewalReminders } from '../billing/index.ts';
 import { reviewScholarshipApplications } from '../scholarship/index.ts';
+import { takeMonthlySnapshots } from '../score/index.ts';
 import { type JobsRepository, jobsRepository } from './jobs.repository.ts';
 
 /** A code lives ten minutes; a day later it is only a record of an address, so it goes. */
@@ -49,5 +50,6 @@ export const scheduledJobs: readonly ScheduledJob[] = [
   exclusive('subscription-rollover', rollOverPeriods),
   exclusive('renewal-reminders', sendRenewalReminders),
   exclusive('scholarship-review', reviewScholarshipApplications),
+  exclusive('score-monthly-snapshot', takeMonthlySnapshots),
   exclusive('auth-code-cleanup', deleteStaleAuthCodes),
 ];

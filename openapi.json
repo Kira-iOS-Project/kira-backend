@@ -1077,6 +1077,117 @@
           "monthlyInstalment"
         ]
       },
+      "ScoreHistory": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "type": "object",
+            "properties": {
+              "score": {
+                "type": "integer"
+              },
+              "band": {
+                "type": "string",
+                "enum": [
+                  "vulnerable",
+                  "coping",
+                  "healthy"
+                ]
+              },
+              "deltaFromPrevious": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "previousMonth": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "example": "2026-09"
+              }
+            },
+            "required": [
+              "score",
+              "band",
+              "deltaFromPrevious",
+              "previousMonth"
+            ]
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "month": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                  "example": "2026-09"
+                },
+                "score": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "month",
+                "score"
+              ]
+            }
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "indicator": {
+                  "type": "string",
+                  "enum": [
+                    "emergency_fund",
+                    "savings_ratio",
+                    "instalment_ratio",
+                    "consumer_debt",
+                    "debt_to_asset",
+                    "protection_cover"
+                  ]
+                },
+                "fromLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "toLabel": {
+                  "type": "string"
+                },
+                "fromPoints": {
+                  "type": "integer"
+                },
+                "toPoints": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "indicator",
+                "fromLabel",
+                "toLabel",
+                "fromPoints",
+                "toPoints"
+              ]
+            }
+          },
+          "unchangedCount": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "current",
+          "points",
+          "changes",
+          "unchangedCount"
+        ]
+      },
       "IndicatorDetail": {
         "allOf": [
           {
@@ -4912,6 +5023,88 @@
           },
           "404": {
             "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/score/history": {
+      "get": {
+        "tags": [
+          "Score"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getScoreHistory",
+        "summary": "Riwayat Kira Score",
+        "description": "The score now against last month, a point per month (taken on the 25th, WIB, and at the first health check) and the indicators that changed.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "6m",
+                "1y"
+              ],
+              "default": "6m"
+            },
+            "required": false,
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The score history over the range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreHistory"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {

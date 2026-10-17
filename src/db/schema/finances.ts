@@ -117,6 +117,12 @@ export const debtAccounts = pgTable(
 
 export type IndicatorPoints = Record<(typeof INDICATOR)[keyof typeof INDICATOR], number>;
 
+/** What each indicator measured at a snapshot, as Riwayat Kira Score shows it ("1,1×", "32%"). */
+export type IndicatorLabels = Record<(typeof INDICATOR)[keyof typeof INDICATOR], string>;
+
+/** The rows of the monthly unique index; inserts name the same predicate in ON CONFLICT. */
+export const MONTHLY_SNAPSHOT_PREDICATE = sql.raw(`reason::text = '${SNAPSHOT_REASON.monthly}'`);
+
 export const scoreSnapshots = pgTable(
   'score_snapshots',
   {
@@ -127,8 +133,10 @@ export const scoreSnapshots = pgTable(
     score: smallint('score').notNull(),
     band: scoreBandEnum('band').notNull(),
     indicators: jsonb('indicators').$type<IndicatorPoints>().notNull(),
+    /** The measured figures behind the points; null on snapshots taken before they were kept. */
+    measures: jsonb('measures').$type<IndicatorLabels>(),
     reason: snapshotReasonEnum('reason').notNull(),
-    /** The payday period the snapshot belongs to (its first day, WIB). */
+    /** The payday period the snapshot belongs to (its first day, WIB); a monthly one's 25th. */
     periodStart: date('period_start', { mode: 'string' }).notNull(),
     createdAt: moment('created_at').defaultNow().notNull(),
   },
@@ -138,6 +146,13 @@ export const scoreSnapshots = pgTable(
     uniqueIndex('score_snapshots_user_period_recompute_idx')
       .on(table.userId, table.periodStart)
       .where(sql`${table.reason} = ${sql.raw(`'${SNAPSHOT_REASON.recompute}'`)}`),
+    /**
+     * One monthly point per month: the 25th's job and a catch-up run store it once. The reason is
+     * compared as text because Postgres refuses an enum value inside the transaction that adds it.
+     */
+    uniqueIndex('score_snapshots_user_period_monthly_idx')
+      .on(table.userId, table.periodStart)
+      .where(MONTHLY_SNAPSHOT_PREDICATE),
     check('score_snapshots_score_check', sql`${table.score} between 0 and 100`),
   ],
 );

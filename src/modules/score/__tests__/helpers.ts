@@ -68,6 +68,9 @@ export function createScoreRepositoryMock(
     listOpenDebts: async () => DINDA_DEBTS,
     snapshotHistory: async () => ({ count: 1, latestInPeriodAt: NOW, previousScore: null }),
     insertSnapshot: async () => undefined,
+    listHistory: async () => [],
+    listMonthlyCandidates: async () => [],
+    insertMonthlySnapshot: async () => true,
     saveHealthCheck: async () => undefined,
     ...overrides,
   };

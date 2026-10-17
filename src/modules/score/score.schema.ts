@@ -6,7 +6,13 @@ import {
   MAX_ANNUAL_INTEREST_RATE,
   PROTECTION,
 } from '../../lib/constants/profile.ts';
-import { INDICATOR, INDICATOR_GROUP, SCORE_BAND, STEP_KIND } from '../../lib/constants/score.ts';
+import {
+  INDICATOR,
+  INDICATOR_GROUP,
+  SCORE_BAND,
+  SCORE_HISTORY_RANGE,
+  STEP_KIND,
+} from '../../lib/constants/score.ts';
 
 const rupiah = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 /** A skipped answer: the app leaves the key out, which reads as null. */
@@ -149,6 +155,48 @@ export const indicatorParamsSchema = z.object({
   key: indicatorKeySchema.openapi({ param: { name: 'key', in: 'path' } }),
 });
 
+const month = z
+  .string()
+  .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+  .openapi({ example: '2026-09' });
+
+export const scoreHistoryQuerySchema = z.object({
+  range: z
+    .enum(enumValues(SCORE_HISTORY_RANGE))
+    .default(SCORE_HISTORY_RANGE.sixMonths)
+    .openapi({ param: { name: 'range', in: 'query' } }),
+});
+
+/** Riwayat Kira Score (SKR-07, SKR-07b): the score now, the monthly points and what changed. */
+export const scoreHistorySchema = z
+  .object({
+    current: z.object({
+      score: z.number().int(),
+      band: bandSchema,
+      /** Against the latest monthly point before this month; null when there is none. */
+      deltaFromPrevious: z.number().int().nullable(),
+      /** That point's month; null when there is none. */
+      previousMonth: month.nullable(),
+    }),
+    /** One per month in the range, oldest first: the 25th's snapshot, or the first health check's. */
+    points: z.array(z.object({ month, score: z.number().int() })),
+    /** The indicators whose points moved since `previousMonth`, in the score's order. */
+    changes: z.array(
+      z.object({
+        indicator: indicatorKeySchema,
+        /** The figure then ("0,8×"); null when that snapshot predates the figures being kept. */
+        fromLabel: z.string().nullable(),
+        toLabel: z.string(),
+        fromPoints: z.number().int(),
+        toPoints: z.number().int(),
+      }),
+    ),
+    /** The indicators that did not move; 0 when there is no earlier month to compare with. */
+    unchangedCount: z.number().int(),
+  })
+  .openapi('ScoreHistory');
+
 export type HealthCheckBody = z.infer<typeof healthCheckBodySchema>;
+export type ScoreHistory = z.infer<typeof scoreHistorySchema>;
 export type ScoreReport = z.infer<typeof scoreReportSchema>;
 export type IndicatorDetail = z.infer<typeof indicatorDetailSchema>;
