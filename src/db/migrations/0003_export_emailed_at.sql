@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "export_emailed_at" timestamp (3) with time zone;

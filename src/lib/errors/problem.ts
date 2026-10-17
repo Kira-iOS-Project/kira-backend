@@ -32,6 +32,53 @@ const TITLES = {
   HTTP_ERROR: 'Request Refused',
   INTERNAL_ERROR: 'Internal Server Error',
   META_HEALTH_UNHEALTHY: 'Service Unhealthy',
+  AUTH_CODE_RATE_LIMITED: 'Too Many Code Requests',
+  AUTH_VERIFY_RATE_LIMITED: 'Too Many Sign-in Tries',
+  AUTH_CODE_INVALID: 'Invalid Code',
+  AUTH_CODE_EXPIRED: 'Code Expired',
+  AUTH_CODE_ATTEMPTS_EXCEEDED: 'Too Many Attempts',
+  AUTH_UNAUTHENTICATED: 'Not Signed In',
+  AUTH_REFRESH_INVALID: 'Session Ended',
+  EMAIL_DELIVERY_FAILED: 'Email Not Sent',
+  ACCOUNT_EXPORT_RATE_LIMITED: 'Export Recently Emailed',
+  SCORE_NOT_AVAILABLE: 'Score Not Available',
+  PAYOFF_EXTRA_TOO_HIGH: 'Extra Payment Too High',
+  PAYOFF_NOTHING_TO_PLAN: 'Nothing To Plan',
+  PAYOFF_PLAN_NOT_FOUND: 'No Active Plan',
+  PAYOFF_DEBT_NOT_FOUND: 'Debt Account Not Found',
+  PAYOFF_PAYMENT_TOO_HIGH: 'Payment Too High',
+  PAYOFF_PAYMENT_ALREADY_RECORDED: 'Payment Already Recorded',
+  CHAT_AI_DISABLED: 'Kira AI Is Off',
+  CHAT_MESSAGE_NOT_FOUND: 'Message Not Found',
+  CHAT_DRAFTS_NOT_PENDING: 'Drafts Already Settled',
+  PLAN_FEATURE_UNAVAILABLE: 'Not in Your Plan',
+  RECEIPT_TOTAL_MISMATCH: 'Receipt Total Mismatch',
+  TRANSACTION_NOT_FOUND: 'Transaction Not Found',
+  TRANSACTION_BATCH_NOT_FOUND: 'Batch Not Found',
+  TRANSACTION_UNDO_EXPIRED: 'Undo Window Passed',
+  IMPORT_NOT_FOUND: 'Import Not Found',
+  IMPORT_RANGE_TOO_LONG: 'Import Range Too Long',
+  IMPORT_ROW_UNKNOWN: 'Unknown Import Row',
+  SUBSCRIPTION_NOT_FOUND: 'No Subscription',
+  SUBSCRIPTION_NOT_CANCELLABLE: 'Subscription Not Cancellable',
+  SUBSCRIPTION_NOT_PAID: 'Subscription Has No Payment',
+  SCHOLARSHIP_NOT_ELIGIBLE: 'Not Eligible',
+  SCHOLARSHIP_APPLICATION_NOT_FOUND: 'Application Not Found',
+  SCHOLARSHIP_DEBT_EMERGENCY_REQUIRED: 'Mode Darurat Utang Required',
+  COMMUNITY_GROUP_NOT_FOUND: 'Group Not Found',
+  COMMUNITY_LINK_UNAVAILABLE: 'Group Link Unavailable',
+  COMMUNITY_PRODUCT_NOT_FOUND: 'Product Not Found',
+  COMMUNITY_REPORT_DUPLICATE: 'Group Already Reported',
+  COMMUNITY_RULES_NOT_ACCEPTED: 'Community Rules Not Accepted',
+
+  CARE_CHECK_IN_NOT_FOUND: 'Check-in Not Found',
+  CARE_SAFETY_PLAN_NOT_FOUND: 'Safety Plan Not Found',
+  ASSET_NOT_FOUND: 'Asset Not Found',
+  GOAL_NOT_FOUND: 'Goal Not Found',
+  GOAL_EMERGENCY_EXISTS: 'Emergency Fund Exists',
+  GOAL_DEPOSIT_CONFLICT: 'Deposit Id Used',
+  BILL_NOT_FOUND: 'Bill Not Found',
+  BILL_DEBT_NOT_FOUND: 'Debt Account Not Found',
 } as const satisfies Record<ErrorCode, string>;
 
 /** An `HTTPException` comes from middleware that knows only a status (the body limit, the
@@ -160,11 +207,13 @@ const problemSchema = z
 
 const DESCRIPTIONS: Readonly<Record<number, string>> = {
   400: 'A business rule refused the request',
+  401: 'No valid session',
   403: 'Action not allowed',
   404: 'Resource not found',
   409: 'Resource conflict',
   413: 'Request body exceeds the size limit',
   422: 'Request schema validation failed',
+  429: 'Too many requests',
   503: 'A dependency is unavailable',
   504: 'The request exceeded its time budget',
 };
@@ -173,14 +222,25 @@ const DESCRIPTIONS: Readonly<Record<number, string>> = {
  * The problem+json entries of a route's `responses` map, one per status its service can raise
  * (Rule 13): `responses: { 200: {...}, ...errorResponses(404, 422) }`.
  */
-export function errorResponses(...statuses: number[]) {
-  return Object.fromEntries(
-    statuses.map((status) => [
-      status,
-      {
-        content: { 'application/problem+json': { schema: problemSchema } },
-        description: DESCRIPTIONS[status] ?? 'Error',
-      },
-    ]),
-  );
+type ProblemResponse = {
+  content: { 'application/problem+json': { schema: typeof problemSchema } };
+  description: string;
+};
+
+export function errorResponses(...statuses: number[]): Record<string, ProblemResponse> {
+  const problem = { content: { 'application/problem+json': { schema: problemSchema } } };
+  return {
+    ...Object.fromEntries(
+      statuses.map((status) => [
+        status,
+        { ...problem, description: DESCRIPTIONS[status] ?? 'Error' },
+      ]),
+    ),
+    /** Any status a route does not list (a 500, the 504 budget, the 413 body limit) is a problem too,
+       so a generated client decodes its code and request id instead of dropping the body. */
+    default: {
+      ...problem,
+      description: 'Any other problem: a server failure, a timeout, a body too large',
+    },
+  };
 }

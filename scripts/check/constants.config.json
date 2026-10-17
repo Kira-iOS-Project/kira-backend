@@ -3,5 +3,105 @@
     "name": "service identity",
     "home": "src/lib/constants/service.ts",
     "allow": []
+  },
+  {
+    "name": "profile",
+    "home": "src/lib/constants/profile.ts",
+    "allow": [
+      {
+        "path": "src/lib/constants/community.ts",
+        "reason": "'debt_free' there is the Bebas Hutang community category, a word of its own vocabulary that happens to equal the focus value."
+      },
+      {
+        "path": "src/modules/community/",
+        "reason": "'paylater' there names the illustration a community group shows, an artwork name of the app, not a debt kind."
+      }
+    ]
+  },
+  {
+    "name": "consents",
+    "home": "src/lib/constants/consents.ts",
+    "allow": []
+  },
+  {
+    "name": "care",
+    "home": "src/lib/constants/care.ts",
+    "allow": []
+  },
+  {
+    "name": "score",
+    "home": "src/lib/constants/score.ts",
+    "allow": [
+      {
+        "path": "src/modules/meta/",
+        "reason": "The health check's own 'healthy' status (GET /health), a word of the meta module's response, not a Kira Score band."
+      },
+      {
+        "path": "src/__tests__/app.test.ts",
+        "reason": "Asserts GET /health's 'healthy' status, not a Kira Score band."
+      },
+      {
+        "path": "src/db/schema/finances.ts",
+        "reason": "'emergency_fund' there is the financial_profiles column name, which happens to equal the indicator key."
+      }
+    ]
+  },
+  {
+    "name": "money",
+    "home": "src/lib/constants/money.ts",
+    "allow": []
+  },
+  {
+    "name": "UNG finance",
+    "home": "src/lib/constants/ung.ts",
+    "allow": [
+      {
+        "path": "src/lib/constants/community.ts",
+        "reason": "'other' there is a community category, not the fallback wallet type."
+      }
+    ]
+  },
+  {
+    "name": "chat",
+    "home": "src/lib/constants/chat.ts",
+    "allow": []
+  },
+  {
+    "name": "plans",
+    "home": "src/lib/constants/plans.ts",
+    "allow": [
+      {
+        "path": "src/lib/constants/community.ts",
+        "reason": "'active' there is a curated group's or product's listing status, not a subscription status."
+      }
+    ]
+  },
+  {
+    "name": "scholarship",
+    "home": "src/lib/constants/scholarship.ts",
+    "allow": []
+  },
+  {
+    "name": "home",
+    "home": "src/lib/constants/home.ts",
+    "allow": []
+  },
+  {
+    "name": "community",
+    "home": "src/lib/constants/community.ts",
+    "allow": [
+      {
+        "path": "src/lib/constants/profile.ts",
+        "reason": "'debt_free' there is the person's focus (Bebas Hutang on the health check), its own vocabulary that happens to equal the community category."
+      },
+      {
+        "path": "src/lib/constants/plans.ts",
+        "reason": "'active' there is a subscription status, not a curated listing status."
+      },
+      {
+        "path": "src/lib/constants/ung.ts",
+        "reason": "'other' there is the fallback wallet type, not the community category."
+      }
+    ]
   }
 ]

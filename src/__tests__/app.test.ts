@@ -19,7 +19,7 @@ describe('GET /health', () => {
   });
 
   test('answers a 503 problem when the database does not', async () => {
-    dbControl.execute = async () => {
+    dbControl.respond = async () => {
       throw new Error('connection refused');
     };
 
@@ -30,6 +30,22 @@ describe('GET /health', () => {
     expect(res.headers.get('Content-Type')).toBe('application/problem+json');
     expect(body.type).toBe(`${PROBLEM_TYPE_BASE}META_HEALTH_UNHEALTHY`);
     expect(JSON.stringify(body)).not.toContain('connection refused');
+  });
+});
+
+describe('GET /email/*', () => {
+  test('serves the email images from public/email/', async () => {
+    const res = await app.request('/email/mark.png');
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+  });
+
+  test('answers a missing image with the 404 problem', async () => {
+    const res = await app.request('/email/nothing-here.png');
+
+    expect(res.status).toBe(404);
+    expect((await res.json()).code).toBe('ROUTE_NOT_FOUND');
   });
 });
 

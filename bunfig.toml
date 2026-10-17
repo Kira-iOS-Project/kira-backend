@@ -39,6 +39,10 @@ coveragePathIgnorePatterns = [
   # The shared doubles themselves: the harness the measured files run under.
   "src/test/**",
 
+  # Each module's own mock builders (__tests__/helpers.ts): test code, which bun measures because
+  # the file name is not *.test.ts. A builder's unused default is not untested product code.
+  "src/**/__tests__/helpers.ts",
+
   # Queue and worker wiring: a Queue constructor and a Worker factory that open a Redis
   # connection. The job logic worth testing lives in its own processor module, which is
   # deliberately not listed and is covered directly.
@@ -50,8 +54,10 @@ coveragePathIgnorePatterns = [
   # in measured files. List each client file by path as it is added.
   "src/lib/auth/auth.ts",
   "src/lib/redis/redis.ts",
+  "src/lib/email/resend.ts",
 
   # Type-only declarations: erased at runtime, so no test can load them.
   "src/types/**",
   "src/**/*.types.ts",
+  "src/lib/export/export-section.ts",
 ]

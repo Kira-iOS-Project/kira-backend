@@ -19,6 +19,74 @@ export const ERROR_CODES = [
   'INTERNAL_ERROR',
 
   'META_HEALTH_UNHEALTHY',
+
+  /** Sign-in with an email and a one-time code (ONB-05 to ONB-07b, ONB-15). */
+  'AUTH_CODE_RATE_LIMITED',
+  'AUTH_VERIFY_RATE_LIMITED',
+  'AUTH_CODE_INVALID',
+  'AUTH_CODE_EXPIRED',
+  'AUTH_CODE_ATTEMPTS_EXCEEDED',
+  'AUTH_UNAUTHENTICATED',
+  'AUTH_REFRESH_INVALID',
+
+  /** Transactional email through Resend. */
+  'EMAIL_DELIVERY_FAILED',
+  'ACCOUNT_EXPORT_RATE_LIMITED',
+
+  /** The Kira Score before the health check has been answered. */
+  'SCORE_NOT_AVAILABLE',
+
+  /** Rencana Pelunasan: simulating how consumer debts are paid off. */
+  'PAYOFF_EXTRA_TOO_HIGH',
+  'PAYOFF_NOTHING_TO_PLAN',
+  'PAYOFF_PLAN_NOT_FOUND',
+  'PAYOFF_DEBT_NOT_FOUND',
+  'PAYOFF_PAYMENT_TOO_HIGH',
+  'PAYOFF_PAYMENT_ALREADY_RECORDED',
+
+  /** Catat: chat, receipts, voice, manual entries and the transaction history. */
+  'CHAT_AI_DISABLED',
+  'CHAT_MESSAGE_NOT_FOUND',
+  'CHAT_DRAFTS_NOT_PENDING',
+  'PLAN_FEATURE_UNAVAILABLE',
+  'RECEIPT_TOTAL_MISMATCH',
+  'TRANSACTION_NOT_FOUND',
+  'TRANSACTION_BATCH_NOT_FOUND',
+  'TRANSACTION_UNDO_EXPIRED',
+  'IMPORT_NOT_FOUND',
+  'IMPORT_RANGE_TOO_LONG',
+  'IMPORT_ROW_UNKNOWN',
+
+  /** Plans, the simulated billing and Beasiswa Kira. */
+  'SUBSCRIPTION_NOT_FOUND',
+  'SUBSCRIPTION_NOT_CANCELLABLE',
+  'SUBSCRIPTION_NOT_PAID',
+  'SCHOLARSHIP_NOT_ELIGIBLE',
+  'SCHOLARSHIP_APPLICATION_NOT_FOUND',
+  'SCHOLARSHIP_DEBT_EMERGENCY_REQUIRED',
+
+  /** Terhubung: community groups, their rules and reports, and Etalase. */
+  'COMMUNITY_GROUP_NOT_FOUND',
+  'COMMUNITY_LINK_UNAVAILABLE',
+  'COMMUNITY_PRODUCT_NOT_FOUND',
+  'COMMUNITY_REPORT_DUPLICATE',
+  'COMMUNITY_RULES_NOT_ACCEPTED',
+
+  /** Rencana: goals, their deposits and the emergency fund (REN-02 to REN-05). */
+  'GOAL_NOT_FOUND',
+  'GOAL_EMERGENCY_EXISTS',
+  'GOAL_DEPOSIT_CONFLICT',
+
+  /** Kira Peduli: check-ins and the safety plan (PED-05, PED-06, PED-10). */
+  'CARE_CHECK_IN_NOT_FOUND',
+  'CARE_SAFETY_PLAN_NOT_FOUND',
+
+  /** Portofolio Manual (REN-10, REN-11). */
+  'ASSET_NOT_FOUND',
+
+  /** Tagihan & Cicilan (UNG-06, UNG-07). */
+  'BILL_NOT_FOUND',
+  'BILL_DEBT_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
