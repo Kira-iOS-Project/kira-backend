@@ -98,7 +98,7 @@ export const planSchema = z
     riskProfile: riskProfileKindSchema.nullable(),
     prefill: planPrefillSchema,
   })
-  .openapi('Plan');
+  .openapi('PlanOverview');
 
 /** A calculator's inputs by name, as the app keeps them: amounts, rates, years, choices. */
 const goalInputsSchema = z

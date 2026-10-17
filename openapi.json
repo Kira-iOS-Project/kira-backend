@@ -3513,6 +3513,133 @@
           "safePlace"
         ]
       },
+      "PlanOverview": {
+        "type": "object",
+        "properties": {
+          "ladder": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LadderStep"
+            }
+          },
+          "goals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoalSummary"
+            }
+          },
+          "riskProfile": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "conservative",
+              "moderate",
+              "aggressive",
+              null
+            ]
+          },
+          "prefill": {
+            "$ref": "#/components/schemas/PlanPrefill"
+          }
+        },
+        "required": [
+          "ladder",
+          "goals",
+          "riskProfile",
+          "prefill"
+        ]
+      },
+      "LadderStep": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "key": {
+            "type": "string",
+            "enum": [
+              "pay_off_debt",
+              "emergency_fund",
+              "protection",
+              "invest"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "done",
+              "current",
+              "todo"
+            ]
+          },
+          "detail": {
+            "type": "object",
+            "properties": {
+              "debtName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "amount": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "target": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "multiple": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "targetMultiple": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "health": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "incomeCover": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "debtName",
+              "amount",
+              "target",
+              "multiple",
+              "targetMultiple",
+              "health",
+              "incomeCover"
+            ]
+          }
+        },
+        "required": [
+          "step",
+          "key",
+          "status",
+          "detail"
+        ]
+      },
       "GoalSummary": {
         "type": "object",
         "properties": {
@@ -3559,6 +3686,48 @@
           "targetDate",
           "monthlyDeposit",
           "savedAmount"
+        ]
+      },
+      "PlanPrefill": {
+        "type": "object",
+        "properties": {
+          "essentialExpense": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "emergencyFund": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "married": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "dependants": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "monthlyIncome": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "essentialExpense",
+          "emergencyFund",
+          "married",
+          "dependants",
+          "monthlyIncome"
         ]
       },
       "Goal": {
@@ -8246,7 +8415,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Plan"
+                  "$ref": "#/components/schemas/PlanOverview"
                 }
               }
             }
