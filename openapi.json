@@ -3781,9 +3781,6 @@
             },
             {
               "type": "boolean"
-            },
-            {
-              "type": "null"
             }
           ]
         }
