@@ -1,6 +1,7 @@
 /**
  * Riwayat Kira Score (SKR-07, SKR-07b): a point per month, taken on the 25th (WIB) by the hourly
- * scheduler and at the first health check, and the score now against the latest earlier month.
+ * scheduler and at the first health check, and the score now against the snapshot GET /score's
+ * delta is measured from: the latest one before the current payday period.
  * The sentences around the numbers ("Naik 15 poin sejak Mei") are the app's, written on device.
  */
 
@@ -68,8 +69,10 @@ export async function getScoreHistory(
   const since = wibStartOfDay(addMonths(thisMonth, -HISTORY_MONTHS));
   const months = byMonth(await history.listHistory(userId, since));
   const firstMonth = addMonths(thisMonth, -(RANGE_MONTHS[range] - 1)).slice(0, 7);
-  const previous = months.findLast(({ month }) => month < thisMonth.slice(0, 7)) ?? null;
-  const { evaluation } = scored;
+  /** GET /score's previous point, so both screens show the same "+N" for the same score. */
+  const before = await history.findPrevious(userId, wibStartOfDay(scored.periodStart));
+  const previous = before ? { month: monthOf(before), snapshot: before } : null;
+  const { evaluation, report } = scored;
   const labels = labelsOf(evaluation);
   const changes = previous
     ? evaluation.indicators
@@ -86,7 +89,7 @@ export async function getScoreHistory(
     current: {
       score: evaluation.score,
       band: evaluation.band,
-      deltaFromPrevious: previous ? evaluation.score - previous.snapshot.score : null,
+      deltaFromPrevious: report.delta,
       previousMonth: previous?.month ?? null,
     },
     points: months

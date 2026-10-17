@@ -12,7 +12,11 @@ import {
   PROTECTION,
 } from '../../../lib/constants/profile.ts';
 import type { DebtInput, ScoreInput } from '../score.engine.ts';
-import type { ScoreHistoryRepository } from '../score.history.repository.ts';
+import { SNAPSHOT_REASON } from '../../../lib/constants/score.ts';
+import { factsOf, pointsOf } from '../score.engine.ts';
+import type { HistorySnapshot, ScoreHistoryRepository } from '../score.history.repository.ts';
+import { labelsOf } from '../score.labels.ts';
+import { evaluate } from '../score.measure.ts';
 import type { ScoreRepository } from '../score.repository.ts';
 
 export const NOW = new Date('2026-10-16T05:00:00.000Z');
@@ -79,9 +83,36 @@ export function createScoreHistoryRepositoryMock(
 ): ScoreHistoryRepository {
   return {
     listHistory: async () => [],
+    findPrevious: async () => null,
     listMonthlyCandidates: async () => [],
     insertMonthlySnapshot: async () => true,
     listSnapshots: async () => [],
     ...overrides,
   };
+}
+
+/** Dinda's points and figures, as a snapshot of her score keeps them. */
+export const POINTS = pointsOf(factsOf(DINDA));
+export const LABELS = labelsOf(evaluate(DINDA));
+
+/** A plotted snapshot: September's monthly point unless `overrides` say otherwise. */
+export function snapshot(overrides: Partial<HistorySnapshot> = {}): HistorySnapshot {
+  return {
+    reason: SNAPSHOT_REASON.monthly,
+    periodStart: '2026-09-25',
+    createdAt: new Date('2026-09-25T00:00:00.000Z'),
+    score: 62,
+    indicators: POINTS,
+    measures: LABELS,
+    ...overrides,
+  };
+}
+
+/** The monthly point of `month` (`YYYY-MM`) at `score`. */
+export function monthly(month: string, score: number): HistorySnapshot {
+  return snapshot({
+    periodStart: `${month}-25`,
+    createdAt: new Date(`${month}-25T00:00:00.000Z`),
+    score,
+  });
 }

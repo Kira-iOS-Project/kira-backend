@@ -79,4 +79,23 @@ describe('createScoreHistoryRepository', () => {
     ]);
     expect(fake.queries[0]?.sql).toContain('order by "score_snapshots"."created_at" asc');
   });
+
+  test('finds the latest snapshot before the payday period, or none', async () => {
+    let rows: Record<string, unknown>[] = [
+      {
+        reason: SNAPSHOT_REASON.healthCheck,
+        periodStart: '2026-08-25',
+        createdAt: '2026-09-20T03:00:00.000Z',
+        score: 58,
+        indicators: SNAPSHOT.indicators,
+        measures: null,
+      },
+    ];
+    const fake = createFakeDb(() => rows);
+    const repository = createScoreHistoryRepository(fake.db);
+    expect((await repository.findPrevious('user-1', NOW))?.score).toBe(58);
+    expect(fake.queries[0]?.sql).toContain('order by "score_snapshots"."created_at" desc limit');
+    rows = [];
+    expect(await repository.findPrevious('user-1', NOW)).toBeNull();
+  });
 });

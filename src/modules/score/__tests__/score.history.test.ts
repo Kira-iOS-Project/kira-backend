@@ -1,48 +1,36 @@
 import { describe, expect, test } from 'bun:test';
 import { FOCUS } from '../../../lib/constants/profile.ts';
 import { INDICATOR, SCORE_HISTORY_RANGE, SNAPSHOT_REASON } from '../../../lib/constants/score.ts';
-import { factsOf, pointsOf } from '../score.engine.ts';
 import type { HistorySnapshot } from '../score.history.repository.ts';
 import { getScoreHistory, takeMonthlySnapshots } from '../score.history.ts';
-import { labelsOf } from '../score.labels.ts';
-import { evaluate } from '../score.measure.ts';
+import { getScoreReport } from '../score.service.ts';
 import type { NewSnapshot } from '../score.repository.ts';
 import {
   createScoreHistoryRepositoryMock,
   createScoreRepositoryMock,
-  DINDA,
+  LABELS,
+  monthly,
   NOW,
+  POINTS,
+  snapshot,
 } from './helpers.ts';
 
-const POINTS = pointsOf(factsOf(DINDA));
-const LABELS = labelsOf(evaluate(DINDA));
-
-function snapshot(overrides: Partial<HistorySnapshot> = {}): HistorySnapshot {
-  return {
-    reason: SNAPSHOT_REASON.monthly,
-    periodStart: '2026-09-25',
-    createdAt: new Date('2026-09-25T00:00:00.000Z'),
-    score: 62,
-    indicators: POINTS,
-    measures: LABELS,
-    ...overrides,
-  };
-}
-
-function monthly(month: string, score: number): HistorySnapshot {
-  return snapshot({
-    periodStart: `${month}-25`,
-    createdAt: new Date(`${month}-25T00:00:00.000Z`),
-    score,
-  });
-}
-
-/** The history of `snapshots` on NOW (16 October 2026) over `range`. */
+/**
+ * The history of `snapshots` on NOW (16 October 2026, payday the 25th, so the period began on
+ * 25 September, WIB) over `range`, with `previous` as the latest snapshot before that period.
+ */
 function historyOf(
   snapshots: HistorySnapshot[],
   range: (typeof SCORE_HISTORY_RANGE)[keyof typeof SCORE_HISTORY_RANGE] = SCORE_HISTORY_RANGE.sixMonths,
+  previous: HistorySnapshot | null = null,
 ) {
-  const history = createScoreHistoryRepositoryMock({ listHistory: async () => snapshots });
+  const history = createScoreHistoryRepositoryMock({
+    listHistory: async () => snapshots,
+    findPrevious: async (_userId, before) => {
+      expect(before.toISOString()).toBe('2026-09-24T17:00:00.000Z');
+      return previous;
+    },
+  });
   return getScoreHistory('user-1', range, {
     repository: createScoreRepositoryMock(),
     history,
@@ -95,13 +83,14 @@ describe('getScoreHistory', () => {
     ]);
   });
 
-  test('compares the score now with the latest earlier month, naming what moved', async () => {
+  test('names what moved since the snapshot before this payday period', async () => {
     const before = { ...POINTS, [INDICATOR.emergencyFund]: POINTS[INDICATOR.emergencyFund] - 25 };
-    const result = await historyOf([
-      snapshot({ indicators: before, measures: { ...LABELS, [INDICATOR.emergencyFund]: '0,8×' } }),
-    ]);
+    const last = snapshot({
+      indicators: before,
+      measures: { ...LABELS, [INDICATOR.emergencyFund]: '0,8×' },
+    });
+    const result = await historyOf([last], SCORE_HISTORY_RANGE.sixMonths, last);
     expect(result.current.previousMonth).toBe('2026-09');
-    expect(result.current.deltaFromPrevious).toBe(result.current.score - 62);
     expect(result.changes).toEqual([
       {
         indicator: INDICATOR.emergencyFund,
@@ -115,13 +104,41 @@ describe('getScoreHistory', () => {
   });
 
   test('leaves the earlier figure out when that snapshot did not keep it', async () => {
-    const result = await historyOf([
-      snapshot({ indicators: { ...POINTS, [INDICATOR.savingsRatio]: 0 }, measures: null }),
-    ]);
+    const old = snapshot({
+      indicators: { ...POINTS, [INDICATOR.savingsRatio]: 0 },
+      measures: null,
+    });
+    const result = await historyOf([old], SCORE_HISTORY_RANGE.sixMonths, old);
     expect(result.changes[0]?.fromLabel).toBeNull();
   });
 
-  test('has nothing to compare in the first month', async () => {
+  test("takes GET /score's delta and names the snapshot it is measured from", async () => {
+    /** A health check redone on 20 September: after August's point, before the period began. */
+    const redone = snapshot({
+      reason: SNAPSHOT_REASON.healthCheck,
+      periodStart: '2026-08-25',
+      createdAt: new Date('2026-09-20T03:00:00.000Z'),
+      score: 58,
+    });
+    const repository = createScoreRepositoryMock({
+      snapshotHistory: async () => ({ count: 3, latestInPeriodAt: NOW, previousScore: 58 }),
+    });
+    const history = createScoreHistoryRepositoryMock({
+      listHistory: async () => [monthly('2026-08', 55), redone],
+      findPrevious: async () => redone,
+    });
+    const result = await getScoreHistory('user-1', SCORE_HISTORY_RANGE.sixMonths, {
+      repository,
+      history,
+      now: () => NOW,
+    });
+    const report = await getScoreReport('user-1', { repository, now: () => NOW });
+    expect(result.current.deltaFromPrevious).toBe(report.delta);
+    expect(result.current.deltaFromPrevious).toBe(result.current.score - 58);
+    expect(result.current.previousMonth).toBe('2026-09');
+  });
+
+  test('has nothing to compare before a first payday period has passed', async () => {
     const result = await historyOf([
       snapshot({
         reason: SNAPSHOT_REASON.healthCheck,

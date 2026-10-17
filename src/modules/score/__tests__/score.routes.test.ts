@@ -118,19 +118,11 @@ describe('PUT /api/health-check', () => {
 });
 
 describe('GET /api/score/history', () => {
-  test('answers 403 PLAN_FEATURE_UNAVAILABLE outside Kira Plus', async () => {
-    dbControl.respond = signedIn(scored);
-    const res = await app.request('/api/score/history', { headers: AUTH_HEADER });
-
-    expect(res.status).toBe(403);
-    expect((await res.json()).code).toBe('PLAN_FEATURE_UNAVAILABLE');
-  });
-
-  /** Last month's 25th point, with every indicator one rung lower in emergency fund. */
+  /** Last month's 25th point, one rung lower in emergency fund. */
   const SEPTEMBER = {
     reason: SNAPSHOT_REASON.monthly,
     periodStart: '2026-09-25',
-    createdAt: '2026-09-25T00:00:00.000Z',
+    createdAt: '2026-09-24T17:00:00.000Z',
     score: 62,
     indicators: {
       [INDICATOR.emergencyFund]: 25,
@@ -142,10 +134,26 @@ describe('GET /api/score/history', () => {
     },
     measures: null,
   };
+  /** A health check redone on 20 September, before this payday period (from 25 September). */
+  const REDONE = {
+    ...SEPTEMBER,
+    reason: SNAPSHOT_REASON.healthCheck,
+    periodStart: '2026-08-25',
+    createdAt: '2026-09-20T03:00:00.000Z',
+    score: 58,
+  };
 
+  /**
+   * The score reads, the plotted snapshots, and the snapshot before this period: its score alone
+   * for GET /score's delta, every column for the history's.
+   */
   function withHistory(query: FakeQuery): FakeRow[] {
-    if (query.sql.includes('from "score_snapshots"') && query.sql.includes('asc')) {
-      return query.params.includes(SNAPSHOT_REASON.monthly) ? [SEPTEMBER] : [];
+    const snapshots = query.sql.includes('from "score_snapshots"');
+    if (snapshots && query.sql.includes(' desc')) {
+      return query.sql.includes('"reason"') ? [REDONE] : [{ score: REDONE.score }];
+    }
+    if (snapshots && query.sql.includes(' asc')) {
+      return query.params.includes(SNAPSHOT_REASON.monthly) ? [SEPTEMBER] : [REDONE];
     }
     return scored(query);
   }
@@ -171,18 +179,25 @@ describe('GET /api/score/history', () => {
     expect((await res.json()).code).toBe('VALIDATION_FAILED');
   });
 
-  test('answers the history against last month', async () => {
+  test("answers the history with GET /score's delta, from the same snapshot", async () => {
     dbControl.respond = onPlus(withHistory);
+    const score = await (await request('/api/score')).json();
     const res = await request('/api/score/history?range=1y');
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body.points).toEqual([{ month: '2026-09', score: 62 }]);
+    expect(body.current.deltaFromPrevious).toBe(score.delta);
+    expect(body.current.deltaFromPrevious).toBe(body.current.score - 58);
     expect(body.current.previousMonth).toBe('2026-09');
-    expect(body.current.deltaFromPrevious).toBe(body.current.score - 62);
-    expect(body.changes.map((change: { indicator: string }) => change.indicator)).toContain(
-      INDICATOR.emergencyFund,
-    );
     expect(body.unchangedCount + body.changes.length).toBe(6);
+  });
+
+  test('answers 403 PLAN_FEATURE_UNAVAILABLE outside Kira Plus', async () => {
+    dbControl.respond = signedIn(scored);
+    const res = await app.request('/api/score/history', { headers: AUTH_HEADER });
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe('PLAN_FEATURE_UNAVAILABLE');
   });
 });
