@@ -109,7 +109,7 @@ export function createCareRepository(client: PostgresJsDatabase = db): CareRepos
         .update(careCheckIns)
         .set({
           status: CHECK_IN_STATUS.seen,
-          seenAt: sql`coalesce(${careCheckIns.seenAt}, ${now})`,
+          seenAt: sql`coalesce(${careCheckIns.seenAt}, ${now.toISOString()}::timestamptz)`,
         })
         .where(
           and(
@@ -138,7 +138,9 @@ export function createCareRepository(client: PostgresJsDatabase = db): CareRepos
     async activateDebtEmergency(userId, now) {
       const [row] = await client
         .update(users)
-        .set({ debtEmergencyModeUsedAt: sql`coalesce(${users.debtEmergencyModeUsedAt}, ${now})` })
+        .set({
+          debtEmergencyModeUsedAt: sql`coalesce(${users.debtEmergencyModeUsedAt}, ${now.toISOString()}::timestamptz)`,
+        })
         .where(eq(users.id, userId))
         .returning({ activatedAt: users.debtEmergencyModeUsedAt });
       return row?.activatedAt ?? null;

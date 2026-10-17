@@ -33,6 +33,8 @@ const accountSchema = z
     months: z.number().int().min(1).nullable(),
     /** The month it is paid off (`YYYY-MM`, WIB); null when it never is. */
     payoffMonth: month.nullable(),
+    /** The due date of its last payment (`YYYY-MM-DD`, WIB); null without a due day. */
+    payoffDate: z.iso.date().nullable(),
     /** What it costs in interest until then, in whole rupiah; null when it never is paid off. */
     interest: rupiah.nullable(),
   })
@@ -45,6 +47,10 @@ const productiveSchema = z
     name: z.string(),
     remaining: rupiah,
     monthlyInstalment: rupiah,
+    /** When its own instalments finish (`YYYY-MM`); null when they never do in time. */
+    payoffMonth: month.nullable(),
+    /** The due date of that last instalment (`YYYY-MM-DD`); null without a due day. */
+    payoffDate: z.iso.date().nullable(),
   })
   .openapi('PayoffProductiveDebt');
 
@@ -74,6 +80,8 @@ export const payoffPlanSchema = z
     totalInterest: rupiah.nullable(),
     allPaidMonths: z.number().int().min(1).nullable(),
     allPaidMonth: month.nullable(),
+    /** The date of the last payment (`YYYY-MM-DD`); null unless every account has a due day. */
+    allPaidDate: z.iso.date().nullable(),
     comparison: comparisonSchema.nullable(),
   })
   .openapi('PayoffPlan');

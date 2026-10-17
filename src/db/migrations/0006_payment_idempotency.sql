@@ -1,0 +1,2 @@
+ALTER TABLE "debt_payments" ADD COLUMN "client_payment_id" uuid;--> statement-breakpoint
+CREATE UNIQUE INDEX "debt_payments_user_client_idx" ON "debt_payments" USING btree ("user_id","client_payment_id");

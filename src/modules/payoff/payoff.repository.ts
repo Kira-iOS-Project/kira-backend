@@ -50,7 +50,7 @@ export function createPayoffRepository(client: PostgresJsDatabase = db): PayoffR
             gt(debtAccounts.remainingAmount, 0),
           ),
         )
-        .orderBy(debtAccounts.createdAt)
+        .orderBy(debtAccounts.createdAt, debtAccounts.id)
         .limit(DEBT_LIMIT);
     },
   };

@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError } from '../../lib/errors/errors.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../lib/errors/errors.ts';
 
 /** The extra payment asked for is more than the money left in this payday period. */
 export class PayoffExtraTooHighError extends ValidationError {
@@ -40,5 +40,12 @@ export class PayoffPaymentTooHighError extends ValidationError {
       undefined,
       'PAYOFF_PAYMENT_TOO_HIGH',
     );
+  }
+}
+
+/** This Tandai Sudah Bayar (its client payment id) was recorded already: a double tap or a retry. */
+export class PayoffPaymentAlreadyRecordedError extends ConflictError {
+  constructor() {
+    super('This payment was recorded already.', undefined, 'PAYOFF_PAYMENT_ALREADY_RECORDED');
   }
 }

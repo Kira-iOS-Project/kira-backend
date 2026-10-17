@@ -43,6 +43,20 @@ function transactionRunner(serial: boolean) {
   };
 }
 
+/**
+ * Fails like postgres.js does on a live server: a JS Date reaches the driver only when it was bound
+ * inside a raw sql`` fragment, where no column maps it to a string first. Drizzle's own column binds
+ * arrive as ISO strings, so a Date here is the bug that made PUT /api/care/debt-emergency a 500.
+ * Bind `${date.toISOString()}::timestamptz` instead.
+ */
+function rejectUntypedDates(params: readonly unknown[]) {
+  const index = params.findIndex((param) => param instanceof Date);
+  if (index === -1) return;
+  throw new TypeError(
+    `The "string" argument must be of type string. Received an instance of Date (param $${index + 1})`,
+  );
+}
+
 function fakeMethods(
   client: object,
   respond: () => FakeResponder,
@@ -52,6 +66,7 @@ function fakeMethods(
   const inTransaction = transactionRunner(serial);
   return {
     unsafe(sql, params = []) {
+      rejectUntypedDates(params);
       const query = { sql, params };
       log.push(query);
       const rows = (async () => respond()(query))();

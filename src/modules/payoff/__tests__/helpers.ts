@@ -79,7 +79,9 @@ export function createPlanRepositoryMock(overrides: Partial<PlanRepository> = {}
     findDebt: async (_userId, debtId) => PLAN_DEBTS.find((debt) => debt.id === debtId) ?? null,
     createPlan: async (_userId, plan) => ({ ...PAYOFF_PLAN, ...plan }),
     setFocus: async () => undefined,
-    recordPayment: async () => true,
+    listPaidSince: async () => [],
+    hasPayment: async () => false,
+    recordPayment: async () => 'applied',
     ...overrides,
   };
 }

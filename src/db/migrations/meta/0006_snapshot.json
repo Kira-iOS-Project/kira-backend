@@ -1,5 +1,5 @@
 {
-  "id": "aad5ae84-ff1c-46d2-ae6b-f42f395116cf",
+  "id": "a4260a3e-e3da-4144-9d8f-c527cb277e82",
   "prevId": "7938be8a-3cf5-43ce-86f1-fb65b497cb3e",
   "version": "7",
   "dialect": "postgresql",
@@ -2517,12 +2517,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "measures": {
-          "name": "measures",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "reason": {
           "name": "reason",
           "type": "snapshot_reason",
@@ -2584,28 +2578,6 @@
           ],
           "isUnique": true,
           "where": "\"score_snapshots\".\"reason\" = 'recompute'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "score_snapshots_user_period_monthly_idx": {
-          "name": "score_snapshots_user_period_monthly_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "period_start",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "reason::text = 'monthly'",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -3328,6 +3300,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "client_payment_id": {
+          "name": "client_payment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "paid_at": {
           "name": "paid_at",
           "type": "timestamp (3) with time zone",
@@ -3376,6 +3354,27 @@
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "debt_payments_user_client_idx": {
+          "name": "debt_payments_user_client_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "client_payment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -3845,8 +3844,7 @@
       "schema": "public",
       "values": [
         "health_check",
-        "recompute",
-        "monthly"
+        "recompute"
       ]
     },
     "public.message_kind": {
