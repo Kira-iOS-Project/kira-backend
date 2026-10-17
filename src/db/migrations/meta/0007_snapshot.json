@@ -1,5 +1,5 @@
 {
-  "id": "a81e0ffe-c6f8-469b-8046-65053a70ee9b",
+  "id": "498b72cf-007f-4adc-84db-96d1a2577d12",
   "prevId": "a4260a3e-e3da-4144-9d8f-c527cb277e82",
   "version": "7",
   "dialect": "postgresql",
@@ -2523,6 +2523,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "monthly_on": {
+          "name": "monthly_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
         "reason": {
           "name": "reason",
           "type": "snapshot_reason",
@@ -2588,8 +2594,8 @@
           "method": "btree",
           "with": {}
         },
-        "score_snapshots_user_period_monthly_idx": {
-          "name": "score_snapshots_user_period_monthly_idx",
+        "score_snapshots_user_monthly_idx": {
+          "name": "score_snapshots_user_monthly_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -2598,14 +2604,13 @@
               "nulls": "last"
             },
             {
-              "expression": "period_start",
+              "expression": "monthly_on",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
           "isUnique": true,
-          "where": "reason::text = 'monthly'",
           "concurrently": false,
           "method": "btree",
           "with": {}

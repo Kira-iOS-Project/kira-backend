@@ -8,7 +8,6 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
 import {
   financialProfiles,
-  MONTHLY_SNAPSHOT_PREDICATE,
   scoreSnapshots,
   type IndicatorLabels,
   type IndicatorPoints,
@@ -30,7 +29,7 @@ export type HistorySnapshot = {
 };
 
 /** A snapshot as Unduh Datamu lists it. */
-export type ExportSnapshot = {
+type ExportSnapshot = {
   reason: Values<typeof SNAPSHOT_REASON>;
   createdAt: Date;
   score: number;
@@ -52,7 +51,7 @@ export type ScoreHistoryRepository = {
     limit: number,
     afterId: string | null,
   ): Promise<string[]>;
-  /** A second monthly snapshot for the same month is dropped by the partial unique index. */
+  /** A second monthly snapshot for the same month is dropped by the monthly unique index. */
   insertMonthlySnapshot(userId: string, snapshot: NewSnapshot): Promise<boolean>;
   /** Every snapshot of a person, oldest first, for Unduh Datamu. */
   listSnapshots(userId: string): Promise<ExportSnapshot[]>;
@@ -115,8 +114,7 @@ export function createScoreHistoryRepository(
                 .where(
                   and(
                     eq(scoreSnapshots.userId, financialProfiles.userId),
-                    eq(scoreSnapshots.periodStart, periodStart),
-                    eq(scoreSnapshots.reason, SNAPSHOT_REASON.monthly),
+                    eq(scoreSnapshots.monthlyOn, periodStart),
                   ),
                 ),
             ),
@@ -130,11 +128,8 @@ export function createScoreHistoryRepository(
     async insertMonthlySnapshot(userId, snapshot) {
       const rows = await client
         .insert(scoreSnapshots)
-        .values({ userId, ...snapshot })
-        .onConflictDoNothing({
-          target: [scoreSnapshots.userId, scoreSnapshots.periodStart],
-          where: MONTHLY_SNAPSHOT_PREDICATE,
-        })
+        .values({ userId, ...snapshot, monthlyOn: snapshot.periodStart })
+        .onConflictDoNothing({ target: [scoreSnapshots.userId, scoreSnapshots.monthlyOn] })
         .returning({ id: scoreSnapshots.id });
       return rows.length > 0;
     },

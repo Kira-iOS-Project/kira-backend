@@ -59,9 +59,7 @@ describe('createScoreHistoryRepository', () => {
     const repository = createScoreHistoryRepository(fake.db);
     const monthly = { ...SNAPSHOT, reason: SNAPSHOT_REASON.monthly, periodStart: '2026-10-25' };
     expect(await repository.insertMonthlySnapshot('user-1', monthly)).toBe(true);
-    expect(fake.queries[0]?.sql).toContain(
-      `on conflict ("user_id","period_start") where reason::text = '${SNAPSHOT_REASON.monthly}' do nothing`,
-    );
+    expect(fake.queries[0]?.sql).toContain('on conflict ("user_id","monthly_on") do nothing');
     rows = [];
     expect(await repository.insertMonthlySnapshot('user-1', monthly)).toBe(false);
   });
