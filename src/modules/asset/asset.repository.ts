@@ -39,7 +39,8 @@ export function createAssetRepository(client: PostgresJsDatabase = db): AssetRep
         .insert(assets)
         .values({ userId, ...input })
         .returning(columns);
-      return row as Asset;
+      if (!row) throw new Error('The asset was not stored');
+      return row;
     },
 
     async update(userId, id, patch) {

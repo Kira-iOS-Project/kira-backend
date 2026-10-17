@@ -26,6 +26,19 @@ describe('createAssetRepository', () => {
     expect(fake.queries[0]?.sql).toStartWith('insert into "assets"');
   });
 
+  test('fails loudly when the asset is not stored', async () => {
+    const fake = createFakeDb(inOrder([]));
+    const input = {
+      assetClass: ASSET_CLASS.gold,
+      name: 'Emas Antam',
+      value: 15_000_000,
+      valuedOn: '2026-10-01',
+    };
+    await expect(createAssetRepository(fake.db).create('user-1', input)).rejects.toThrow(
+      'The asset was not stored',
+    );
+  });
+
   test('changes only the person’s own asset, else answers null', async () => {
     const fake = createFakeDb(inOrder([asset], []));
     const repository = createAssetRepository(fake.db);
