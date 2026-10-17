@@ -36,6 +36,13 @@ export const ERROR_CODES = [
   /** The Kira Score before the health check has been answered. */
   'SCORE_NOT_AVAILABLE',
 
+  /** Rencana Pelunasan: simulating how consumer debts are paid off. */
+  'PAYOFF_EXTRA_TOO_HIGH',
+  'PAYOFF_NOTHING_TO_PLAN',
+  'PAYOFF_PLAN_NOT_FOUND',
+  'PAYOFF_DEBT_NOT_FOUND',
+  'PAYOFF_PAYMENT_TOO_HIGH',
+
   /** Catat: chat, receipts, voice, manual entries and the transaction history. */
   'CHAT_AI_DISABLED',
   'CHAT_MESSAGE_NOT_FOUND',

@@ -12,4 +12,5 @@ export * from './columns.ts';
 export * from './community.ts';
 export * from './finances.ts';
 export * from './ledger.ts';
+export * from './payoff.ts';
 export * from './usage.ts';

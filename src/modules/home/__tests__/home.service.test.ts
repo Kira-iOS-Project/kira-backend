@@ -4,7 +4,7 @@ import { FOCUS } from '../../../lib/constants/profile.ts';
 import { SCORE_BAND, STEP_KIND } from '../../../lib/constants/score.ts';
 import { addDays } from '../../../lib/time/wib.ts';
 import type { ScoreReport } from '../../score/index.ts';
-import { getHome } from '../home.service.ts';
+import { findRemainingMoney, getHome } from '../home.service.ts';
 import { account, createHomeRepositoryMock, NOW } from './helpers.ts';
 
 const REPORT: ScoreReport = {
@@ -169,5 +169,22 @@ describe('getHome', () => {
       statusCode: 401,
       code: 'AUTH_UNAUTHENTICATED',
     });
+  });
+});
+
+describe('findRemainingMoney', () => {
+  test('is the money left that Beranda shows', async () => {
+    const { repository, now } = deps();
+    expect(await findRemainingMoney('user-1', { repository, now })).toBe(1_840_000);
+  });
+
+  test('fails loudly when the signed-in account has no row', async () => {
+    const { repository, now } = deps({ findAccount: async () => null });
+    await expect(findRemainingMoney('user-1', { repository, now })).rejects.toThrow();
+  });
+
+  test('reads the clock when none is given', async () => {
+    const { repository } = deps();
+    expect(await findRemainingMoney('user-1', { repository })).toBe(1_840_000);
   });
 });

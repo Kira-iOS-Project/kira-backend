@@ -36,6 +36,13 @@
       "when": 1792187984084,
       "tag": "0004_story_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792195356324,
+      "tag": "0005_payoff_plans",
+      "breakpoints": true
     }
   ]
 }

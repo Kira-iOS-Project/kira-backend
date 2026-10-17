@@ -1,6 +1,11 @@
 import { z } from '@hono/zod-openapi';
 import { enumValues } from '../../lib/constants/enum-values.ts';
-import { DEBT_KIND, MARITAL_STATUS, PROTECTION } from '../../lib/constants/profile.ts';
+import {
+  DEBT_KIND,
+  MARITAL_STATUS,
+  MAX_ANNUAL_INTEREST_RATE,
+  PROTECTION,
+} from '../../lib/constants/profile.ts';
 import { INDICATOR, INDICATOR_GROUP, SCORE_BAND, STEP_KIND } from '../../lib/constants/score.ts';
 
 const rupiah = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
@@ -22,6 +27,10 @@ const debtSchema = z
     remaining: rupiah,
     monthlyInstalment: rupiah,
     remainingTenorMonths: z.number().int().min(0).max(600).nullable().default(null),
+    /** Bunga per tahun in percent, as the lender states it; the app leaves it out when unknown. */
+    annualInterestRate: z.number().min(0).max(MAX_ANNUAL_INTEREST_RATE).nullable().default(null),
+    /** Tanggal jatuh tempo, the day of the month; the app leaves it out when unknown. */
+    dueDay: z.number().int().min(1).max(31).nullable().default(null),
   })
   .openapi('HealthCheckDebt');
 

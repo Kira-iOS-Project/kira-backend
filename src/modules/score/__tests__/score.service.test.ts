@@ -4,12 +4,13 @@ import { INDICATOR, SCORE_BAND, SNAPSHOT_REASON, STEP_KIND } from '../../../lib/
 import type { NewSnapshot } from '../score.repository.ts';
 import type { HealthCheckBody } from '../score.schema.ts';
 import {
+  estimateScoreChange,
   findScoreReport,
   getIndicatorDetail,
   getScoreReport,
   saveHealthCheck,
 } from '../score.service.ts';
-import { createScoreRepositoryMock, NOW } from './helpers.ts';
+import { createScoreRepositoryMock, debt, NOW } from './helpers.ts';
 
 const clock = () => NOW;
 
@@ -124,6 +125,8 @@ describe('saveHealthCheck', () => {
         remaining: 420_000,
         monthlyInstalment: 210_000,
         remainingTenorMonths: 2,
+        annualInterestRate: null,
+        dueDay: null,
       },
     ],
     emergencyFund: 3_360_000,
@@ -160,5 +163,31 @@ describe('saveHealthCheck', () => {
       repository: createScoreRepositoryMock(),
     });
     expect(report.score).toBe(66);
+  });
+});
+
+describe('estimateScoreChange', () => {
+  const paylaterA = debt();
+  const paylaterB = debt({ name: 'Paylater B', remaining: 890_000, monthlyInstalment: 290_000 });
+  const motor = debt({ kind: DEBT_KIND.vehicle, name: 'Cicilan Motor', remaining: 13_000_000 });
+
+  test('is the score with the account gone, less the score with it still open', async () => {
+    const estimate = await estimateScoreChange('user-1', paylaterB, {
+      repository: createScoreRepositoryMock({ listOpenDebts: async () => [paylaterA, motor] }),
+    });
+
+    expect(estimate).toMatchObject({ consumerDebtBefore: 50, consumerDebtAfter: 75 });
+    expect(estimate?.after).toBeGreaterThan(estimate?.before ?? 100);
+  });
+
+  test('is null before the health check', async () => {
+    const repository = createScoreRepositoryMock({
+      findState: async () => ({
+        focus: FOCUS.trackSpending,
+        payday: { day: 25, endOfMonth: false },
+        input: null,
+      }),
+    });
+    expect(await estimateScoreChange('user-1', paylaterA, { repository })).toBeNull();
   });
 });

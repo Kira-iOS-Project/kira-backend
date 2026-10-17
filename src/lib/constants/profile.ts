@@ -48,3 +48,9 @@ export const DEBT_PAYMENT_STATUS = {
   late: 'late',
   overdue: 'overdue',
 } as const;
+
+/**
+ * The highest annual interest rate a debt account may carry, in percent. Online loans are the
+ * dearest, near 110% a year at the regulator's daily cap; anything above this is a typing slip.
+ */
+export const MAX_ANNUAL_INTEREST_RATE = 300;

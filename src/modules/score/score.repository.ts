@@ -169,6 +169,8 @@ export function createScoreRepository(client: PostgresJsDatabase = db): ScoreRep
               name: debt.name,
               monthlyInstalment: debt.monthlyInstalment,
               remainingTenorMonths: debt.remainingTenorMonths,
+              annualInterestRate: debt.annualInterestRate,
+              dueDay: debt.dueDay,
               userId,
               originalAmount: debt.remaining,
               remainingAmount: debt.remaining,
