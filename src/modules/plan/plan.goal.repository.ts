@@ -4,7 +4,7 @@
  * the app's, so a retry stores nothing twice.
  */
 
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
 import { goalDeposits, goals, type GoalInputs } from '../../db/schema/schema.ts';
@@ -42,6 +42,8 @@ export type GoalRepository = {
   updateGoal(userId: string, id: string, patch: GoalPatch): Promise<boolean>;
   /** Newest first. */
   listDeposits(goalId: string): Promise<DepositRow[]>;
+  /** Every deposit of the person's goals, oldest first, for Unduh Datamu. */
+  listAllDeposits(userId: string): Promise<(DepositRow & { goalName: string })[]>;
   /** Stores the deposit once; answers the stored row for its id, which may be another goal's. */
   insertDeposit(deposit: DepositRow): Promise<DepositRow>;
 };
@@ -62,8 +64,13 @@ function violatesEmergency(error: unknown): boolean {
   return violatesEmergency(Reflect.get(error, 'cause'));
 }
 
+/**
+ * What a goal has saved: its starting amount plus every deposit. Written with table-qualified
+ * names, because Drizzle drops the table from a single-table select and an unqualified "id" inside
+ * the subquery would be the deposit's own.
+ */
 const savedAmount =
-  sql<number>`${goals.initialAmount} + coalesce((select sum(${goalDeposits.amount}) from ${goalDeposits} where ${goalDeposits.goalId} = ${goals.id}), 0)`.mapWith(
+  sql<number>`"goals"."initial_amount" + coalesce((select sum("goal_deposits"."amount") from "goal_deposits" where "goal_deposits"."goal_id" = "goals"."id"), 0)`.mapWith(
     Number,
   );
 
@@ -140,6 +147,15 @@ export function createGoalRepository(client: PostgresJsDatabase = db): GoalRepos
         .from(goalDeposits)
         .where(eq(goalDeposits.goalId, goalId))
         .orderBy(desc(goalDeposits.depositedOn), desc(goalDeposits.createdAt));
+    },
+
+    listAllDeposits(userId) {
+      return client
+        .select({ ...depositColumns, goalName: goals.name })
+        .from(goalDeposits)
+        .innerJoin(goals, eq(goals.id, goalDeposits.goalId))
+        .where(eq(goals.userId, userId))
+        .orderBy(asc(goalDeposits.depositedOn), asc(goalDeposits.createdAt));
     },
 
     async insertDeposit(deposit) {
