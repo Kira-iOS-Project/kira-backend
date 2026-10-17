@@ -6,12 +6,8 @@
 import { and, desc, eq, gte, lt, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
-import {
-  type BudgetAllocation,
-  budgets,
-  type PaydayChoice,
-  transactions,
-} from '../../db/schema/schema.ts';
+import { type BudgetAllocation, budgets, transactions, users } from '../../db/schema/schema.ts';
+import type { Payday } from '../../lib/time/wib.ts';
 import { TRANSACTION_TYPE } from '../../lib/constants/money.ts';
 import type { z } from 'zod';
 import type { expenseCategorySchema } from '../../lib/money/money.schema.ts';
@@ -32,9 +28,7 @@ export type SummaryRepository = {
   ): Promise<{ category: ExpenseCategory; amount: number }[]>;
   /** All expenses within [from, to). */
   expenseTotal(userId: string, from: Date, to: Date): Promise<number>;
-  findBudget(
-    userId: string,
-  ): Promise<{ allocations: BudgetAllocation[]; payday: PaydayChoice } | null>;
+  findBudget(userId: string): Promise<{ allocations: BudgetAllocation[]; payday: Payday } | null>;
 };
 
 function expensesOf(userId: string, from: Date, to: Date) {
@@ -77,12 +71,20 @@ export function createSummaryRepository(client: PostgresJsDatabase = db): Summar
     },
 
     async findBudget(userId) {
+      /** The payday is the account's (users), as Beranda and the budget read it. */
       const [row] = await client
-        .select({ allocations: budgets.allocations, payday: budgets.payday })
+        .select({
+          allocations: budgets.allocations,
+          day: users.paydayDay,
+          endOfMonth: users.paydayEndOfMonth,
+        })
         .from(budgets)
+        .innerJoin(users, eq(users.id, budgets.userId))
         .where(eq(budgets.userId, userId))
         .limit(1);
-      return row ?? null;
+      return row
+        ? { allocations: row.allocations, payday: { day: row.day, endOfMonth: row.endOfMonth } }
+        : null;
     },
   };
 }

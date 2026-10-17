@@ -49,12 +49,7 @@
   {
     "name": "money",
     "home": "src/lib/constants/money.ts",
-    "allow": [
-      {
-        "path": "src/db/schema/budgets.ts",
-        "reason": "'income' in the constraint name identifies the budgets table column, not the transaction income category."
-      }
-    ]
+    "allow": []
   },
   {
     "name": "UNG finance",

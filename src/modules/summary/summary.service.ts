@@ -38,7 +38,7 @@ export async function getWeeklySummary(
   return { start, end, total, previousTotal, days, categories, budget };
 }
 
-/** The budget's total against the payday period `end` falls in, as the budget's own payday sets it. */
+/** The budget's total against the payday period `end` falls in, by the account's payday. */
 async function budgetOf(
   userId: string,
   end: string,
@@ -46,11 +46,7 @@ async function budgetOf(
 ): Promise<WeeklySummary['budget']> {
   const budget = await repository.findBudget(userId);
   if (!budget) return null;
-  const payday =
-    budget.payday.type === 'endOfMonth'
-      ? { day: null, endOfMonth: true }
-      : { day: budget.payday.day, endOfMonth: false };
-  const period = paydayPeriod(end, payday);
+  const period = paydayPeriod(end, budget.payday);
   const spent = await repository.expenseTotal(
     userId,
     wibStartOfDay(period.start),

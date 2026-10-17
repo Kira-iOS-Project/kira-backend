@@ -54,7 +54,7 @@ function deps(
   const options: LadderDeps = {
     scoreInput: async () => input,
     payingNow: async () => ({ id: 'debt-a', name: 'Paylater A' }),
-    emergencyGoal: async () => goal,
+    emergencyGoal: async () => (goal ? { id: 'goal-1', monthlyDeposit: 650_000, ...goal } : null),
     repository,
     now: () => NOW,
   };

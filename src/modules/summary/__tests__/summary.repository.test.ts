@@ -37,7 +37,8 @@ describe('createSummaryRepository', () => {
         [
           {
             allocations: JSON.stringify([{ category: EXPENSE_CATEGORY.food, amount: 1 }]),
-            payday: '{"type":"day","day":25}',
+            day: 25,
+            endOfMonth: false,
           },
         ],
         [],
@@ -48,7 +49,7 @@ describe('createSummaryRepository', () => {
     expect(await repository.expenseTotal('user-1', FROM, TO)).toBe(0);
     expect(await repository.findBudget('user-1')).toEqual({
       allocations: [{ category: EXPENSE_CATEGORY.food, amount: 1 }],
-      payday: { type: 'day', day: 25 },
+      payday: { day: 25, endOfMonth: false },
     });
     expect(await repository.findBudget('user-1')).toBeNull();
   });

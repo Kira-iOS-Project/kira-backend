@@ -51,7 +51,7 @@ describe('getWeeklySummary', () => {
       { category: EXPENSE_CATEGORY.food, amount: 2_500_000 },
       { category: EXPENSE_CATEGORY.transport, amount: 1_500_000 },
     ];
-    const day = repositoryOf({ allocations, payday: { type: 'day', day: 25 } });
+    const day = repositoryOf({ allocations, payday: { day: 25, endOfMonth: false } });
     const onDay = await getWeeklySummary(
       'user-1',
       { end: '2026-10-14' },
@@ -63,7 +63,7 @@ describe('getWeeklySummary', () => {
       periodStart: '2026-09-25',
       periodEnd: '2026-10-24',
     });
-    const last = repositoryOf({ allocations, payday: { type: 'endOfMonth' } });
+    const last = repositoryOf({ allocations, payday: { day: null, endOfMonth: true } });
     const onLast = await getWeeklySummary(
       'user-1',
       { end: '2026-10-14' },
