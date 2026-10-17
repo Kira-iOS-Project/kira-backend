@@ -43,6 +43,13 @@
       "when": 1792195356324,
       "tag": "0005_payoff_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792196063403,
+      "tag": "0006_score_history",
+      "breakpoints": true
     }
   ]
 }

@@ -42,4 +42,15 @@ export const STEP_KIND = {
 export const SNAPSHOT_REASON = {
   healthCheck: 'health_check',
   recompute: 'recompute',
+  /** Riwayat Kira Score's monthly point, taken on the 25th (WIB). */
+  monthly: 'monthly',
+} as const;
+
+/** The day of the month (WIB) Riwayat Kira Score takes its monthly snapshot. */
+export const MONTHLY_SNAPSHOT_DAY = 25;
+
+/** Riwayat Kira Score's two ranges: 6 Bulan and 1 Tahun, in months. */
+export const SCORE_HISTORY_RANGE = {
+  sixMonths: '6m',
+  oneYear: '1y',
 } as const;
