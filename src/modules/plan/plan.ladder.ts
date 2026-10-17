@@ -3,8 +3,9 @@
  * score engine's facts from the health check and the open debts:
  * 1 Lunasi Utang Mahal: done with no consumer debt left; names the account being paid now.
  * 2 Dana Darurat: done once the fund reaches the engine's target multiple of essential spending.
- *   The fund is the Dana Darurat goal's saved amount when that goal exists, else the health
- *   check's figure (the emergency-fund wallet takes over once wallets exist: a follow-up).
+ *   With a Dana Darurat goal the rung follows the goal, as its card does: its saved amount
+ *   against its own target, the multiple from the pokok typed into the calculator. Without one,
+ *   the health check's fund and target (the emergency-fund wallet takes over: a follow-up).
  * 3 Proteksi: done with both health cover and income cover.
  * 4 Investasi Bertahap: a suggestion, never locked or done.
  * Only the first rung not done is current (rung 4 once 1–3 are done); the rest are todo. Before the
@@ -18,17 +19,17 @@ import { addMonths, monthStart, wibDate, wibStartOfDay } from '../../lib/time/wi
 import { GOAL_KIND, LADDER_STATUS, PLAN_LADDER_STEP } from '../../lib/constants/plan.ts';
 import { payingNowOf } from '../payoff/index.ts';
 import { factsOf, findScoreInput, isConsumerDebt, type ScoreInput } from '../score/index.ts';
-import { listGoalSummaries } from './plan.goal.service.ts';
+import { goalRepository } from './plan.goal.repository.ts';
 import { ladderRepository, type LadderRepository } from './plan.ladder.repository.ts';
-import type { LadderStep, PlanPrefill } from './plan.schema.ts';
+import { ESSENTIAL_EXPENSE_INPUT, type LadderStep, type PlanPrefill } from './plan.schema.ts';
 
 type LadderDetail = LadderStep['detail'];
 
 export type LadderDeps = {
   scoreInput?: (userId: string) => Promise<ScoreInput | null>;
   payingNow?: (userId: string) => Promise<{ id: string; name: string } | null>;
-  /** What the Dana Darurat goal holds, or null without that goal. */
-  emergencySaved?: (userId: string) => Promise<number | null>;
+  /** The Dana Darurat goal's saved amount, target and pokok, or null without that goal. */
+  emergencyGoal?: (userId: string) => Promise<EmergencyGoal | null>;
   repository?: LadderRepository;
   now?: () => Date;
 };
@@ -53,10 +54,19 @@ const KEYS = [
 /** One decimal, as Rencana writes it ("Sekarang 1,1× pengeluaran pokok"). */
 const oneDecimal = (value: number) => Math.round(value * 10) / 10;
 
-/** The Dana Darurat goal's saved amount (initial amount and deposits), or null without it. */
-async function emergencySavedOf(userId: string): Promise<number | null> {
-  const goals = await listGoalSummaries(userId);
-  return goals.find((goal) => goal.kind === GOAL_KIND.emergencyFund)?.savedAmount ?? null;
+type EmergencyGoal = { saved: number; target: number; essential: number | null };
+
+/** The Dana Darurat goal: saved (initial amount and deposits), target, and the pokok typed in. */
+async function emergencyGoalOf(userId: string): Promise<EmergencyGoal | null> {
+  const goals = await goalRepository.listGoals(userId);
+  const goal = goals.find((row) => row.kind === GOAL_KIND.emergencyFund);
+  if (!goal) return null;
+  const essential = goal.inputs[ESSENTIAL_EXPENSE_INPUT];
+  return {
+    saved: goal.savedAmount,
+    target: goal.targetAmount,
+    essential: typeof essential === 'number' && essential > 0 ? essential : null,
+  };
 }
 
 /** Only the first rung not done is current; rung 4 is never done, so it is current after 1–3. */
@@ -80,15 +90,18 @@ export async function ladderOf(userId: string, deps: LadderDeps = {}): Promise<L
   }
   const facts = factsOf(input);
   const consumer = input.debts.filter(isConsumerDebt);
-  const [payingNow, saved] = await Promise.all([
+  const [payingNow, goal] = await Promise.all([
     consumer.length > 0 ? (deps.payingNow ?? payingNowOf)(userId) : null,
-    (deps.emergencySaved ?? emergencySavedOf)(userId),
+    (deps.emergencyGoal ?? emergencyGoalOf)(userId),
   ]);
-  const fund = saved ?? facts.liquid;
-  const target = facts.targetMultiple * facts.essential;
+  const fund = goal?.saved ?? facts.liquid;
+  const essential = goal ? (goal.essential ?? facts.essential) : facts.essential;
+  const target = goal?.target ?? facts.targetMultiple * facts.essential;
+  const targetMultiple =
+    goal && essential > 0 ? Math.round(target / essential) : facts.targetMultiple;
   const done: [boolean, boolean, boolean] = [
     consumer.length === 0,
-    facts.essential > 0 && fund >= target,
+    target > 0 && fund >= target,
     facts.health && facts.incomeCover,
   ];
   const details: LadderDetail[] = [
@@ -99,8 +112,8 @@ export async function ladderOf(userId: string, deps: LadderDeps = {}): Promise<L
     Object.assign({}, EMPTY, {
       amount: fund,
       target,
-      multiple: facts.essential > 0 ? oneDecimal(fund / facts.essential) : null,
-      targetMultiple: facts.targetMultiple,
+      multiple: essential > 0 ? oneDecimal(fund / essential) : null,
+      targetMultiple,
     }),
     Object.assign({}, EMPTY, { health: facts.health, incomeCover: facts.incomeCover }),
     EMPTY,
@@ -122,9 +135,9 @@ export async function ladderOf(userId: string, deps: LadderDeps = {}): Promise<L
 export async function prefillOf(userId: string, deps: LadderDeps = {}): Promise<PlanPrefill> {
   const repository = deps.repository ?? ladderRepository;
   const thisMonth = monthStart(wibDate((deps.now ?? (() => new Date()))()));
-  const [input, saved, months] = await Promise.all([
+  const [input, goal, months] = await Promise.all([
     (deps.scoreInput ?? findScoreInput)(userId),
-    (deps.emergencySaved ?? emergencySavedOf)(userId),
+    (deps.emergencyGoal ?? emergencyGoalOf)(userId),
     repository.essentialByMonth(
       userId,
       wibStartOfDay(addMonths(thisMonth, -PREFILL_MONTHS)),
@@ -138,7 +151,7 @@ export async function prefillOf(userId: string, deps: LadderDeps = {}): Promise<
       : null;
   return {
     essentialExpense: average ?? input?.essential ?? null,
-    emergencyFund: saved ?? input?.emergencyFund ?? null,
+    emergencyFund: goal?.saved ?? input?.emergencyFund ?? null,
     married: input?.maritalStatus ? input.maritalStatus === MARITAL_STATUS.married : null,
     dependants: input ? input.dependents : null,
     monthlyIncome: input?.income ?? null,
