@@ -12,12 +12,14 @@ import { RISK_PROFILE } from './plan.ts';
  * Points per option (index = the board's order), from the most cautious answer (1) to the most
  * risk-tolerant (4); "Belum Tahu" always scores 1 (coordinator's decision: the boards give no
  * weights).
- * 1 Tujuan: Menjaga Nilai dari Inflasi 2 · Menambah Dana Pelan-pelan 3 · Mengejar Pertumbuhan
+ * 1 Tujuan: Menjaga Nilai Uang dari Inflasi 2 · Menambah Dana Pelan-pelan 3 · Mengejar Pertumbuhan
  *   Tinggi 4 · Belum Tahu 1.
  * 2 Turun 15%: Jual Semua 2 · Diam dan Tunggu Pulih 3 · Tambah Sedikit 4 · Belum Tahu 1.
  * 3 Lama dibiarkan: kurang dari 1 tahun 1 · 1–3 tahun 2 · 3–5 tahun 3 · lebih dari 5 tahun 4.
  * 4 Pengalaman: Belum Pernah 1 · Menabung atau Deposito 2 · Reksa Dana 3 · Saham atau Kripto 4.
- * 5 Setoran bulanan: sampai 5% gaji 1 · 5–10% 2 · 10–20% 3 · lebih dari 20% 4.
+ * 5 Setoran bulanan: the board's four ranges (Sampai Rp375.000,00 · Rp375.000,00 sampai
+ *   Rp750.000,00 · Rp750.000,00 sampai Rp1.500.000,00 · Lebih dari Rp1.500.000,00 on a salary of
+ *   Rp7.500.000,00) score 1 · 2 · 3 · 4; only the index is sent, never an amount.
  * The boards' own answers (3 + 3 + 2 + 1 + 2 = 11) give Moderat, as HasilRisiko shows.
  */
 export const RISK_ANSWER_POINTS: readonly (readonly number[])[] = [
