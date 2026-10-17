@@ -3,18 +3,22 @@
  * score engine's facts from the health check and the open debts:
  * 1 Lunasi Utang Mahal: done with no consumer debt left; names the account being paid now.
  * 2 Dana Darurat: done once the fund reaches the engine's target multiple of essential spending.
+ *   The fund is the Dana Darurat goal's saved amount when that goal exists, else the health
+ *   check's figure (the emergency-fund wallet takes over once wallets exist: a follow-up).
  * 3 Proteksi: done with both health cover and income cover.
- * 4 Investasi Bertahap: a suggestion, never locked or done; current once rungs 1 and 2 are done.
- * The first of rungs 1–3 not done is current, the rest todo. Before the health check every rung is
- * todo with no detail. Prefill's monthlyIncome is the health check's net income (KuisRisiko's Q5).
+ * 4 Investasi Bertahap: a suggestion, never locked or done.
+ * Only the first rung not done is current (rung 4 once 1–3 are done); the rest are todo. Before the
+ * health check every rung is todo with no detail. Prefill's monthlyIncome is the health check's net
+ * income (KuisRisiko's Q5).
  */
 
 import { PREFILL_MONTHS } from '../../lib/constants/ladder.ts';
-import { LADDER_STATUS, PLAN_LADDER_STEP } from '../../lib/constants/plan.ts';
 import { MARITAL_STATUS } from '../../lib/constants/profile.ts';
 import { addMonths, monthStart, wibDate, wibStartOfDay } from '../../lib/time/wib.ts';
+import { GOAL_KIND, LADDER_STATUS, PLAN_LADDER_STEP } from '../../lib/constants/plan.ts';
 import { payingNowOf } from '../payoff/index.ts';
 import { factsOf, findScoreInput, isConsumerDebt, type ScoreInput } from '../score/index.ts';
+import { listGoalSummaries } from './plan.goal.service.ts';
 import { ladderRepository, type LadderRepository } from './plan.ladder.repository.ts';
 import type { LadderStep, PlanPrefill } from './plan.schema.ts';
 
@@ -23,6 +27,8 @@ type LadderDetail = LadderStep['detail'];
 export type LadderDeps = {
   scoreInput?: (userId: string) => Promise<ScoreInput | null>;
   payingNow?: (userId: string) => Promise<{ id: string; name: string } | null>;
+  /** What the Dana Darurat goal holds, or null without that goal. */
+  emergencySaved?: (userId: string) => Promise<number | null>;
   repository?: LadderRepository;
   now?: () => Date;
 };
@@ -47,14 +53,19 @@ const KEYS = [
 /** One decimal, as Rencana writes it ("Sekarang 1,1× pengeluaran pokok"). */
 const oneDecimal = (value: number) => Math.round(value * 10) / 10;
 
+/** The Dana Darurat goal's saved amount (initial amount and deposits), or null without it. */
+async function emergencySavedOf(userId: string): Promise<number | null> {
+  const goals = await listGoalSummaries(userId);
+  return goals.find((goal) => goal.kind === GOAL_KIND.emergencyFund)?.savedAmount ?? null;
+}
+
+/** Only the first rung not done is current; rung 4 is never done, so it is current after 1–3. */
 function statusesOf(done: [boolean, boolean, boolean]) {
-  const current = done.findIndex((isDone) => !isDone);
-  const rungs = done.map((isDone, index) => {
+  const current = [...done, false].findIndex((isDone) => !isDone);
+  return [...done, false].map((isDone, index) => {
     if (isDone) return LADDER_STATUS.done;
     return index === current ? LADDER_STATUS.current : LADDER_STATUS.todo;
   });
-  const invest = done[0] && done[1] ? LADDER_STATUS.current : LADDER_STATUS.todo;
-  return [...rungs, invest];
 }
 
 export async function ladderOf(userId: string, deps: LadderDeps = {}): Promise<LadderStep[]> {
@@ -69,11 +80,15 @@ export async function ladderOf(userId: string, deps: LadderDeps = {}): Promise<L
   }
   const facts = factsOf(input);
   const consumer = input.debts.filter(isConsumerDebt);
-  const payingNow = consumer.length > 0 ? await (deps.payingNow ?? payingNowOf)(userId) : null;
+  const [payingNow, saved] = await Promise.all([
+    consumer.length > 0 ? (deps.payingNow ?? payingNowOf)(userId) : null,
+    (deps.emergencySaved ?? emergencySavedOf)(userId),
+  ]);
+  const fund = saved ?? facts.liquid;
   const target = facts.targetMultiple * facts.essential;
   const done: [boolean, boolean, boolean] = [
     consumer.length === 0,
-    facts.essential > 0 && facts.liquid >= target,
+    facts.essential > 0 && fund >= target,
     facts.health && facts.incomeCover,
   ];
   const details: LadderDetail[] = [
@@ -82,9 +97,9 @@ export async function ladderOf(userId: string, deps: LadderDeps = {}): Promise<L
       amount: consumer.reduce((sum, debt) => sum + debt.remaining, 0),
     }),
     Object.assign({}, EMPTY, {
-      amount: facts.liquid,
+      amount: fund,
       target,
-      multiple: facts.essential > 0 ? oneDecimal(facts.liquid / facts.essential) : null,
+      multiple: facts.essential > 0 ? oneDecimal(fund / facts.essential) : null,
       targetMultiple: facts.targetMultiple,
     }),
     Object.assign({}, EMPTY, { health: facts.health, incomeCover: facts.incomeCover }),
@@ -107,8 +122,9 @@ export async function ladderOf(userId: string, deps: LadderDeps = {}): Promise<L
 export async function prefillOf(userId: string, deps: LadderDeps = {}): Promise<PlanPrefill> {
   const repository = deps.repository ?? ladderRepository;
   const thisMonth = monthStart(wibDate((deps.now ?? (() => new Date()))()));
-  const [input, months] = await Promise.all([
+  const [input, saved, months] = await Promise.all([
     (deps.scoreInput ?? findScoreInput)(userId),
+    (deps.emergencySaved ?? emergencySavedOf)(userId),
     repository.essentialByMonth(
       userId,
       wibStartOfDay(addMonths(thisMonth, -PREFILL_MONTHS)),
@@ -122,7 +138,7 @@ export async function prefillOf(userId: string, deps: LadderDeps = {}): Promise<
       : null;
   return {
     essentialExpense: average ?? input?.essential ?? null,
-    emergencyFund: input?.emergencyFund ?? null,
+    emergencyFund: saved ?? input?.emergencyFund ?? null,
     married: input?.maritalStatus ? input.maritalStatus === MARITAL_STATUS.married : null,
     dependants: input ? input.dependents : null,
     monthlyIncome: input?.income ?? null,

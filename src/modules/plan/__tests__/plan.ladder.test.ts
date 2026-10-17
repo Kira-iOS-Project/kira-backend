@@ -39,7 +39,11 @@ const DINDA: ScoreInput = {
 
 const NOW = new Date('2026-10-17T05:00:00.000Z');
 
-function deps(input: ScoreInput | null, months: { month: string; total: number }[] = []) {
+function deps(
+  input: ScoreInput | null,
+  months: { month: string; total: number }[] = [],
+  saved: number | null = null,
+) {
   const ranges: unknown[] = [];
   const repository: LadderRepository = {
     essentialByMonth: async (_userId, from, to) => {
@@ -50,6 +54,7 @@ function deps(input: ScoreInput | null, months: { month: string; total: number }
   const options: LadderDeps = {
     scoreInput: async () => input,
     payingNow: async () => ({ id: 'debt-a', name: 'Paylater A' }),
+    emergencySaved: async () => saved,
     repository,
     now: () => NOW,
   };
@@ -92,6 +97,30 @@ describe('ladderOf', () => {
     expect(ladder.map((step) => step.status)).toEqual(['done', 'current', 'todo', 'todo']);
     expect(ladder[1]?.detail.multiple).toBeNull();
     expect(ladder[2]?.detail).toMatchObject({ health: false, incomeCover: false });
+  });
+
+  test("the Dana Darurat goal's saved amount stands in for the health check's fund", async () => {
+    const ladder = await ladderOf('user-1', deps(DINDA, [], 25_200_000).options);
+
+    expect(ladder[1]).toMatchObject({
+      status: 'done',
+      detail: { amount: 25_200_000, multiple: 6, target: 25_200_000 },
+    });
+    expect((await prefillOf('user-1', deps(DINDA, [], 5_450_000).options)).emergencyFund).toBe(
+      5_450_000,
+    );
+  });
+
+  test('only the first open rung is current: rung 3 before investing', async () => {
+    const unprotected = { ...DINDA, debts: [], emergencyFund: 25_200_000, protections: [] };
+    const ladder = await ladderOf('user-1', deps(unprotected).options);
+
+    expect(ladder.map((step) => step.status)).toEqual(['done', 'done', 'current', 'todo']);
+  });
+
+  test("reads the goals itself when not given them: no goal, the health check's fund", async () => {
+    const { emergencySaved: _saved, ...withoutGoals } = deps(DINDA).options;
+    expect((await ladderOf('user-1', withoutGoals))[1]?.detail.amount).toBe(4_800_000);
   });
 
   test('before the health check every rung is ahead, with no detail', async () => {
