@@ -47,6 +47,7 @@ export function createGoalRepositoryMock(overrides: Partial<GoalRepository> = {}
     findGoal: async () => goalRow(),
     insertGoal: async () => goalRow(),
     updateGoal: async () => true,
+    deleteGoal: async () => true,
     listDeposits: async () => [],
     listAllDeposits: async () => [],
     insertDeposit: async (deposit) => deposit,

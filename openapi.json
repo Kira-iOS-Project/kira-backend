@@ -4161,6 +4161,78 @@
           "answers"
         ]
       },
+      "LegalitySearch": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-07-31"
+          },
+          "source": {
+            "type": "string",
+            "format": "uri"
+          },
+          "listed": {
+            "type": "integer",
+            "example": 94
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LicensedLender"
+            },
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "asOf",
+          "source",
+          "listed",
+          "results"
+        ]
+      },
+      "LicensedLender": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "string",
+            "example": "PT Kredit Pintar Indonesia"
+          },
+          "app": {
+            "type": "string",
+            "example": "Kredit Pintar"
+          },
+          "license": {
+            "type": "string",
+            "example": "KEP-83/D.05/2019"
+          },
+          "licensedOn": {
+            "type": "string",
+            "format": "date",
+            "example": "2019-09-30"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "conventional",
+              "sharia"
+            ]
+          },
+          "website": {
+            "type": "string",
+            "example": "https://www.kreditpintar.com/"
+          }
+        },
+        "required": [
+          "company",
+          "app",
+          "license",
+          "licensedOn",
+          "type",
+          "website"
+        ]
+      },
       "ChatMessagePage": {
         "type": "object",
         "properties": {
@@ -10022,6 +10094,75 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteGoal",
+        "summary": "Hapus Tujuan",
+        "description": "Deletes the goal with its deposits. An unknown goal, or one another person owns, is 404.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/goals/{id}/deposits": {
@@ -10213,6 +10354,76 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/legality": {
+      "get": {
+        "operationId": "searchLegality",
+        "tags": [
+          "Rencana"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Cek Legalitas",
+        "description": "Searches OJK's list of licensed fintech lenders by app, company or web address, every word of q matching. An empty result means only that the name is not in this list; Kira does not judge legality. The query is not stored, and the request log keeps the path without it.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 80,
+              "example": "kredit pintar"
+            },
+            "required": true,
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalitySearch"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {

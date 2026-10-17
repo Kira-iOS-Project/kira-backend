@@ -3,6 +3,7 @@ import type { AppEnv } from '../../lib/server/factory.ts';
 import {
   addGoalDeposit,
   createGoal,
+  deleteGoal,
   getGoalDetail,
   listGoalSummaries,
   updateGoal,
@@ -11,6 +12,7 @@ import { getRiskProfile, saveRiskProfile } from './plan.risk.ts';
 import type {
   addGoalDepositRoute,
   createGoalRoute,
+  deleteGoalRoute,
   getGoalRoute,
   getPlanRoute,
   getRiskProfileRoute,
@@ -39,6 +41,11 @@ export const getGoalHandler: RouteHandler<typeof getGoalRoute, AppEnv> = async (
 export const updateGoalHandler: RouteHandler<typeof updateGoalRoute, AppEnv> = async (c) => {
   const { id } = c.req.valid('param');
   return c.json(await updateGoal(c.get('userId'), id, c.req.valid('json')), 200);
+};
+
+export const deleteGoalHandler: RouteHandler<typeof deleteGoalRoute, AppEnv> = async (c) => {
+  await deleteGoal(c.get('userId'), c.req.valid('param').id);
+  return c.body(null, 204);
 };
 
 export const addGoalDepositHandler: RouteHandler<typeof addGoalDepositRoute, AppEnv> = async (

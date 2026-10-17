@@ -40,6 +40,8 @@ export type GoalRepository = {
   /** Throws GoalEmergencyExistsError for a second emergency fund. */
   insertGoal(userId: string, goal: NewGoal, isEmergency: boolean): Promise<GoalRow>;
   updateGoal(userId: string, id: string, patch: GoalPatch): Promise<boolean>;
+  /** Deletes the person's goal with its deposits (cascade); says whether one matched. */
+  deleteGoal(userId: string, id: string): Promise<boolean>;
   /** Newest first. */
   listDeposits(goalId: string): Promise<DepositRow[]>;
   /** Every deposit of the person's goals, oldest first, for Unduh Datamu. */
@@ -136,6 +138,14 @@ export function createGoalRepository(client: PostgresJsDatabase = db): GoalRepos
       const rows = await client
         .update(goals)
         .set(patch)
+        .where(and(eq(goals.userId, userId), eq(goals.id, id)))
+        .returning({ id: goals.id });
+      return rows.length > 0;
+    },
+
+    async deleteGoal(userId, id) {
+      const rows = await client
+        .delete(goals)
         .where(and(eq(goals.userId, userId), eq(goals.id, id)))
         .returning({ id: goals.id });
       return rows.length > 0;

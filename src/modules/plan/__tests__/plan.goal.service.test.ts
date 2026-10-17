@@ -7,6 +7,7 @@ import {
   listGoalSummaries,
   milestonesOf,
   updateGoal,
+  deleteGoal,
 } from '../plan.goal.service.ts';
 import { createGoalRepositoryMock, DEPOSIT_ID, GOAL_ID, goalRow } from './helpers.ts';
 
@@ -128,6 +129,22 @@ describe('goals', () => {
     expect(goal.id).toBe(GOAL_ID);
     const none = createGoalRepositoryMock({ updateGoal: async () => false });
     expect(updateGoal(USER, GOAL_ID, { name: 'X' }, { repository: none })).rejects.toMatchObject({
+      code: 'GOAL_NOT_FOUND',
+    });
+  });
+
+  test('deletes the goal, and an unknown one is GOAL_NOT_FOUND', async () => {
+    const asked: string[] = [];
+    const repository = createGoalRepositoryMock({
+      deleteGoal: async (userId, id) => {
+        asked.push(`${userId}/${id}`);
+        return true;
+      },
+    });
+    expect(await deleteGoal(USER, GOAL_ID, { repository })).toBeUndefined();
+    expect(asked).toEqual([`${USER}/${GOAL_ID}`]);
+    const none = createGoalRepositoryMock({ deleteGoal: async () => false });
+    expect(deleteGoal(USER, GOAL_ID, { repository: none })).rejects.toMatchObject({
       code: 'GOAL_NOT_FOUND',
     });
   });

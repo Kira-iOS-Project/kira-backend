@@ -69,6 +69,15 @@ describe('createGoalRepository', () => {
     expect(fake.queries[0]?.sql).toStartWith('update "goals"');
   });
 
+  test("deletes only the person's goal and says whether one matched", async () => {
+    const gone = createFakeDb(() => []);
+    expect(await createGoalRepository(gone.db).deleteGoal('user-1', GOAL_ID)).toBe(false);
+    expect(gone.queries[0]?.sql).toStartWith('delete from "goals"');
+    expect(gone.queries[0]?.sql).toContain('"user_id" = $');
+    const found = createFakeDb(() => [{ id: GOAL_ID }]);
+    expect(await createGoalRepository(found.db).deleteGoal('user-1', GOAL_ID)).toBe(true);
+  });
+
   test('lists deposits newest first, and every deposit of the person for the export', async () => {
     const row = { id: DEPOSIT_ID, goalId: GOAL_ID, amount: 650_000, depositedOn: '2026-09-25' };
     const fake = createFakeDb((query) =>

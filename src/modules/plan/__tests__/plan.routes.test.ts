@@ -24,6 +24,7 @@ describe('the goal routes without a session', () => {
     ['POST', '/api/goals'],
     ['GET', `/api/goals/${GOAL_ID}`],
     ['PATCH', `/api/goals/${GOAL_ID}`],
+    ['DELETE', `/api/goals/${GOAL_ID}`],
     ['POST', `/api/goals/${GOAL_ID}/deposits`],
   ])('%s %s answers 401', async (method, path) => {
     const res = await app.request(path, { method });
