@@ -20,6 +20,7 @@ export type IndicatorPoints = Record<IndicatorKey, number>;
 
 /** An open debt account: one not paid off yet. */
 export type DebtInput = {
+  id?: string;
   kind: Values<typeof DEBT_KIND>;
   name: string;
   remaining: number;

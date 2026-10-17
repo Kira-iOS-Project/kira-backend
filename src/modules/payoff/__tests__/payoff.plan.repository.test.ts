@@ -81,7 +81,9 @@ describe('createPlanRepository', () => {
   });
 
   test('records a payment once, then applies it against the balance it expects', async () => {
-    const fake = createFakeDb(inOrder([{ id: 'payment-1' }], [{ id: 'debt-1' }]));
+    const fake = createFakeDb(
+      inOrder([{ id: 'transaction-1' }], [{ id: 'payment-1' }], [{ id: 'debt-1' }]),
+    );
     const outcome = await createPlanRepository(fake.db).recordPayment(
       'user-1',
       'debt-1',
@@ -90,16 +92,23 @@ describe('createPlanRepository', () => {
     );
 
     expect(outcome).toBe('applied');
-    expect(sqlOf(fake)).toEqual(['insert into "debt_payments"', 'update "debt_accounts" set']);
-    expect(fake.queries[0]?.sql).toContain(
+    expect(sqlOf(fake)).toEqual([
+      'insert into "transactions"',
+      'insert into "debt_payments"',
+      'update "debt_accounts" set',
+    ]);
+    expect(fake.queries[0]?.sql).toContain('on conflict ("user_id","client_id") do nothing');
+    expect(fake.queries[0]?.params).toEqual(expect.arrayContaining(['pay-1', 420_000]));
+    expect(fake.queries[1]?.sql).toContain(
       'on conflict ("user_id","client_payment_id") do nothing',
     );
-    expect(fake.queries[0]?.params).toEqual(expect.arrayContaining([420_000, 'pay-1']));
-    expect(fake.queries[1]?.sql).toContain('"paid_off_at" is null');
-    expect(fake.queries[1]?.sql).toContain('"remaining_amount" = $');
+    expect(fake.queries[1]?.params).toEqual(expect.arrayContaining([420_000, 'pay-1']));
+    expect(fake.queries[2]?.sql).toContain('"paid_off_at" is null');
+    expect(fake.queries[2]?.sql).toContain('"remaining_amount" = $');
+    expect(fake.queries[2]?.sql).toContain('"remaining_tenor_months"');
   });
 
-  test('a repeated payment id changes nothing', async () => {
+  test('a transaction client id already used is treated as a duplicate payment', async () => {
     const fake = createFakeDb(inOrder([]));
     const outcome = await createPlanRepository(fake.db).recordPayment(
       'user-1',
@@ -112,8 +121,21 @@ describe('createPlanRepository', () => {
     expect(fake.queries).toHaveLength(1);
   });
 
+  test('rolls back the transaction when an old payment id already exists', async () => {
+    const fake = createFakeDb(inOrder([{ id: 'transaction-1' }], []));
+    const outcome = await createPlanRepository(fake.db).recordPayment(
+      'user-1',
+      'debt-1',
+      { amount: 1_000, from: 420_000, to: 419_000, paymentId: 'pay-1' },
+      NOW,
+    );
+
+    expect(outcome).toBe('duplicate');
+    expect(fake.queries).toHaveLength(2);
+  });
+
   test('rolls the payment back when the balance changed meanwhile', async () => {
-    const fake = createFakeDb(inOrder([{ id: 'payment-1' }], []));
+    const fake = createFakeDb(inOrder([{ id: 'transaction-1' }], [{ id: 'payment-1' }], []));
     const outcome = await createPlanRepository(fake.db).recordPayment(
       'user-1',
       'debt-1',
@@ -122,7 +144,7 @@ describe('createPlanRepository', () => {
     );
 
     expect(outcome).toBe('stale');
-    expect(fake.queries).toHaveLength(2);
+    expect(fake.queries).toHaveLength(3);
   });
 
   test('rethrows any other failure of the payment', async () => {

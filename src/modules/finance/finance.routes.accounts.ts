@@ -3,6 +3,8 @@ import { errorResponses } from '../../lib/errors/problem.ts';
 import {
   createDebtBodySchema,
   debtCreateResponseSchema,
+  debtDetailSchema,
+  debtParamsSchema,
   createWalletBodySchema,
   walletCreateResponseSchema,
   walletListSchema,
@@ -46,5 +48,18 @@ export const createDebtRoute = createRoute({
   responses: {
     201: { ...json(debtCreateResponseSchema), description: 'Created debt account' },
     ...errorResponses(401, 422),
+  },
+});
+
+export const getDebtRoute = createRoute({
+  ...protectedRoute,
+  method: 'get',
+  path: '/debts/{id}',
+  operationId: 'getDebtDetail',
+  summary: 'Debt account detail and installment history',
+  request: { params: debtParamsSchema },
+  responses: {
+    200: { ...json(debtDetailSchema), description: 'Owned debt account detail' },
+    ...errorResponses(401, 404),
   },
 });

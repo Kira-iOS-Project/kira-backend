@@ -33,14 +33,20 @@ export function debt(overrides: Partial<DebtInput> = {}): DebtInput {
 }
 
 export const DINDA_DEBTS: DebtInput[] = [
-  debt(),
-  debt({ name: 'Paylater B', remaining: 890_000, monthlyInstalment: 290_000 }),
-  debt({
-    kind: DEBT_KIND.vehicle,
-    name: 'Cicilan Motor',
-    remaining: 13_000_000,
-    monthlyInstalment: 850_000,
-  }),
+  Object.assign({ id: 'paylater-a' }, debt()),
+  Object.assign(
+    { id: 'paylater-b' },
+    debt({ name: 'Paylater B', remaining: 890_000, monthlyInstalment: 290_000 }),
+  ),
+  Object.assign(
+    { id: 'motor' },
+    debt({
+      kind: DEBT_KIND.vehicle,
+      name: 'Cicilan Motor',
+      remaining: 13_000_000,
+      monthlyInstalment: 850_000,
+    }),
+  ),
 ];
 
 export const DINDA_ANSWERS: Omit<ScoreInput, 'debts'> = {

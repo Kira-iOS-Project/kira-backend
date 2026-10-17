@@ -138,6 +138,24 @@ export async function estimateScoreChange(
   };
 }
 
+/** The current score and the engine's simulated score after this account is paid off. */
+export async function estimateDebtPayoffScore(
+  userId: string,
+  debtId: string,
+  deps: Pick<ScoreDeps, 'repository'> = {},
+): Promise<{ current: number; afterPayoff: number; isSimulated: true } | null> {
+  const repository = deps.repository ?? scoreRepository;
+  const state = await repository.findState(userId);
+  if (!state?.input) return null;
+  const debts = await repository.listOpenDebts(userId);
+  return {
+    current: evaluate({ ...state.input, debts }).score,
+    afterPayoff: evaluate({ ...state.input, debts: debts.filter((debt) => debt.id !== debtId) })
+      .score,
+    isSimulated: true,
+  };
+}
+
 /** Saves the answers and returns the first score; the quiz never asks how a debt is being paid. */
 export async function saveHealthCheck(
   userId: string,

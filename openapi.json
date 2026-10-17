@@ -4993,7 +4993,8 @@
                 "type": "string",
                 "enum": [
                   "upcoming",
-                  "dueSoon"
+                  "dueSoon",
+                  "paid"
                 ]
               }
             },
@@ -5149,6 +5150,205 @@
           "name",
           "kind",
           "amount"
+        ]
+      },
+      "DebtDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "paylater",
+              "online_loan",
+              "credit_card",
+              "vehicle",
+              "mortgage",
+              "family_loan"
+            ]
+          },
+          "originalAmount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remainingAmount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "monthlyInstallment": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remainingTenorMonths": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "installmentsTotal": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "installmentsRemaining": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "on_time",
+              "late",
+              "overdue"
+            ]
+          },
+          "nextInstallment": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "dueDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "amount": {
+                "type": "integer"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "upcoming",
+                  "dueSoon",
+                  "paid"
+                ]
+              }
+            },
+            "required": [
+              "dueDate",
+              "amount",
+              "status"
+            ]
+          },
+          "dueSoon": {
+            "type": "boolean"
+          },
+          "totalPaid": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "scoreEstimate": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "current": {
+                "type": "integer"
+              },
+              "afterPayoff": {
+                "type": "integer"
+              },
+              "isSimulated": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            },
+            "required": [
+              "current",
+              "afterPayoff",
+              "isSimulated"
+            ]
+          },
+          "nextStep": {
+            "type": "string"
+          },
+          "installmentSchedule": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dueDate": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "amount": {
+                  "type": "integer"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "upcoming",
+                    "dueSoon",
+                    "paid"
+                  ]
+                }
+              },
+              "required": [
+                "dueDate",
+                "amount",
+                "status"
+              ]
+            }
+          },
+          "paymentHistory": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "amount": {
+                  "type": "integer"
+                },
+                "onTime": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "date",
+                "amount",
+                "onTime"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "originalAmount",
+          "remainingAmount",
+          "monthlyInstallment",
+          "remainingTenorMonths",
+          "installmentsTotal",
+          "installmentsRemaining",
+          "paymentStatus",
+          "nextInstallment",
+          "dueSoon",
+          "totalPaid",
+          "scoreEstimate",
+          "nextStep",
+          "installmentSchedule",
+          "paymentHistory"
         ]
       },
       "BankImport": {
@@ -10480,6 +10680,73 @@
           },
           "422": {
             "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/debts/{id}": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getDebtDetail",
+        "summary": "Debt account detail and installment history",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Owned debt account detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
             "content": {
               "application/problem+json": {
                 "schema": {

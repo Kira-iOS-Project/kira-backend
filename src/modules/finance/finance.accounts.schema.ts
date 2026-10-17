@@ -15,6 +15,7 @@ const walletSchema = z
   .openapi('Wallet');
 
 const date = z.iso.date();
+const installmentStatus = z.enum(['upcoming', 'dueSoon', 'paid']);
 
 const debtSummarySchema = z
   .object({
@@ -29,7 +30,7 @@ const debtSummarySchema = z
     installmentsRemaining: z.number().int().nullable(),
     paymentStatus: z.enum(enumValues(DEBT_PAYMENT_STATUS)),
     nextInstallment: z
-      .object({ dueDate: date, amount: z.number().int(), status: z.enum(['upcoming', 'dueSoon']) })
+      .object({ dueDate: date, amount: z.number().int(), status: installmentStatus })
       .nullable(),
     dueSoon: z.boolean(),
   })
@@ -37,6 +38,46 @@ const debtSummarySchema = z
 
 export const walletCreateResponseSchema = z.union([walletSchema, debtSummarySchema]);
 export const debtCreateResponseSchema = debtSummarySchema;
+export const debtParamsSchema = z.object({ id: z.uuid() });
+
+export const debtDetailSchema = z
+  .object({
+    id: z.uuid(),
+    name: z.string(),
+    kind: z.enum(enumValues(DEBT_KIND)),
+    originalAmount: z.number().int().min(0),
+    remainingAmount: z.number().int().min(0),
+    monthlyInstallment: z.number().int().min(0),
+    remainingTenorMonths: z.number().int().nullable(),
+    installmentsTotal: z.number().int().nullable(),
+    installmentsRemaining: z.number().int().nullable(),
+    paymentStatus: z.enum(enumValues(DEBT_PAYMENT_STATUS)),
+    nextInstallment: z
+      .object({ dueDate: date, amount: z.number().int(), status: installmentStatus })
+      .nullable(),
+    dueSoon: z.boolean(),
+    totalPaid: z.number().int().min(0),
+    scoreEstimate: z
+      .object({
+        current: z.number().int(),
+        afterPayoff: z.number().int(),
+        isSimulated: z.literal(true),
+      })
+      .nullable(),
+    nextStep: z.string(),
+    installmentSchedule: z.array(
+      z.object({ dueDate: date, amount: z.number().int(), status: installmentStatus }),
+    ),
+    paymentHistory: z.array(
+      z.object({
+        id: z.uuid(),
+        date: z.iso.datetime(),
+        amount: z.number().int(),
+        onTime: z.boolean(),
+      }),
+    ),
+  })
+  .openapi('DebtDetail');
 
 export const walletListSchema = z
   .object({

@@ -3,7 +3,6 @@ import { financeRepository, type FinanceRepository } from './finance.repository.
 import type { CreateDebtInput, CreateWalletInput } from './finance.accounts.schema.ts';
 import { DEBT_KIND } from '../../lib/constants/profile.ts';
 import { FINANCE_INPUT_ALIAS, WALLET_TYPE } from '../../lib/constants/ung.ts';
-
 type Deps = { repository?: FinanceRepository; now?: () => Date };
 
 function nextDueDate(today: string, dueDay: number | null): string | null {

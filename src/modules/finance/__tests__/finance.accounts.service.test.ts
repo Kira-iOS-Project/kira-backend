@@ -44,6 +44,9 @@ function repository(overrides: Partial<FinanceRepository> = {}): FinanceReposito
       remainingTenorMonths: body.remainingTenorMonths,
       dueDay: body.dueDay,
     }),
+    findDebt: async (_userId, debtId) =>
+      debtId === debt.id ? { ...debt, createdAt: new Date('2026-08-10T00:00:00.000Z') } : null,
+    listDebtPayments: async () => [],
     ...overrides,
   };
 }

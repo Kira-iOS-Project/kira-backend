@@ -95,4 +95,37 @@ describe('finance account repository', () => {
       expect(query.sql).toContain('returning');
     }
   });
+
+  test('loads debt details and payment history with owner filters and stable order', async () => {
+    const createdAt = new Date('2026-08-10T00:00:00.000Z');
+    const paidAt = new Date('2026-09-10T00:00:00.000Z');
+    const fake = createFakeDb((query) =>
+      query.sql.includes('from "debt_accounts"')
+        ? [
+            {
+              id: ID,
+              name: 'Paylater',
+              kind: DEBT_KIND.paylater,
+              originalAmount: 1000,
+              remainingAmount: 800,
+              monthlyInstallment: 200,
+              remainingTenorMonths: 4,
+              dueDay: 20,
+              paymentStatus: DEBT_PAYMENT_STATUS.onTime,
+              createdAt,
+            },
+          ]
+        : [{ id: 'payment-1', amount: 200, paidAt }],
+    );
+    const repository = createFinanceRepository(fake.db);
+
+    await expect(repository.findDebt('owner', ID)).resolves.toMatchObject({ id: ID, createdAt });
+    await expect(await repository.listDebtPayments('owner', ID)).toEqual([
+      { id: 'payment-1', amount: 200, paidAt },
+    ]);
+    expect(fake.queries[0]?.sql).toContain('"user_id" =');
+    expect(fake.queries[0]?.sql).toContain('"id" =');
+    expect(fake.queries[1]?.sql).toContain('order by "debt_payments"."paid_at"');
+    expect(fake.queries[1]?.params).toEqual(expect.arrayContaining(['owner', ID]));
+  });
 });

@@ -23,6 +23,9 @@ type DebtRow = {
   paymentStatus: Values<typeof DEBT_PAYMENT_STATUS>;
 };
 
+type DebtDetailRow = DebtRow & { createdAt: Date };
+type DebtPaymentRow = { id: string; amount: number; paidAt: Date };
+
 type CreateWalletBody = {
   name: string;
   type: Values<typeof WALLET_TYPE>;
@@ -43,4 +46,6 @@ export type FinanceRepository = {
   createWallet(userId: string, body: CreateWalletBody, now: Date): Promise<WalletRow>;
   listDebts(userId: string): Promise<DebtRow[]>;
   createDebt(userId: string, body: CreateDebtBody, now: Date): Promise<DebtRow>;
+  findDebt(userId: string, debtId: string): Promise<DebtDetailRow | null>;
+  listDebtPayments(userId: string, debtId: string): Promise<DebtPaymentRow[]>;
 };

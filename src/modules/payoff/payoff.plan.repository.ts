@@ -6,10 +6,11 @@
 import { and, eq, gt, gte, isNull } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
-import { debtAccounts, debtPayments, payoffPlans, users } from '../../db/schema/schema.ts';
+import { debtAccounts, payoffPlans, users } from '../../db/schema/schema.ts';
 import type { DEBT_PAYMENT_STATUS } from '../../lib/constants/profile.ts';
 import type { PayoffMethod } from './payoff.engine.ts';
 import type { OpenDebt } from './payoff.repository.ts';
+import { hasDebtPayment, recordDebtPayment } from './payoff.payment.repository.ts';
 
 type Values<T> = T[keyof T];
 
@@ -36,10 +37,7 @@ export type Payment = { amount: number; from: number; to: number; paymentId: str
 /** A consumer account the plan paid off, and when. */
 export type PaidDebt = PlanDebt & { paidOffAt: Date | null };
 /** What became of a payment: applied, refused as a repeat, or the balance changed meanwhile. */
-type PaymentOutcome = 'applied' | 'duplicate' | 'stale';
-
-/** Thrown inside the payment's transaction to roll its insert back when the balance moved. */
-const STALE_BALANCE = new Error('The balance changed meanwhile');
+export type PaymentOutcome = 'applied' | 'duplicate' | 'stale';
 
 /** At most this many accounts are read: the quiz accepts twenty. */
 const DEBT_LIMIT = 50;
@@ -153,46 +151,11 @@ export function createPlanRepository(client: PostgresJsDatabase = db): PlanRepos
     },
 
     async hasPayment(userId, paymentId) {
-      const mine = eq(debtPayments.userId, userId);
-      const where = and(mine, eq(debtPayments.clientPaymentId, paymentId));
-      const [row] = await client.select({ id: debtPayments.id }).from(debtPayments).where(where);
-      return row !== undefined;
+      return hasDebtPayment(client, userId, paymentId);
     },
 
-    async recordPayment(userId, debtId, payment, now) {
-      try {
-        return await client.transaction(async (tx) => {
-          const [inserted] = await tx
-            .insert(debtPayments)
-            .values({
-              debtId,
-              userId,
-              amount: payment.amount,
-              clientPaymentId: payment.paymentId,
-              paidAt: now,
-            })
-            .onConflictDoNothing({ target: [debtPayments.userId, debtPayments.clientPaymentId] })
-            .returning({ id: debtPayments.id });
-          if (!inserted) return 'duplicate';
-          const updated = await tx
-            .update(debtAccounts)
-            .set({ remainingAmount: payment.to, paidOffAt: payment.to === 0 ? now : null })
-            .where(
-              and(
-                eq(debtAccounts.id, debtId),
-                eq(debtAccounts.userId, userId),
-                isNull(debtAccounts.paidOffAt),
-                eq(debtAccounts.remainingAmount, payment.from),
-              ),
-            )
-            .returning({ id: debtAccounts.id });
-          if (updated.length === 0) throw STALE_BALANCE;
-          return 'applied';
-        });
-      } catch (error) {
-        if (error === STALE_BALANCE) return 'stale';
-        throw error;
-      }
+    recordPayment(userId, debtId, payment, now) {
+      return recordDebtPayment(client, userId, debtId, payment, now);
     },
   };
 }

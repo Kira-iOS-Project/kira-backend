@@ -112,6 +112,7 @@ export function createScoreRepository(client: PostgresJsDatabase = db): ScoreRep
     listOpenDebts(userId) {
       return client
         .select({
+          id: debtAccounts.id,
           kind: debtAccounts.kind,
           name: debtAccounts.name,
           remaining: debtAccounts.remainingAmount,

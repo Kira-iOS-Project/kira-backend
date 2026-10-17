@@ -35,6 +35,7 @@ export function dinda(query: FakeQuery): FakeRow[] {
     return [{ income: 0, expense: 5_660_000, count: 12 }];
   }
   if (query.sql.includes('from "debt_accounts"')) return DINDA_OPEN;
+  if (query.sql.startsWith('insert into "transactions"')) return [{ id: 'transaction-1' }];
   return [];
 }
 
@@ -63,6 +64,7 @@ export const PLAN_DEBT_ROWS = PLAN_DEBTS.map((d) => ({
 export function planned(query: FakeQuery): FakeRow[] {
   if (query.sql.includes('from "payoff_plans"')) return [PLAN_ROW];
   if (query.sql.startsWith('insert into "payoff_plans"')) return [PLAN_ROW];
+  if (query.sql.startsWith('insert into "transactions"')) return [{ id: 'transaction-1' }];
   if (query.sql.startsWith('insert into "debt_payments"')) return [{ id: 'payment-1' }];
   /** No account paid off since the plan began, unless a test says so. */
   if (query.sql.includes('"paid_off_at" >=')) return [];
