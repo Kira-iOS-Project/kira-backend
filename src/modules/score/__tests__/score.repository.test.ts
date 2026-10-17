@@ -123,7 +123,7 @@ describe('createScoreRepository', () => {
       fake.queries.slice(0, 5).map((query) => query.sql.split(' ').slice(0, 3).join(' ')),
     ).toEqual([
       'insert into "financial_profiles"',
-      'delete from "debt_accounts"',
+      'select "id", "kind",',
       'insert into "debt_accounts"',
       'update "users" set',
       'insert into "score_snapshots"',

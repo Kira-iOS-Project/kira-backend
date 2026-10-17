@@ -69,6 +69,8 @@ export function createAccountFinanceRepository(client: PostgresJsDatabase = db):
           monthlyInstalment: body.monthlyInstallment,
           remainingTenorMonths: body.remainingTenorMonths,
           dueDay: body.dueDay,
+          /** Added in Dompet: a health check retake leaves it alone. */
+          fromHealthCheck: false,
           createdAt: now,
           updatedAt: now,
         })

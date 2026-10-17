@@ -5,6 +5,7 @@
 
 import {
   bigint,
+  boolean,
   check,
   date,
   index,
@@ -98,6 +99,11 @@ export const debtAccounts = pgTable(
       .default(DEBT_PAYMENT_STATUS.onTime)
       .notNull(),
     paidOffAt: moment('paid_off_at'),
+    /**
+     * Added by the health check (true; every account before Dompet was) or in Dompet (false): a
+     * retake of the health check updates and removes only its own accounts.
+     */
+    fromHealthCheck: boolean('from_health_check').notNull().default(true),
     ...timestamps,
   },
   (table) => [
