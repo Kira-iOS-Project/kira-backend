@@ -83,6 +83,10 @@ export const ERROR_CODES = [
 
   /** Portofolio Manual (REN-10, REN-11). */
   'ASSET_NOT_FOUND',
+
+  /** Tagihan & Cicilan (UNG-06, UNG-07). */
+  'BILL_NOT_FOUND',
+  'BILL_DEBT_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
