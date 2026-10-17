@@ -52,6 +52,16 @@
     "allow": []
   },
   {
+    "name": "UNG finance",
+    "home": "src/lib/constants/ung.ts",
+    "allow": [
+      {
+        "path": "src/lib/constants/community.ts",
+        "reason": "'other' there is a community category, not the fallback wallet type."
+      }
+    ]
+  },
+  {
     "name": "chat",
     "home": "src/lib/constants/chat.ts",
     "allow": []
@@ -87,6 +97,10 @@
       {
         "path": "src/lib/constants/plans.ts",
         "reason": "'active' there is a subscription status, not a curated listing status."
+      },
+      {
+        "path": "src/lib/constants/ung.ts",
+        "reason": "'other' there is the fallback wallet type, not the community category."
       }
     ]
   }

@@ -19,6 +19,7 @@ import { FOCUS } from '../../lib/constants/profile.ts';
 import { SNAPSHOT_REASON } from '../../lib/constants/score.ts';
 import type { Payday } from '../../lib/time/wib.ts';
 import type { DebtInput, ScoreBand, ScoreInput } from './score.engine.ts';
+import { syncHealthCheckDebts } from './score.debts.repository.ts';
 import type { HealthCheckBody } from './score.schema.ts';
 
 type Values<T> = T[keyof T];
@@ -169,22 +170,7 @@ export function createScoreRepository(client: PostgresJsDatabase = db): ScoreRep
           .insert(financialProfiles)
           .values({ userId, ...profile })
           .onConflictDoUpdate({ target: financialProfiles.userId, set: profile });
-        await tx.delete(debtAccounts).where(eq(debtAccounts.userId, userId));
-        if (debts.length > 0) {
-          await tx.insert(debtAccounts).values(
-            debts.map((debt) => ({
-              kind: debt.kind,
-              name: debt.name,
-              monthlyInstalment: debt.monthlyInstalment,
-              remainingTenorMonths: debt.remainingTenorMonths,
-              annualInterestRate: debt.annualInterestRate,
-              dueDay: debt.dueDay,
-              userId,
-              originalAmount: debt.remaining,
-              remainingAmount: debt.remaining,
-            })),
-          );
-        }
+        await syncHealthCheckDebts(tx, userId, debts);
         await tx
           .update(users)
           .set({ paydayDay: payday.day, paydayEndOfMonth: payday.endOfMonth })

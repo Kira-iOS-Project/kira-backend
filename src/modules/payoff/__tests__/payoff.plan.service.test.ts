@@ -1,7 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import { PAYOFF_ACCOUNT_STATUS, PAYOFF_METHOD } from '../../../lib/constants/payoff.ts';
 import type { PlanDeps } from '../payoff.plan.service.ts';
-import { createPlan, getActivePlan, payingNowOf, setPlanFocus } from '../payoff.plan.service.ts';
+import {
+  createPlan,
+  getActivePlan,
+  payingNowOf,
+  priorityOf,
+  setPlanFocus,
+} from '../payoff.plan.service.ts';
 import {
   createPlanRepositoryMock,
   ID_A,
@@ -162,5 +168,17 @@ describe('payingNowOf', () => {
 
     const clear = createPlanRepositoryMock({ listDebts: async () => [] });
     expect(await payingNowOf('user-1', { repository: clear })).toBeNull();
+  });
+});
+
+describe('priorityOf', () => {
+  test("an account's place in the plan's order, smallest first without a plan, none outside it", async () => {
+    const focused = createPlanRepositoryMock({
+      findActive: async () => ({ ...PAYOFF_PLAN, focusDebtId: B }),
+    });
+    expect(await priorityOf('user-1', B, { repository: focused })).toEqual({ rank: 1, of: 2 });
+    const none = createPlanRepositoryMock({ findActive: async () => null });
+    expect(await priorityOf('user-1', A, { repository: none })).toEqual({ rank: 1, of: 2 });
+    expect(await priorityOf('user-1', MOTOR, { repository: none })).toBeNull();
   });
 });

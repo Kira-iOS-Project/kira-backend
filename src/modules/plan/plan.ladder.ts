@@ -54,17 +54,25 @@ const KEYS = [
 /** One decimal, as Rencana writes it ("Sekarang 1,1× pengeluaran pokok"). */
 const oneDecimal = (value: number) => Math.round(value * 10) / 10;
 
-type EmergencyGoal = { saved: number; target: number; essential: number | null };
+export type EmergencyGoal = {
+  id: string;
+  saved: number;
+  target: number;
+  monthlyDeposit: number;
+  essential: number | null;
+};
 
 /** The Dana Darurat goal: saved (initial amount and deposits), target, and the pokok typed in. */
-async function emergencyGoalOf(userId: string): Promise<EmergencyGoal | null> {
+export async function emergencyGoalOf(userId: string): Promise<EmergencyGoal | null> {
   const goals = await goalRepository.listGoals(userId);
   const goal = goals.find((row) => row.kind === GOAL_KIND.emergencyFund);
   if (!goal) return null;
   const essential = goal.inputs[ESSENTIAL_EXPENSE_INPUT];
   return {
+    id: goal.id,
     saved: goal.savedAmount,
     target: goal.targetAmount,
+    monthlyDeposit: goal.monthlyDeposit,
     essential: typeof essential === 'number' && essential > 0 ? essential : null,
   };
 }

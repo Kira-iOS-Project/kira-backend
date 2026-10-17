@@ -107,7 +107,9 @@
               "GOAL_DEPOSIT_CONFLICT",
               "CARE_CHECK_IN_NOT_FOUND",
               "CARE_SAFETY_PLAN_NOT_FOUND",
-              "ASSET_NOT_FOUND"
+              "ASSET_NOT_FOUND",
+              "BILL_NOT_FOUND",
+              "BILL_DEBT_NOT_FOUND"
             ]
           },
           "requestId": {
@@ -2380,6 +2382,114 @@
           "end",
           "nextPayday",
           "daysUntilPayday"
+        ]
+      },
+      "WeeklySummary": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": "string",
+            "format": "date"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "previousTotal": {
+            "type": "integer"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "expense": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "date",
+                "expense"
+              ]
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                },
+                "amount": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "category",
+                "amount"
+              ]
+            }
+          },
+          "budget": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "amount": {
+                "type": "integer"
+              },
+              "spent": {
+                "type": "integer"
+              },
+              "periodStart": {
+                "type": "string",
+                "format": "date"
+              },
+              "periodEnd": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "required": [
+              "amount",
+              "spent",
+              "periodStart",
+              "periodEnd"
+            ]
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "total",
+          "previousTotal",
+          "days",
+          "categories",
+          "budget"
         ]
       },
       "Plans": {
@@ -4850,6 +4960,1051 @@
           }
         }
       },
+      "WalletList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Wallet"
+            }
+          },
+          "debts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DebtSummary"
+            }
+          },
+          "heldTotal": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalDebt": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "items",
+          "debts",
+          "heldTotal",
+          "totalDebt"
+        ]
+      },
+      "Wallet": {
+        "type": "object",
+        "properties": {
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "wallet"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "bank",
+              "e_wallet",
+              "other"
+            ]
+          },
+          "balance": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "accountType",
+          "id",
+          "name",
+          "type",
+          "balance",
+          "createdAt"
+        ]
+      },
+      "DebtSummary": {
+        "type": "object",
+        "properties": {
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "debt"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "paylater",
+              "online_loan",
+              "credit_card",
+              "vehicle",
+              "mortgage",
+              "family_loan"
+            ]
+          },
+          "originalAmount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remainingAmount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "monthlyInstallment": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remainingTenorMonths": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "installmentsTotal": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "installmentsRemaining": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "on_time",
+              "late",
+              "overdue"
+            ]
+          },
+          "nextInstallment": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "dueDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "amount": {
+                "type": "integer"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "upcoming",
+                  "dueSoon"
+                ]
+              }
+            },
+            "required": [
+              "dueDate",
+              "amount",
+              "status"
+            ]
+          },
+          "dueSoon": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accountType",
+          "id",
+          "name",
+          "kind",
+          "originalAmount",
+          "remainingAmount",
+          "monthlyInstallment",
+          "remainingTenorMonths",
+          "installmentsTotal",
+          "installmentsRemaining",
+          "paymentStatus",
+          "nextInstallment",
+          "dueSoon"
+        ]
+      },
+      "CurrentBudget": {
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "income": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000000
+          },
+          "remaining": {
+            "type": "integer"
+          },
+          "allocations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                },
+                "amount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10000000000000
+                },
+                "spent": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10000000000000
+                },
+                "nearLimit": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "category",
+                "amount",
+                "spent",
+                "nearLimit"
+              ]
+            }
+          },
+          "totalAllocated": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000000
+          },
+          "overAllocated": {
+            "type": "boolean"
+          },
+          "averages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                },
+                "amount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10000000000000
+                }
+              },
+              "required": [
+                "category",
+                "amount"
+              ]
+            }
+          },
+          "instalmentsMonthly": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000000
+          },
+          "goalPost": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "goalId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "monthlyDeposit": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              },
+              "savedAmount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              },
+              "targetAmount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              }
+            },
+            "required": [
+              "goalId",
+              "monthlyDeposit",
+              "savedAmount",
+              "targetAmount"
+            ]
+          },
+          "payday": {
+            "type": "object",
+            "properties": {
+              "requested": {
+                "type": "object",
+                "properties": {
+                  "day": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 31,
+                    "default": null
+                  },
+                  "endOfMonth": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "endOfMonth"
+                ]
+              },
+              "periodStart": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-17"
+              },
+              "periodEnd": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-17"
+              },
+              "nextPayday": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-10-17"
+              },
+              "daysUntilPayday": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "requested",
+              "periodStart",
+              "periodEnd",
+              "nextPayday",
+              "daysUntilPayday"
+            ]
+          }
+        },
+        "required": [
+          "configured",
+          "income",
+          "remaining",
+          "allocations",
+          "totalAllocated",
+          "overAllocated",
+          "averages",
+          "instalmentsMonthly",
+          "goalPost",
+          "payday"
+        ]
+      },
+      "SaveBudget": {
+        "type": "object",
+        "properties": {
+          "allocations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "food",
+                    "coffee",
+                    "transport",
+                    "shopping",
+                    "bills",
+                    "paylater_instalment",
+                    "savings_deposit",
+                    "insurance",
+                    "entertainment",
+                    "health",
+                    "education",
+                    "household",
+                    "other_expense"
+                  ]
+                },
+                "amount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10000000000000
+                }
+              },
+              "required": [
+                "category",
+                "amount"
+              ]
+            },
+            "maxItems": 13
+          },
+          "payday": {
+            "type": "object",
+            "properties": {
+              "day": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 31,
+                "default": null
+              },
+              "endOfMonth": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "endOfMonth"
+            ]
+          }
+        },
+        "required": [
+          "allocations",
+          "payday"
+        ]
+      },
+      "CreatedAccount": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Wallet"
+          },
+          {
+            "$ref": "#/components/schemas/DebtSummary"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "accountType",
+          "mapping": {
+            "wallet": "#/components/schemas/Wallet",
+            "debt": "#/components/schemas/DebtSummary"
+          }
+        }
+      },
+      "CreateWalletInput": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cash",
+                  "bank",
+                  "ewallet",
+                  "e_wallet",
+                  "other"
+                ]
+              },
+              "balance": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              },
+              "openingBalance": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              }
+            },
+            "required": [
+              "name",
+              "type"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "credit_card",
+                  "paylater",
+                  "pinjol"
+                ]
+              },
+              "remainingDebt": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000000000000
+              },
+              "monthlyInstallment": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10000000000000
+              },
+              "remainingTenorMonths": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 600
+              },
+              "nextDueDate": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "required": [
+              "name",
+              "type",
+              "remainingDebt"
+            ]
+          }
+        ]
+      },
+      "CreateDebtInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "credit_card",
+              "paylater",
+              "pinjol",
+              "online_loan"
+            ]
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "monthlyInstallment": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000000000
+          },
+          "remainingTenorMonths": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 600
+          },
+          "nextDueDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "amount"
+        ]
+      },
+      "DebtDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "paylater",
+              "online_loan",
+              "credit_card",
+              "vehicle",
+              "mortgage",
+              "family_loan"
+            ]
+          },
+          "remaining": {
+            "type": "integer"
+          },
+          "totalAmount": {
+            "type": "integer"
+          },
+          "paidAmount": {
+            "type": "integer"
+          },
+          "instalmentsPaid": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "instalmentsTotal": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "monthlyInstalment": {
+            "type": "integer"
+          },
+          "dueDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "example": "2026-10-25"
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "number": {
+                  "type": "integer"
+                },
+                "amount": {
+                  "type": "integer"
+                },
+                "paidOn": {
+                  "type": "string",
+                  "format": "date",
+                  "example": "2026-10-25"
+                },
+                "onTime": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "number",
+                "amount",
+                "paidOn",
+                "onTime"
+              ]
+            }
+          },
+          "nextStep": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "priority": {
+                "type": "integer"
+              },
+              "priorityOf": {
+                "type": "integer"
+              },
+              "extraAmount": {
+                "type": "integer"
+              },
+              "payOn": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date",
+                "example": "2026-10-25"
+              },
+              "monthsEarlier": {
+                "type": "integer"
+              },
+              "scoreBefore": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "scoreAfter": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "priority",
+              "priorityOf",
+              "extraAmount",
+              "payOn",
+              "monthsEarlier",
+              "scoreBefore",
+              "scoreAfter"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "remaining",
+          "totalAmount",
+          "paidAmount",
+          "instalmentsPaid",
+          "instalmentsTotal",
+          "monthlyInstalment",
+          "dueDate",
+          "payments",
+          "nextStep"
+        ]
+      },
+      "BillList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "monthlyTotal": {
+            "type": "integer"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "group": {
+                  "type": "string",
+                  "enum": [
+                    "next7Days",
+                    "thisMonth",
+                    "nextMonth",
+                    "later"
+                  ]
+                },
+                "bills": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Bill"
+                  }
+                }
+              },
+              "required": [
+                "group",
+                "bills"
+              ]
+            }
+          }
+        },
+        "required": [
+          "count",
+          "monthlyTotal",
+          "sections"
+        ]
+      },
+      "Bill": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "bill",
+              "instalment"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "food",
+              "coffee",
+              "transport",
+              "shopping",
+              "bills",
+              "paylater_instalment",
+              "savings_deposit",
+              "insurance",
+              "entertainment",
+              "health",
+              "education",
+              "household",
+              "other_expense"
+            ]
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "isEstimate": {
+            "type": "boolean"
+          },
+          "repeats": {
+            "type": "string",
+            "enum": [
+              "once",
+              "monthly",
+              "yearly"
+            ]
+          },
+          "dueOn": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-22"
+          },
+          "dueDay": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 31
+          },
+          "nextDueOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "example": "2026-10-22"
+          },
+          "daysUntil": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "debtId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "remainingInstalments": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "paidThisPeriod": {
+            "type": "boolean"
+          },
+          "lastPaidOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "example": "2026-10-22"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "category",
+          "amount",
+          "isEstimate",
+          "repeats",
+          "dueOn",
+          "dueDay",
+          "nextDueOn",
+          "daysUntil",
+          "debtId",
+          "remainingInstalments",
+          "paidThisPeriod",
+          "lastPaidOn",
+          "createdAt"
+        ]
+      },
+      "CreateBill": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "isEstimate": {
+            "type": "boolean",
+            "default": false
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "food",
+              "coffee",
+              "transport",
+              "shopping",
+              "bills",
+              "paylater_instalment",
+              "savings_deposit",
+              "insurance",
+              "entertainment",
+              "health",
+              "education",
+              "household",
+              "other_expense"
+            ]
+          },
+          "repeats": {
+            "type": "string",
+            "enum": [
+              "once",
+              "monthly",
+              "yearly"
+            ]
+          },
+          "dueOn": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-22"
+          },
+          "debtId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "default": null
+          }
+        },
+        "required": [
+          "name",
+          "amount",
+          "category",
+          "repeats",
+          "dueOn"
+        ]
+      },
+      "UpdateBill": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000000000
+          },
+          "isEstimate": {
+            "type": "boolean"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "food",
+              "coffee",
+              "transport",
+              "shopping",
+              "bills",
+              "paylater_instalment",
+              "savings_deposit",
+              "insurance",
+              "entertainment",
+              "health",
+              "education",
+              "household",
+              "other_expense"
+            ]
+          },
+          "repeats": {
+            "type": "string",
+            "enum": [
+              "once",
+              "monthly",
+              "yearly"
+            ]
+          },
+          "dueOn": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-22"
+          },
+          "debtId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "paidOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "BankImport": {
         "type": "object",
         "properties": {
@@ -6675,6 +7830,74 @@
         }
       }
     },
+    "/api/summary/weekly": {
+      "get": {
+        "operationId": "getWeeklySummary",
+        "tags": [
+          "Uang"
+        ],
+        "summary": "Ringkasan Mingguan",
+        "description": "The seven WIB days ending on `end` (today by default): expenses per day and per category, the week before, and the budget of the payday period. Numbers only; the app writes the sentences.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": false,
+            "name": "end",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The week",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklySummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/plans": {
       "get": {
         "tags": [
@@ -8252,6 +9475,70 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createDebt",
+        "summary": "Add a debt account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDebtInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created debt account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9961,6 +11248,583 @@
         ],
         "operationId": "deleteTransaction",
         "summary": "Delete a transaction",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallets": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listWallets",
+        "summary": "Wallets and total held balance",
+        "responses": {
+          "200": {
+            "description": "Owned wallets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createWallet",
+        "summary": "Add a wallet or a debt account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWalletInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created wallet or debt account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedAccount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/budgets/current": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getCurrentBudget",
+        "summary": "Budget per Kategori: this payday period",
+        "description": "The payday period (Beranda's), income left, each category's limit and spending, the last three periods' averages and the Dana Darurat pos from Rencana.",
+        "responses": {
+          "200": {
+            "description": "The current budget",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentBudget"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "saveCurrentBudget",
+        "summary": "Simpan Budget: the limits per category and the payday",
+        "description": "Replaces the limits (each category at most once) and sets the payday Beranda also follows; answers the budget afterwards.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBudget"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The budget after saving",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentBudget"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/debts/{id}": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getDebt",
+        "summary": "Detail Utang",
+        "description": "One debt account: what is paid, the next due date, its payments newest first, and the payoff engine's next step with the Kira Score estimate.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bills": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listBills",
+        "summary": "Tagihan & Cicilan: the bills grouped by when they fall due",
+        "description": "7 Hari ke Depan (overdue included), Bulan Ini, Bulan Depan and later, in WIB. A bill paid this period sits in the group of its next due date.",
+        "responses": {
+          "200": {
+            "description": "The bills",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createBill",
+        "summary": "Tambah Tagihan",
+        "description": "debtId links the bill to one of the person's debt accounts as its instalment.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBill"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bill"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bills/{id}": {
+      "patch": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "updateBill",
+        "summary": "Ubah Tagihan, or Tandai Sudah Dibayar with paidOn (null takes it back)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBill"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The changed bill",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Bill"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteBill",
+        "summary": "Hapus Tagihan",
         "parameters": [
           {
             "schema": {

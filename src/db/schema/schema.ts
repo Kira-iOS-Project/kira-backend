@@ -8,6 +8,8 @@
 export * from './accounts.ts';
 export * from './assets.ts';
 export * from './billing.ts';
+export * from './bills.ts';
+export * from './budgets.ts';
 export * from './care.ts';
 export * from './columns.ts';
 export * from './community.ts';
@@ -17,3 +19,4 @@ export * from './ledger.ts';
 export * from './payoff.ts';
 export * from './risk.ts';
 export * from './usage.ts';
+export * from './wallets.ts';

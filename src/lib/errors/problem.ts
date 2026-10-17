@@ -77,6 +77,8 @@ const TITLES = {
   GOAL_NOT_FOUND: 'Goal Not Found',
   GOAL_EMERGENCY_EXISTS: 'Emergency Fund Exists',
   GOAL_DEPOSIT_CONFLICT: 'Deposit Id Used',
+  BILL_NOT_FOUND: 'Bill Not Found',
+  BILL_DEBT_NOT_FOUND: 'Debt Account Not Found',
 } as const satisfies Record<ErrorCode, string>;
 
 /** An `HTTPException` comes from middleware that knows only a status (the body limit, the
