@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
 import { debtAccounts, wallets } from '../../db/schema/schema.ts';
@@ -39,7 +39,7 @@ export function createAccountFinanceRepository(client: PostgresJsDatabase = db):
       if (!row) throw new Error('Wallet insert returned no row.');
       return row;
     },
-    async listDebts(userId) {
+    async listDebts(userId, options) {
       return await client
         .select({
           id: debtAccounts.id,
@@ -53,7 +53,12 @@ export function createAccountFinanceRepository(client: PostgresJsDatabase = db):
           paymentStatus: debtAccounts.paymentStatus,
         })
         .from(debtAccounts)
-        .where(eq(debtAccounts.userId, userId))
+        .where(
+          and(
+            eq(debtAccounts.userId, userId),
+            options?.includePaidOff ? undefined : isNull(debtAccounts.paidOffAt),
+          ),
+        )
         .orderBy(asc(debtAccounts.createdAt), asc(debtAccounts.id))
         .limit(100);
     },

@@ -11,3 +11,9 @@ export const FINANCE_INPUT_ALIAS = {
   eWallet: 'ewallet',
   pinjol: 'pinjol',
 } as const;
+
+/** What POST /wallets created, the discriminator of its answer (a credit card is a debt account). */
+export const FINANCE_ACCOUNT_TYPE = {
+  wallet: 'wallet',
+  debt: 'debt',
+} as const;

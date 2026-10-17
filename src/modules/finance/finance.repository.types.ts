@@ -41,6 +41,7 @@ type CreateDebtBody = {
 export type FinanceRepository = {
   listWallets(userId: string): Promise<WalletRow[]>;
   createWallet(userId: string, body: CreateWalletBody, now: Date): Promise<WalletRow>;
-  listDebts(userId: string): Promise<DebtRow[]>;
+  /** The open accounts; with `includePaidOff`, every account (Unduh Datamu). */
+  listDebts(userId: string, options?: { includePaidOff: boolean }): Promise<DebtRow[]>;
   createDebt(userId: string, body: CreateDebtBody, now: Date): Promise<DebtRow>;
 };

@@ -2,7 +2,7 @@ import { daysBetween, wibDate } from '../../lib/time/wib.ts';
 import { financeRepository, type FinanceRepository } from './finance.repository.ts';
 import type { CreateDebtInput, CreateWalletInput } from './finance.accounts.schema.ts';
 import { DEBT_KIND } from '../../lib/constants/profile.ts';
-import { FINANCE_INPUT_ALIAS, WALLET_TYPE } from '../../lib/constants/ung.ts';
+import { FINANCE_ACCOUNT_TYPE, FINANCE_INPUT_ALIAS, WALLET_TYPE } from '../../lib/constants/ung.ts';
 
 type Deps = { repository?: FinanceRepository; now?: () => Date };
 
@@ -27,7 +27,7 @@ export async function listWallets(userId: string, deps: Deps = {}) {
     listDebts(userId, { ...deps, repository }),
   ]);
   return {
-    items,
+    items: items.map((wallet) => ({ accountType: FINANCE_ACCOUNT_TYPE.wallet, ...wallet })),
     debts: debtList.items,
     heldTotal: items.reduce((sum, wallet) => sum + wallet.balance, 0),
     totalDebt: debtList.totalDebt,
@@ -41,6 +41,7 @@ export async function listDebts(userId: string, deps: Deps = {}) {
     const dueDate = nextDueDate(today, debt.dueDay);
     const dueSoon = dueDate !== null && daysBetween(today, dueDate) <= 10;
     return {
+      accountType: FINANCE_ACCOUNT_TYPE.debt,
       id: debt.id,
       name: debt.name,
       kind: debt.kind,
@@ -48,7 +49,7 @@ export async function listDebts(userId: string, deps: Deps = {}) {
       remainingAmount: debt.remainingAmount,
       monthlyInstallment: debt.monthlyInstallment,
       remainingTenorMonths: debt.remainingTenorMonths,
-      installmentsTotal: debt.remainingTenorMonths,
+      installmentsTotal: null,
       installmentsRemaining: debt.remainingTenorMonths,
       paymentStatus: debt.paymentStatus,
       nextInstallment: dueDate
@@ -93,6 +94,7 @@ export async function createWallet(userId: string, body: CreateWalletInput, deps
     now,
   );
   return {
+    accountType: FINANCE_ACCOUNT_TYPE.wallet,
     id: wallet.id,
     name: wallet.name,
     type: wallet.type,
@@ -121,6 +123,7 @@ export async function createDebt(userId: string, body: CreateDebtInput, deps: De
   const dueDate = nextDueDate(today, debt.dueDay);
   const dueSoon = dueDate !== null && daysBetween(today, dueDate) <= 10;
   return {
+    accountType: FINANCE_ACCOUNT_TYPE.debt,
     id: debt.id,
     name: debt.name,
     kind: debt.kind,
@@ -128,7 +131,7 @@ export async function createDebt(userId: string, body: CreateDebtInput, deps: De
     remainingAmount: debt.remainingAmount,
     monthlyInstallment: debt.monthlyInstallment,
     remainingTenorMonths: debt.remainingTenorMonths,
-    installmentsTotal: debt.remainingTenorMonths,
+    installmentsTotal: null,
     installmentsRemaining: debt.remainingTenorMonths,
     paymentStatus: debt.paymentStatus,
     nextInstallment: dueDate

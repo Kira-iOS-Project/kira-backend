@@ -113,7 +113,7 @@ describe('finance account lists', () => {
       kind: DEBT_KIND.onlineLoan,
       originalAmount: 1_000_000,
       remainingAmount: 1_000_000,
-      installmentsTotal: 10,
+      installmentsTotal: null,
       nextInstallment: { dueDate: '2026-10-20', amount: 100_000, status: 'dueSoon' },
     });
   });

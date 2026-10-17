@@ -4884,6 +4884,12 @@
       "Wallet": {
         "type": "object",
         "properties": {
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "wallet"
+            ]
+          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -4910,6 +4916,7 @@
           }
         },
         "required": [
+          "accountType",
           "id",
           "name",
           "type",
@@ -4920,6 +4927,12 @@
       "DebtSummary": {
         "type": "object",
         "properties": {
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "debt"
+            ]
+          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -5008,6 +5021,7 @@
           }
         },
         "required": [
+          "accountType",
           "id",
           "name",
           "kind",
@@ -5225,6 +5239,23 @@
           "goalPosts",
           "payday"
         ]
+      },
+      "CreatedAccount": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Wallet"
+          },
+          {
+            "$ref": "#/components/schemas/DebtSummary"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "accountType",
+          "mapping": {
+            "wallet": "#/components/schemas/Wallet",
+            "debt": "#/components/schemas/DebtSummary"
+          }
+        }
       },
       "CreateWalletInput": {
         "anyOf": [
@@ -10811,14 +10842,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/components/schemas/Wallet"
-                    },
-                    {
-                      "$ref": "#/components/schemas/DebtSummary"
-                    }
-                  ]
+                  "$ref": "#/components/schemas/CreatedAccount"
                 }
               }
             }

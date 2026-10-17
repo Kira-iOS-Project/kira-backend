@@ -47,7 +47,7 @@ export async function financeExportSections(
   const repository = deps.repository ?? financeRepository;
   const [wallets, debts] = await Promise.all([
     repository.listWallets(userId),
-    repository.listDebts(userId),
+    repository.listDebts(userId, { includePaidOff: true }),
   ]);
   const sections: ExportSection[] = [];
   if (wallets.length > 0) {

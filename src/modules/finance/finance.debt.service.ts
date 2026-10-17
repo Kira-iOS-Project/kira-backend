@@ -4,9 +4,7 @@
  * Score. The engines are the payoff and score modules'; this only puts their numbers together.
  */
 
-import { PayoffDebtNotFoundError } from '../payoff/payoff.errors.ts';
-import { paymentDate } from '../payoff/payoff.plan.view.ts';
-import { priorityOf } from '../payoff/index.ts';
+import { PayoffDebtNotFoundError, paymentDate, priorityOf } from '../payoff/index.ts';
 import { estimatePayingOff } from '../score/index.ts';
 import { wibDate } from '../../lib/time/wib.ts';
 import type { DebtDetail } from './finance.debt.schema.ts';

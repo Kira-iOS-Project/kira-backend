@@ -15,7 +15,7 @@ function repository(overrides: Partial<FinanceRepository> = {}): FinanceReposito
       throw new Error('unused');
     },
     ...overrides,
-  } as FinanceRepository;
+  };
 }
 
 describe('financeExportSections', () => {
