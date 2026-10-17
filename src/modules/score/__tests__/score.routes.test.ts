@@ -7,12 +7,15 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
 import { FOCUS, MARITAL_STATUS } from '../../../lib/constants/profile.ts';
 import { INDICATOR, SNAPSHOT_REASON } from '../../../lib/constants/score.ts';
-import type { FakeQuery, FakeRow } from '../../../test/fake-postgres.ts';
+import type { FakeQuery, FakeResponder, FakeRow } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
-import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
+import { AUTH_HEADER, onKiraPlus, signedIn } from '../../../test/session.ts';
 import { DINDA_ANSWERS, DINDA_DEBTS, NOW } from './helpers.ts';
 
 beforeEach(() => resetExternalMocks());
+
+/** Riwayat Skor is Kira Plus: the history tests run on it. */
+const onPlus = (next?: FakeResponder) => signedIn(onKiraPlus(next));
 
 const STATE = {
   focus: FOCUS.trackSpending,
@@ -115,6 +118,14 @@ describe('PUT /api/health-check', () => {
 });
 
 describe('GET /api/score/history', () => {
+  test('answers 403 PLAN_FEATURE_UNAVAILABLE outside Kira Plus', async () => {
+    dbControl.respond = signedIn(scored);
+    const res = await app.request('/api/score/history', { headers: AUTH_HEADER });
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe('PLAN_FEATURE_UNAVAILABLE');
+  });
+
   /** Last month's 25th point, with every indicator one rung lower in emergency fund. */
   const SEPTEMBER = {
     reason: SNAPSHOT_REASON.monthly,
@@ -145,7 +156,7 @@ describe('GET /api/score/history', () => {
   });
 
   test('answers 404 SCORE_NOT_AVAILABLE before the health check', async () => {
-    dbControl.respond = signedIn();
+    dbControl.respond = onPlus();
     const res = await request('/api/score/history');
 
     expect(res.status).toBe(404);
@@ -153,7 +164,7 @@ describe('GET /api/score/history', () => {
   });
 
   test('refuses an unknown range with a 422', async () => {
-    dbControl.respond = signedIn(scored);
+    dbControl.respond = onPlus(scored);
     const res = await request('/api/score/history?range=2y');
 
     expect(res.status).toBe(422);
@@ -161,7 +172,7 @@ describe('GET /api/score/history', () => {
   });
 
   test('answers the history against last month', async () => {
-    dbControl.respond = signedIn(withHistory);
+    dbControl.respond = onPlus(withHistory);
     const res = await request('/api/score/history?range=1y');
     const body = await res.json();
 
