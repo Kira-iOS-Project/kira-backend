@@ -7,11 +7,13 @@ import { and, count, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
 import {
+  assets,
   debtAccounts,
   financialProfiles,
   scoreSnapshots,
-  users,
+  type IndicatorLabels,
   type IndicatorPoints,
+  users,
 } from '../../db/schema/schema.ts';
 import { FOCUS } from '../../lib/constants/profile.ts';
 import { SNAPSHOT_REASON } from '../../lib/constants/score.ts';
@@ -40,6 +42,7 @@ export type NewSnapshot = {
   score: number;
   band: ScoreBand;
   indicators: IndicatorPoints;
+  measures: IndicatorLabels;
   reason: Values<typeof SNAPSHOT_REASON>;
   /** The payday period's first day (`YYYY-MM-DD`). */
   periodStart: string;
@@ -75,7 +78,12 @@ export function createScoreRepository(client: PostgresJsDatabase = db): ScoreRep
           essential: financialProfiles.essentialMonthlyExpenses,
           emergencyFund: financialProfiles.emergencyFund,
           monthlySavings: financialProfiles.monthlySavings,
-          otherAssets: financialProfiles.otherAssets,
+          /** Portofolio Manual's total replaces the health check's figure once there are assets. */
+          otherAssets: sql<
+            number | null
+          >`coalesce((select sum(${assets.value}) from ${assets} where ${assets.userId} = ${users.id}), ${financialProfiles.otherAssets})`.mapWith(
+            Number,
+          ),
           propertyAssets: financialProfiles.propertyAssets,
           dependents: financialProfiles.dependents,
           maritalStatus: financialProfiles.maritalStatus,
@@ -169,6 +177,8 @@ export function createScoreRepository(client: PostgresJsDatabase = db): ScoreRep
               name: debt.name,
               monthlyInstalment: debt.monthlyInstalment,
               remainingTenorMonths: debt.remainingTenorMonths,
+              annualInterestRate: debt.annualInterestRate,
+              dueDay: debt.dueDay,
               userId,
               originalAmount: debt.remaining,
               remainingAmount: debt.remaining,

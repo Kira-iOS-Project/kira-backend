@@ -48,3 +48,9 @@ export const DEBT_PAYMENT_STATUS = {
   late: 'late',
   overdue: 'overdue',
 } as const;
+
+/**
+ * The highest annual interest rate a debt account may carry, in percent: online loans are the
+ * dearest, and a rate above this is taken as a typing slip.
+ */
+export const MAX_ANNUAL_INTEREST_RATE = 300;

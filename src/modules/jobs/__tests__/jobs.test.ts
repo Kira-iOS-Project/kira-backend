@@ -181,11 +181,12 @@ describe('exclusive', () => {
 });
 
 describe('scheduledJobs', () => {
-  test('rolls periods over before the reminders, then reviews and cleans up', () => {
+  test('rolls periods over before the reminders, reviews, takes the monthly score, cleans up', () => {
     expect(scheduledJobs.map((job) => job.name)).toEqual([
       'subscription-rollover',
       'renewal-reminders',
       'scholarship-review',
+      'score-monthly-snapshot',
       'auth-code-cleanup',
     ]);
   });

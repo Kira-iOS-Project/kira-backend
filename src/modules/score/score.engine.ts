@@ -67,7 +67,7 @@ const CONSUMER_KINDS = new Set<string>([
   DEBT_KIND.creditCard,
 ]);
 
-export function isConsumerDebt(debt: DebtInput): boolean {
+export function isConsumerDebt(debt: Pick<DebtInput, 'kind'>): boolean {
   return CONSUMER_KINDS.has(debt.kind);
 }
 

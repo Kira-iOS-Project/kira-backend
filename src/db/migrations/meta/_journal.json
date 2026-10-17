@@ -36,6 +36,34 @@
       "when": 1792187984084,
       "tag": "0004_story_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792195356324,
+      "tag": "0005_payoff_plans",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792196374657,
+      "tag": "0006_payment_idempotency",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792196703585,
+      "tag": "0007_score_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792196711193,
+      "tag": "0008_assets",
+      "breakpoints": true
     }
   ]
 }

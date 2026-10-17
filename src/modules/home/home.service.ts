@@ -51,6 +51,22 @@ async function moneyOf(
   };
 }
 
+/**
+ * Sisa uang of the current payday period, in rupiah: what the payoff plan may add on top of the
+ * instalments. The same figure Beranda shows, so the two screens never disagree.
+ */
+export async function findRemainingMoney(
+  userId: string,
+  deps: Pick<HomeDeps, 'repository' | 'now'> = {},
+): Promise<number> {
+  const repository = deps.repository ?? homeRepository;
+  const now = (deps.now ?? (() => new Date()))();
+  const account = await repository.findAccount(userId);
+  if (!account) throw new Error('The signed-in account has no row');
+  const period = paydayPeriod(wibDate(now), account.payday);
+  return (await moneyOf(userId, account, period, repository)).remaining;
+}
+
 /** The seven days before today, when the person asked for the summary and recorded something then. */
 async function weeklySummaryOf(userId: string, today: string, repository: HomeRepository) {
   const from = addDays(today, -7);

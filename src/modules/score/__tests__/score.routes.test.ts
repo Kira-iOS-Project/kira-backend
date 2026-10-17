@@ -6,13 +6,16 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
 import { FOCUS, MARITAL_STATUS } from '../../../lib/constants/profile.ts';
-import { INDICATOR } from '../../../lib/constants/score.ts';
-import type { FakeQuery, FakeRow } from '../../../test/fake-postgres.ts';
+import { INDICATOR, SNAPSHOT_REASON } from '../../../lib/constants/score.ts';
+import type { FakeQuery, FakeResponder, FakeRow } from '../../../test/fake-postgres.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
-import { AUTH_HEADER, signedIn } from '../../../test/session.ts';
+import { AUTH_HEADER, onKiraPlus, signedIn } from '../../../test/session.ts';
 import { DINDA_ANSWERS, DINDA_DEBTS, NOW } from './helpers.ts';
 
 beforeEach(() => resetExternalMocks());
+
+/** Riwayat Skor is Kira Plus: the history tests run on it. */
+const onPlus = (next?: FakeResponder) => signedIn(onKiraPlus(next));
 
 const STATE = {
   focus: FOCUS.trackSpending,
@@ -111,5 +114,75 @@ describe('PUT /api/health-check', () => {
       body: JSON.stringify({ ...body, dependents: 4 }),
     });
     expect(res.status).toBe(422);
+  });
+});
+
+describe('GET /api/score/history', () => {
+  test('answers 403 PLAN_FEATURE_UNAVAILABLE outside Kira Plus', async () => {
+    dbControl.respond = signedIn(scored);
+    const res = await app.request('/api/score/history', { headers: AUTH_HEADER });
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe('PLAN_FEATURE_UNAVAILABLE');
+  });
+
+  /** Last month's 25th point, with every indicator one rung lower in emergency fund. */
+  const SEPTEMBER = {
+    reason: SNAPSHOT_REASON.monthly,
+    periodStart: '2026-09-25',
+    createdAt: '2026-09-25T00:00:00.000Z',
+    score: 62,
+    indicators: {
+      [INDICATOR.emergencyFund]: 25,
+      [INDICATOR.savingsRatio]: 50,
+      [INDICATOR.instalmentRatio]: 75,
+      [INDICATOR.consumerDebt]: 25,
+      [INDICATOR.debtToAsset]: 75,
+      [INDICATOR.protection]: 100,
+    },
+    measures: null,
+  };
+
+  function withHistory(query: FakeQuery): FakeRow[] {
+    if (query.sql.includes('from "score_snapshots"') && query.sql.includes('asc')) {
+      return query.params.includes(SNAPSHOT_REASON.monthly) ? [SEPTEMBER] : [];
+    }
+    return scored(query);
+  }
+
+  test('answers 401 without a session', async () => {
+    const res = await app.request('/api/score/history');
+    expect(res.status).toBe(401);
+  });
+
+  test('answers 404 SCORE_NOT_AVAILABLE before the health check', async () => {
+    dbControl.respond = onPlus();
+    const res = await request('/api/score/history');
+
+    expect(res.status).toBe(404);
+    expect((await res.json()).code).toBe('SCORE_NOT_AVAILABLE');
+  });
+
+  test('refuses an unknown range with a 422', async () => {
+    dbControl.respond = onPlus(scored);
+    const res = await request('/api/score/history?range=2y');
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).code).toBe('VALIDATION_FAILED');
+  });
+
+  test('answers the history against last month', async () => {
+    dbControl.respond = onPlus(withHistory);
+    const res = await request('/api/score/history?range=1y');
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.points).toEqual([{ month: '2026-09', score: 62 }]);
+    expect(body.current.previousMonth).toBe('2026-09');
+    expect(body.current.deltaFromPrevious).toBe(body.current.score - 62);
+    expect(body.changes.map((change: { indicator: string }) => change.indicator)).toContain(
+      INDICATOR.emergencyFund,
+    );
+    expect(body.unchangedCount + body.changes.length).toBe(6);
   });
 });
