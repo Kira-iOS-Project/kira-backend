@@ -91,3 +91,27 @@ export async function payingNowOf(
   const [first] = orderedConsumer(debts, method, plan?.focusDebtId ?? null);
   return first ? { id: first.id, name: first.name } : null;
 }
+
+/**
+ * Where an account stands in the payoff order Detail Utang's "Prioritas · 1 dari 3" reads: its
+ * place among the open consumer accounts, by the plan or, without one, smallest first; null for an
+ * account outside that order (not consumer, or paid off).
+ */
+export async function priorityOf(
+  userId: string,
+  debtId: string,
+  deps: Pick<PlanDeps, 'repository'> = {},
+): Promise<{ rank: number; of: number } | null> {
+  const repository = deps.repository ?? planRepository;
+  const [plan, debts] = await Promise.all([
+    repository.findActive(userId),
+    repository.listDebts(userId),
+  ]);
+  const order = orderedConsumer(
+    debts,
+    plan?.method ?? PAYOFF_METHOD.snowball,
+    plan?.focusDebtId ?? null,
+  );
+  const index = order.findIndex((debt) => debt.id === debtId);
+  return index === -1 ? null : { rank: index + 1, of: order.length };
+}

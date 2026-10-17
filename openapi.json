@@ -5355,6 +5355,157 @@
           "amount"
         ]
       },
+      "DebtDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "paylater",
+              "online_loan",
+              "credit_card",
+              "vehicle",
+              "mortgage",
+              "family_loan"
+            ]
+          },
+          "remaining": {
+            "type": "integer"
+          },
+          "totalAmount": {
+            "type": "integer"
+          },
+          "paidAmount": {
+            "type": "integer"
+          },
+          "instalmentsPaid": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "instalmentsTotal": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "monthlyInstalment": {
+            "type": "integer"
+          },
+          "dueDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "example": "2026-10-25"
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "number": {
+                  "type": "integer"
+                },
+                "amount": {
+                  "type": "integer"
+                },
+                "paidOn": {
+                  "type": "string",
+                  "format": "date",
+                  "example": "2026-10-25"
+                },
+                "onTime": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "number",
+                "amount",
+                "paidOn",
+                "onTime"
+              ]
+            }
+          },
+          "nextStep": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "priority": {
+                "type": "integer"
+              },
+              "priorityOf": {
+                "type": "integer"
+              },
+              "extraAmount": {
+                "type": "integer"
+              },
+              "payOn": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date",
+                "example": "2026-10-25"
+              },
+              "monthsEarlier": {
+                "type": "integer"
+              },
+              "scoreBefore": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "scoreAfter": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "priority",
+              "priorityOf",
+              "extraAmount",
+              "payOn",
+              "monthsEarlier",
+              "scoreBefore",
+              "scoreAfter"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "remaining",
+          "totalAmount",
+          "paidAmount",
+          "instalmentsPaid",
+          "instalmentsTotal",
+          "monthlyInstalment",
+          "dueDate",
+          "payments",
+          "nextStep"
+        ]
+      },
       "BankImport": {
         "type": "object",
         "properties": {
@@ -10730,6 +10881,84 @@
           },
           "401": {
             "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/debts/{id}": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getDebt",
+        "summary": "Detail Utang",
+        "description": "One debt account: what is paid, the next due date, its payments newest first, and the payoff engine's next step with the Kira Score estimate.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DebtDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request schema validation failed",
             "content": {
               "application/problem+json": {
                 "schema": {

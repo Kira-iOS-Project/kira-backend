@@ -8,6 +8,8 @@ import type {
 import { createDebt, createWallet, listWallets } from './finance.accounts.service.ts';
 import type { currentBudgetRoute } from './finance.routes.budget.ts';
 import { getCurrentBudget } from './finance.budget.service.ts';
+import { getDebtDetail } from './finance.debt.service.ts';
+import type { getDebtRoute } from './finance.routes.debt.ts';
 
 export const listWalletsHandler: RouteHandler<typeof listWalletsRoute, AppEnv> = async (c) =>
   c.json(await listWallets(c.get('userId')), 200);
@@ -20,3 +22,6 @@ export const createWalletHandler: RouteHandler<typeof createWalletRoute, AppEnv>
 
 export const createDebtHandler: RouteHandler<typeof createDebtRoute, AppEnv> = async (c) =>
   c.json(await createDebt(c.get('userId'), c.req.valid('json')), 201);
+
+export const getDebtHandler: RouteHandler<typeof getDebtRoute, AppEnv> = async (c) =>
+  c.json(await getDebtDetail(c.get('userId'), c.req.valid('param').id), 200);

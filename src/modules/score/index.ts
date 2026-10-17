@@ -7,6 +7,7 @@ export {
   getIndicatorDetail,
 } from './score.service.ts';
 export { ScoreNotAvailableError } from './score.errors.ts';
+export { estimatePayingOff } from './score.estimate.ts';
 export { takeMonthlySnapshots } from './score.history.ts';
 export { scoreExportSections } from './score.export.ts';
 export type { ScoreEstimate } from './score.service.ts';
