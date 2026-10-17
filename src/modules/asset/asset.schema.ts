@@ -46,7 +46,12 @@ export const portfolioSchema = z
   .openapi('Portfolio');
 
 export const createAssetBodySchema = z
-  .object({ assetClass: assetClassSchema, name: nameSchema, value: valueSchema, valuedOn: valuedOnSchema })
+  .object({
+    assetClass: assetClassSchema,
+    name: nameSchema,
+    value: valueSchema,
+    valuedOn: valuedOnSchema,
+  })
   .openapi('AssetInput');
 
 export const updateAssetBodySchema = z

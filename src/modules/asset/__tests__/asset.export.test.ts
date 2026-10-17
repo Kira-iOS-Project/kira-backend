@@ -11,7 +11,9 @@ function repositoryOf(assets: ReturnType<typeof createAssetMock>[]): AssetReposi
 describe('assetExportSections', () => {
   test('writes one Portofolio block with the class labels, or nothing without assets', async () => {
     const classes = Object.values(ASSET_CLASS);
-    const assets = classes.map((assetClass, index) => createAssetMock({ assetClass, name: `Aset ${index}` }));
+    const assets = classes.map((assetClass, index) =>
+      createAssetMock({ assetClass, name: `Aset ${index}` }),
+    );
     const [section] = await assetExportSections('user-1', { repository: repositoryOf(assets) });
     expect(section?.title).toBe('Rencana · Portofolio');
     expect(section?.header).toEqual(['Jenis Aset', 'Nama Aset', 'Nilai Sekarang', 'Tanggal']);

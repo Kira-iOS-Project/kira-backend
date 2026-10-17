@@ -16,7 +16,12 @@ describe('createAssetRepository', () => {
 
   test('adds an asset for the person', async () => {
     const fake = createFakeDb(inOrder([asset]));
-    const input = { assetClass: ASSET_CLASS.gold, name: 'Emas Antam', value: 15_000_000, valuedOn: '2026-10-01' };
+    const input = {
+      assetClass: ASSET_CLASS.gold,
+      name: 'Emas Antam',
+      value: 15_000_000,
+      valuedOn: '2026-10-01',
+    };
     expect(await createAssetRepository(fake.db).create('user-1', input)).toEqual(asset);
     expect(fake.queries[0]?.sql).toStartWith('insert into "assets"');
   });

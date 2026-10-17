@@ -42,7 +42,11 @@ export async function listAssets(userId: string, deps: AssetDeps = {}): Promise<
   return { assets, total, updatedOn, debtToAsset };
 }
 
-export function createAsset(userId: string, input: AssetInput, deps: AssetDeps = {}): Promise<Asset> {
+export function createAsset(
+  userId: string,
+  input: AssetInput,
+  deps: AssetDeps = {},
+): Promise<Asset> {
   return (deps.repository ?? assetRepository).create(userId, input);
 }
 

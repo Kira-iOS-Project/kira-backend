@@ -20,7 +20,12 @@ function send(method: string, path: string, body?: unknown) {
 }
 
 const asset = createAssetMock();
-const input = { assetClass: ASSET_CLASS.gold, name: 'Emas Antam', value: 15_000_000, valuedOn: '2026-10-01' };
+const input = {
+  assetClass: ASSET_CLASS.gold,
+  name: 'Emas Antam',
+  value: 15_000_000,
+  valuedOn: '2026-10-01',
+};
 
 describe('GET /api/assets', () => {
   test('answers the portfolio with its total; Utang terhadap Aset is null before the health check', async () => {
@@ -40,7 +45,9 @@ describe('GET /api/assets', () => {
 
 describe('POST /api/assets', () => {
   test('answers 201 with the saved asset', async () => {
-    dbControl.respond = signedIn((query) => (query.sql.startsWith('insert into "assets"') ? [asset] : []));
+    dbControl.respond = signedIn((query) =>
+      query.sql.startsWith('insert into "assets"') ? [asset] : [],
+    );
     const res = await send('POST', '/api/assets', input);
     expect(res.status).toBe(201);
     expect((await res.json()).id).toBe(ASSET_ID);
@@ -64,7 +71,9 @@ describe('POST /api/assets', () => {
 describe('PATCH /api/assets/{id}', () => {
   test('answers 200 with the changed asset', async () => {
     const changed = createAssetMock({ value: 16_000_000 });
-    dbControl.respond = signedIn((query) => (query.sql.startsWith('update "assets"') ? [changed] : []));
+    dbControl.respond = signedIn((query) =>
+      query.sql.startsWith('update "assets"') ? [changed] : [],
+    );
     const res = await send('PATCH', `/api/assets/${ASSET_ID}`, { value: 16_000_000 });
     expect(res.status).toBe(200);
     expect((await res.json()).value).toBe(16_000_000);
