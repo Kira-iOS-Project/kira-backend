@@ -13,11 +13,19 @@ import { addMonths, monthStart, wibDate, wibStartOfDay } from '../../lib/time/wi
 import { ScoreNotAvailableError } from './score.errors.ts';
 import { labelsOf } from './score.labels.ts';
 import { evaluate } from './score.measure.ts';
-import { scoreRepository, type HistorySnapshot } from './score.repository.ts';
+import {
+  scoreHistoryRepository,
+  type HistorySnapshot,
+  type ScoreHistoryRepository,
+} from './score.history.repository.ts';
+import { scoreRepository } from './score.repository.ts';
 import type { ScoreHistory } from './score.schema.ts';
 import { scoreOf, snapshotOf, type ScoreDeps } from './score.service.ts';
 
 type Range = (typeof SCORE_HISTORY_RANGE)[keyof typeof SCORE_HISTORY_RANGE];
+
+/** The score's own repository for the answers, and the history's for the snapshots. */
+export type HistoryDeps = ScoreDeps & { history?: ScoreHistoryRepository };
 
 const RANGE_MONTHS: Record<Range, number> = {
   [SCORE_HISTORY_RANGE.sixMonths]: 6,
@@ -43,23 +51,24 @@ function byMonth(snapshots: HistorySnapshot[]): { month: string; snapshot: Histo
   for (const snapshot of snapshots) months.set(monthOf(snapshot), snapshot);
   return [...months.entries()]
     .map(([month, snapshot]) => ({ month, snapshot }))
-    .sort((a, b) => a.month.localeCompare(b.month));
+    .toSorted((a, b) => a.month.localeCompare(b.month));
 }
 
 export async function getScoreHistory(
   userId: string,
   range: Range,
-  deps: ScoreDeps = {},
+  deps: HistoryDeps = {},
 ): Promise<ScoreHistory> {
   const repository = deps.repository ?? scoreRepository;
+  const history = deps.history ?? scoreHistoryRepository;
   const now = (deps.now ?? (() => new Date()))();
   const scored = await scoreOf(userId, { repository, now: () => now });
   if (!scored) throw new ScoreNotAvailableError();
   const thisMonth = monthStart(wibDate(now));
   const since = wibStartOfDay(addMonths(thisMonth, -HISTORY_MONTHS));
-  const months = byMonth(await repository.listHistory(userId, since));
+  const months = byMonth(await history.listHistory(userId, since));
   const firstMonth = addMonths(thisMonth, -(RANGE_MONTHS[range] - 1)).slice(0, 7);
-  const previous = months.filter(({ month }) => month < thisMonth.slice(0, 7)).at(-1) ?? null;
+  const previous = months.findLast(({ month }) => month < thisMonth.slice(0, 7)) ?? null;
   const { evaluation } = scored;
   const labels = labelsOf(evaluation);
   const changes = previous
@@ -95,25 +104,34 @@ export async function getScoreHistory(
  */
 export async function takeMonthlySnapshots(
   now: Date,
-  deps: Pick<ScoreDeps, 'repository'> = {},
+  deps: Omit<HistoryDeps, 'now'> = {},
 ): Promise<{ taken: number } | { skipped: string }> {
   const repository = deps.repository ?? scoreRepository;
+  const history = deps.history ?? scoreHistoryRepository;
   const today = wibDate(now);
   if (Number(today.slice(8, 10)) < MONTHLY_SNAPSHOT_DAY) return { skipped: 'before-the-25th' };
   const periodStart = `${today.slice(0, 8)}${MONTHLY_SNAPSHOT_DAY}`;
-  let taken = 0;
-  let afterId: string | null = null;
-  for (;;) {
-    const ids = await repository.listMonthlyCandidates(periodStart, MONTHLY_BATCH, afterId);
-    for (const userId of ids) {
-      const state = await repository.findState(userId);
-      if (!state?.input) continue;
-      const debts = await repository.listOpenDebts(userId);
-      const evaluation = evaluate({ ...state.input, debts });
-      const snapshot = snapshotOf(evaluation, SNAPSHOT_REASON.monthly, periodStart);
-      if (await repository.insertMonthlySnapshot(userId, snapshot)) taken += 1;
-    }
-    if (ids.length < MONTHLY_BATCH) return { taken };
-    afterId = ids.at(-1) ?? null;
+
+  /** One person's point; false when the answers are gone or the month already has one. */
+  async function take(userId: string): Promise<boolean> {
+    const [state, debts] = await Promise.all([
+      repository.findState(userId),
+      repository.listOpenDebts(userId),
+    ]);
+    if (!state?.input) return false;
+    const evaluation = evaluate({ ...state.input, debts });
+    const snapshot = snapshotOf(evaluation, SNAPSHOT_REASON.monthly, periodStart);
+    return history.insertMonthlySnapshot(userId, snapshot);
   }
+
+  /** A page of people at once, then the next page after the last id, until a short page. */
+  async function page(afterId: string | null, taken: number): Promise<number> {
+    const ids = await history.listMonthlyCandidates(periodStart, MONTHLY_BATCH, afterId);
+    const outcomes = await Promise.all(ids.map(take));
+    const total = taken + outcomes.filter(Boolean).length;
+    const last = ids.at(-1);
+    return ids.length < MONTHLY_BATCH || last === undefined ? total : page(last, total);
+  }
+
+  return { taken: await page(null, 0) };
 }

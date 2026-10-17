@@ -7,6 +7,7 @@
 
 import { INDICATOR } from '../../lib/constants/score.ts';
 import type { IndicatorLabels } from '../../db/schema/schema.ts';
+import type { IndicatorKey } from './score.engine.ts';
 import type { Evaluation } from './score.measure.ts';
 
 /** One decimal with a comma, as Indonesian writes it: 1.1 → "1,1". */
@@ -16,25 +17,20 @@ function decimal(value: number): string {
 
 /** The labels of one evaluation, keyed by indicator. */
 export function labelsOf(evaluation: Evaluation): IndicatorLabels {
-  const labels = {} as IndicatorLabels;
-  for (const { key, measure } of evaluation.indicators) {
-    labels[key] = labelOf(key, measure);
-  }
-  return labels;
-}
-
-function labelOf(
-  key: Evaluation['indicators'][number]['key'],
-  measure: Evaluation['indicators'][number]['measure'],
-): string {
-  switch (key) {
-    case INDICATOR.emergencyFund:
-      return 'ratio' in measure ? `${decimal(measure.ratio)}×` : '';
-    case INDICATOR.consumerDebt:
-      return 'platforms' in measure ? `${measure.platforms} platform` : '';
-    case INDICATOR.protection:
-      return 'health' in measure ? `${Number(measure.health) + Number(measure.income)} dari 2` : '';
-    default:
-      return 'percent' in measure ? `${measure.percent}%` : '';
-  }
+  const { facts } = evaluation;
+  const measure = (key: IndicatorKey) =>
+    evaluation.indicators.find((indicator) => indicator.key === key)?.measure;
+  const percent = (key: IndicatorKey) => {
+    const measured = measure(key);
+    return measured && 'percent' in measured ? `${measured.percent}%` : '';
+  };
+  const fund = measure(INDICATOR.emergencyFund);
+  return {
+    [INDICATOR.emergencyFund]: fund && 'ratio' in fund ? `${decimal(fund.ratio)}×` : '',
+    [INDICATOR.savingsRatio]: percent(INDICATOR.savingsRatio),
+    [INDICATOR.instalmentRatio]: percent(INDICATOR.instalmentRatio),
+    [INDICATOR.consumerDebt]: `${facts.platforms} platform`,
+    [INDICATOR.debtToAsset]: percent(INDICATOR.debtToAsset),
+    [INDICATOR.protection]: `${Number(facts.health) + Number(facts.incomeCover)} dari 2`,
+  };
 }

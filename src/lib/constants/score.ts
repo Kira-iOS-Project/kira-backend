@@ -4,6 +4,8 @@
  * these spellings; the app turns each into its Indonesian words.
  */
 
+import { BILLING_PERIOD } from './plans.ts';
+
 /** Rentan 0–39, Bertahan 40–79, Sehat 80–100. */
 export const SCORE_BAND = {
   vulnerable: 'vulnerable',
@@ -42,8 +44,11 @@ export const STEP_KIND = {
 export const SNAPSHOT_REASON = {
   healthCheck: 'health_check',
   recompute: 'recompute',
-  /** Riwayat Kira Score's monthly point, taken on the 25th (WIB). */
-  monthly: 'monthly',
+  /**
+   * Riwayat Kira Score's monthly point, taken on the 25th (WIB). The word is the billing period's
+   * (one home per identifier); the two enums only share its spelling.
+   */
+  monthly: BILLING_PERIOD.monthly,
 } as const;
 
 /** The day of the month (WIB) Riwayat Kira Score takes its monthly snapshot. */

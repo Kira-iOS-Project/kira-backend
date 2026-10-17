@@ -3,13 +3,12 @@
  * debt accounts and the score snapshots. Saving a health check is one transaction.
  */
 
-import { and, asc, count, desc, eq, gt, gte, isNotNull, isNull, lt, notExists, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { db } from '../../db/client/index.ts';
 import {
   debtAccounts,
   financialProfiles,
-  MONTHLY_SNAPSHOT_PREDICATE,
   scoreSnapshots,
   users,
   type IndicatorLabels,
@@ -48,16 +47,6 @@ export type NewSnapshot = {
   periodStart: string;
 };
 
-/** A snapshot Riwayat Kira Score plots: a monthly one or the first health check's. */
-export type HistorySnapshot = {
-  reason: Values<typeof SNAPSHOT_REASON>;
-  periodStart: string;
-  createdAt: Date;
-  score: number;
-  indicators: IndicatorPoints;
-  measures: IndicatorLabels | null;
-};
-
 /** At most this many open debt accounts are read: the quiz accepts twenty. */
 const DEBT_LIMIT = 50;
 
@@ -66,18 +55,6 @@ export type ScoreRepository = {
   listOpenDebts(userId: string): Promise<DebtInput[]>;
   snapshotHistory(userId: string, periodStart: Date): Promise<SnapshotHistory>;
   insertSnapshot(userId: string, snapshot: NewSnapshot): Promise<void>;
-  /**
-   * The monthly snapshots created since `since`, and the first health check's whenever it was,
-   * oldest first.
-   */
-  listHistory(userId: string, since: Date): Promise<HistorySnapshot[]>;
-  /**
-   * Up to `limit` people with an answered health check and no monthly snapshot for the month whose
-   * 25th is `periodStart`, by id after `afterId`.
-   */
-  listMonthlyCandidates(periodStart: string, limit: number, afterId: string | null): Promise<string[]>;
-  /** A second monthly snapshot for the same month is dropped by the partial unique index. */
-  insertMonthlySnapshot(userId: string, snapshot: NewSnapshot): Promise<boolean>;
   /** Stores the answers, replaces the debt accounts, sets the payday and records the snapshot. */
   saveHealthCheck(
     userId: string,
@@ -176,81 +153,6 @@ export function createScoreRepository(client: PostgresJsDatabase = db): ScoreRep
           target: [scoreSnapshots.userId, scoreSnapshots.periodStart],
           where: sql`${scoreSnapshots.reason} = ${sql.raw(`'${SNAPSHOT_REASON.recompute}'`)}`,
         });
-    },
-
-    async listHistory(userId, since) {
-      const columns = {
-        reason: scoreSnapshots.reason,
-        periodStart: scoreSnapshots.periodStart,
-        createdAt: scoreSnapshots.createdAt,
-        score: scoreSnapshots.score,
-        indicators: scoreSnapshots.indicators,
-        measures: scoreSnapshots.measures,
-      };
-      const [monthly, first] = await Promise.all([
-        client
-          .select(columns)
-          .from(scoreSnapshots)
-          .where(
-            and(
-              eq(scoreSnapshots.userId, userId),
-              eq(scoreSnapshots.reason, SNAPSHOT_REASON.monthly),
-              gte(scoreSnapshots.createdAt, since),
-            ),
-          )
-          .orderBy(asc(scoreSnapshots.createdAt)),
-        client
-          .select(columns)
-          .from(scoreSnapshots)
-          .where(
-            and(
-              eq(scoreSnapshots.userId, userId),
-              eq(scoreSnapshots.reason, SNAPSHOT_REASON.healthCheck),
-            ),
-          )
-          .orderBy(asc(scoreSnapshots.createdAt))
-          .limit(1),
-      ]);
-      return [...first, ...monthly].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-    },
-
-    async listMonthlyCandidates(periodStart, limit, afterId) {
-      const rows = await client
-        .select({ id: financialProfiles.userId })
-        .from(financialProfiles)
-        .where(
-          and(
-            isNotNull(financialProfiles.completedAt),
-            afterId === null ? undefined : gt(financialProfiles.userId, afterId),
-            notExists(
-              client
-                .select({ id: scoreSnapshots.id })
-                .from(scoreSnapshots)
-                .where(
-                  and(
-                    eq(scoreSnapshots.userId, financialProfiles.userId),
-                    eq(scoreSnapshots.periodStart, periodStart),
-                    eq(scoreSnapshots.reason, SNAPSHOT_REASON.monthly),
-                  ),
-                ),
-            ),
-          ),
-        )
-        .orderBy(asc(financialProfiles.userId))
-        .limit(limit);
-      return rows.map((row) => row.id);
-    },
-
-    async insertMonthlySnapshot(userId, snapshot) {
-      const rows = await client
-        .insert(scoreSnapshots)
-        .values({ userId, ...snapshot })
-        .onConflictDoNothing({
-          target: [scoreSnapshots.userId, scoreSnapshots.periodStart],
-          where: MONTHLY_SNAPSHOT_PREDICATE,
-        })
-        .returning({ id: scoreSnapshots.id });
-      return rows.length > 0;
     },
 
     async saveHealthCheck(userId, body, snapshot, now) {
