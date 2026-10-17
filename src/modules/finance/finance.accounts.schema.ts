@@ -3,7 +3,7 @@ import { enumValues } from '../../lib/constants/enum-values.ts';
 import { DEBT_KIND, DEBT_PAYMENT_STATUS } from '../../lib/constants/profile.ts';
 import { WALLET_TYPE } from '../../lib/constants/ung.ts';
 
-export const walletSchema = z
+const walletSchema = z
   .object({
     id: z.uuid(),
     name: z.string(),
@@ -15,7 +15,7 @@ export const walletSchema = z
 
 const date = z.iso.date();
 
-export const debtSummarySchema = z
+const debtSummarySchema = z
   .object({
     id: z.uuid(),
     name: z.string(),

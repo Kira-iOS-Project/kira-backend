@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { createFakeDb } from '../../../test/fake-postgres.ts';
+import { DEBT_KIND, DEBT_PAYMENT_STATUS } from '../../../lib/constants/profile.ts';
+import { WALLET_TYPE } from '../../../lib/constants/ung.ts';
 import { createFinanceRepository } from '../finance.repository.ts';
 
 const ID = '00000000-0000-4000-8000-000000000001';
@@ -8,18 +10,18 @@ describe('finance account repository', () => {
   test('lists wallets and debts scoped to the user with bounded results', async () => {
     const fake = createFakeDb((query) =>
       query.sql.includes('from "wallets"')
-        ? [{ id: ID, name: 'Dompet', type: 'cash', balance: 500, createdAt: new Date() }]
+        ? [{ id: ID, name: 'Dompet', type: WALLET_TYPE.cash, balance: 500, createdAt: new Date() }]
         : [
             {
               id: ID,
               name: 'Paylater',
-              kind: 'paylater',
+              kind: DEBT_KIND.paylater,
               originalAmount: 1000,
               remainingAmount: 800,
               monthlyInstallment: 200,
               remainingTenorMonths: 4,
               dueDay: 20,
-              paymentStatus: 'on_time',
+              paymentStatus: DEBT_PAYMENT_STATUS.onTime,
             },
           ],
     );

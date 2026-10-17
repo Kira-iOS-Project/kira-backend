@@ -5,16 +5,16 @@ type Deps = { repository?: FinanceRepository; now?: () => Date };
 
 function nextDueDate(today: string, dueDay: number | null): string | null {
   if (!dueDay) return null;
-  const [year = 0, month = 1, day = 1] = today.split('-').map(Number);
-  for (let offset = 0; offset < 2; offset += 1) {
+  const [year = 0, month = 1] = today.split('-').map(Number);
+  const dueDateForMonth = (offset: number) => {
     const first = new Date(Date.UTC(year, month - 1 + offset, 1));
     const lastDay = new Date(
       Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0),
     ).getUTCDate();
-    const due = `${first.getUTCFullYear()}-${String(first.getUTCMonth() + 1).padStart(2, '0')}-${String(Math.min(dueDay, lastDay)).padStart(2, '0')}`;
-    if (due >= today || (offset === 0 && dueDay >= day)) return due;
-  }
-  return null;
+    return `${first.getUTCFullYear()}-${String(first.getUTCMonth() + 1).padStart(2, '0')}-${String(Math.min(dueDay, lastDay)).padStart(2, '0')}`;
+  };
+  const currentMonthDueDate = dueDateForMonth(0);
+  return currentMonthDueDate >= today ? currentMonthDueDate : dueDateForMonth(1);
 }
 
 export async function listWallets(userId: string, deps: Deps = {}) {

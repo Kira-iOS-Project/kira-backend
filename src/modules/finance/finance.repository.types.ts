@@ -3,7 +3,7 @@ import type { WALLET_TYPE } from '../../lib/constants/ung.ts';
 
 type Values<T> = T[keyof T];
 
-export type WalletRow = {
+type WalletRow = {
   id: string;
   name: string;
   type: Values<typeof WALLET_TYPE>;
@@ -11,7 +11,7 @@ export type WalletRow = {
   createdAt: Date;
 };
 
-export type DebtRow = {
+type DebtRow = {
   id: string;
   name: string;
   kind: Values<typeof DEBT_KIND>;

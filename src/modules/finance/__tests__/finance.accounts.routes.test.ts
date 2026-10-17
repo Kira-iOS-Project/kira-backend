@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { app } from '../../../app.ts';
 import { dbControl, resetExternalMocks } from '../../../test/preload.ts';
 import { signedIn } from '../../../test/session.ts';
+import { DEBT_KIND, DEBT_PAYMENT_STATUS } from '../../../lib/constants/profile.ts';
+import { WALLET_TYPE } from '../../../lib/constants/ung.ts';
 
 beforeEach(() => resetExternalMocks());
 
@@ -15,7 +17,7 @@ describe('finance account routes', () => {
             {
               id: '00000000-0000-4000-8000-000000000001',
               name: 'Dompet',
-              type: 'cash',
+              type: WALLET_TYPE.cash,
               balance: 125_000,
               createdAt: new Date('2026-10-16T05:00:00.000Z'),
             },
@@ -24,13 +26,13 @@ describe('finance account routes', () => {
             {
               id: '00000000-0000-4000-8000-000000000002',
               name: 'Paylater',
-              kind: 'paylater',
+              kind: DEBT_KIND.paylater,
               originalAmount: 500_000,
               remainingAmount: 350_000,
               monthlyInstallment: 50_000,
               remainingTenorMonths: 7,
               dueDay: 20,
-              paymentStatus: 'on_time',
+              paymentStatus: DEBT_PAYMENT_STATUS.onTime,
             },
           ],
     );
