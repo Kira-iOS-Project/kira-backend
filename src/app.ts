@@ -23,6 +23,7 @@ import { careRouter } from './modules/care/index.ts';
 import { chatRouter } from './modules/chat/index.ts';
 import { communityRouter } from './modules/community/index.ts';
 import { homeRouter } from './modules/home/index.ts';
+import { financeRouter } from './modules/finance/index.ts';
 import { metaApp } from './modules/meta/index.ts';
 import { scholarshipRouter } from './modules/scholarship/index.ts';
 import { debtRouter, payoffRouter } from './modules/payoff/index.ts';
@@ -89,6 +90,7 @@ app.route('/api', planRouter);
 app.route('/api/usage', usageRouter);
 app.route('/api/chat', chatRouter);
 app.route('/api/transactions', transactionRouter);
+app.route('/api', financeRouter);
 app.route('/api/imports', bankImportRouter);
 
 /** Protected routes declare `security: [{ bearerAuth: [] }]`; this names the scheme they use. */

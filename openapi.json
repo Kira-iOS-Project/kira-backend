@@ -4850,6 +4850,178 @@
           }
         }
       },
+      "WalletList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Wallet"
+            }
+          },
+          "debts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DebtSummary"
+            }
+          },
+          "heldTotal": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalDebt": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "items",
+          "debts",
+          "heldTotal",
+          "totalDebt"
+        ]
+      },
+      "Wallet": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "cash",
+              "bank",
+              "e_wallet",
+              "other"
+            ]
+          },
+          "balance": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "balance",
+          "createdAt"
+        ]
+      },
+      "DebtSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "paylater",
+              "online_loan",
+              "credit_card",
+              "vehicle",
+              "mortgage",
+              "family_loan"
+            ]
+          },
+          "originalAmount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remainingAmount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "monthlyInstallment": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remainingTenorMonths": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "installmentsTotal": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "installmentsRemaining": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "on_time",
+              "late",
+              "overdue"
+            ]
+          },
+          "nextInstallment": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "dueDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "amount": {
+                "type": "integer"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "upcoming",
+                  "dueSoon"
+                ]
+              }
+            },
+            "required": [
+              "dueDate",
+              "amount",
+              "status"
+            ]
+          },
+          "dueSoon": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "originalAmount",
+          "remainingAmount",
+          "monthlyInstallment",
+          "remainingTenorMonths",
+          "installmentsTotal",
+          "installmentsRemaining",
+          "paymentStatus",
+          "nextInstallment",
+          "dueSoon"
+        ]
+      },
       "BankImport": {
         "type": "object",
         "properties": {
@@ -9998,6 +10170,52 @@
           },
           "422": {
             "description": "Request schema validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other problem: a server failure, a timeout, a body too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallets": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listWallets",
+        "summary": "Wallets and total held balance",
+        "responses": {
+          "200": {
+            "description": "Owned wallets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session",
             "content": {
               "application/problem+json": {
                 "schema": {
