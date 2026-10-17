@@ -10,6 +10,7 @@ import type { ExportScope, ExportSection } from '../../lib/export/export-section
 import { logger } from '../../lib/server/logger.ts';
 import { paydayPeriod, wibDate } from '../../lib/time/wib.ts';
 import { activePlanOf, quotaPeriod, usageOf } from '../../lib/usage/plan-usage.ts';
+import { assetExportSections } from '../asset/index.ts';
 import { careExportSections } from '../care/index.ts';
 import { communityExportSections } from '../community/index.ts';
 import { scoreExportSections } from '../score/index.ts';
@@ -44,6 +45,7 @@ async function moduleExportSections(userId: string, scope: ExportScope): Promise
       scoreExportSections(userId),
       communityExportSections(userId),
       careExportSections(userId, scope),
+      assetExportSections(userId),
     ])
   ).flat();
 }
