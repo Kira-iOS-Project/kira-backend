@@ -27,6 +27,7 @@ export const financeRouter = createRouter();
 financeRouter.use('/wallets', requireSession);
 financeRouter.openapi(listWalletsRoute, listWalletsHandler);
 financeRouter.use('/bills', requireSession);
+financeRouter.use('/bills/*', requireSession);
 financeRouter.openapi(listBillsRoute, listBillsHandler);
 financeRouter.openapi(createBillRoute, createBillHandler);
 financeRouter.openapi(getBillRoute, getBillHandler);
