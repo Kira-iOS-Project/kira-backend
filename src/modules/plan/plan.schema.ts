@@ -100,11 +100,14 @@ export const planSchema = z
   })
   .openapi('PlanOverview');
 
-/** A calculator's inputs by name, as the app keeps them: amounts, rates, years, choices. */
+/**
+ * A calculator's inputs by name, as the app keeps them: amounts, rates, years, choices. An unknown
+ * input is left out rather than sent as null (a null member breaks the iOS client's generator).
+ */
 const goalInputsSchema = z
   .record(
     z.string().min(1).max(40),
-    z.union([z.number().min(0).max(GOAL_AMOUNT_MAX), z.string().max(80), z.boolean(), z.null()]),
+    z.union([z.number().min(0).max(GOAL_AMOUNT_MAX), z.string().max(80), z.boolean()]),
   )
   .refine((inputs) => Object.keys(inputs).length <= 30, { message: 'At most 30 inputs' })
   .openapi('GoalInputs');

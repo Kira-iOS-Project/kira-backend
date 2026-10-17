@@ -26,7 +26,7 @@ import { moment, timestamps } from './columns.ts';
 export const goalKindEnum = pgEnum('goal_kind', enumValues(GOAL_KIND));
 
 /** A calculator's inputs as the app sent them, by name: amounts, rates, years, choices. */
-export type GoalInputs = Record<string, number | string | boolean | null>;
+export type GoalInputs = Record<string, number | string | boolean>;
 
 export const goals = pgTable(
   'goals',
