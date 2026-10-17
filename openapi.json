@@ -8664,6 +8664,7 @@
         ],
         "operationId": "updateGoal",
         "summary": "Ubah Tujuan",
+        "description": "Changes any of the goal's figures; an emergency fund's inputs must keep a positive essentialExpense (400).",
         "parameters": [
           {
             "schema": {
@@ -8692,6 +8693,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A business rule refused the request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -8751,7 +8762,7 @@
         ],
         "operationId": "addGoalDeposit",
         "summary": "Tambah Setoran",
-        "description": "Records a deposit; the same depositId again on this goal answers the stored one and adds nothing, and one used on another goal is refused.",
+        "description": "Records a deposit. The same depositId again on this goal answers the stored deposit as it was first recorded (whatever amount the retry carries) and adds nothing; one used on another goal is refused.",
         "parameters": [
           {
             "schema": {
