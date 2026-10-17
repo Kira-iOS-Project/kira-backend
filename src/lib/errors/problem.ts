@@ -74,6 +74,9 @@ const TITLES = {
   CARE_CHECK_IN_NOT_FOUND: 'Check-in Not Found',
   CARE_SAFETY_PLAN_NOT_FOUND: 'Safety Plan Not Found',
   ASSET_NOT_FOUND: 'Asset Not Found',
+  GOAL_NOT_FOUND: 'Goal Not Found',
+  GOAL_EMERGENCY_EXISTS: 'Emergency Fund Exists',
+  GOAL_DEPOSIT_CONFLICT: 'Deposit Id Used',
 } as const satisfies Record<ErrorCode, string>;
 
 /** An `HTTPException` comes from middleware that knows only a status (the body limit, the
