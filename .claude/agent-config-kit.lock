@@ -1,0 +1,302 @@
+{
+  "//": "Written by agent-setup (agent-config-kit). Do not edit: agent-sync check compares the project with it, and while it exists the kit's hooks run in this project.",
+  "blocks": {
+    ".gitignore": "sha256:444e68141876d65b8e0b6fc7a3863fd9f1cf9a150a96d4a394945210ae6d2f42",
+    "CLAUDE.md": "sha256:3b2d99b03658b63c0b0040cbf2982d24e94ba98b234714c08505c9e897f55a70"
+  },
+  "kit": "agent-config-kit",
+  "lockVersion": 1,
+  "plugins": {
+    "agent-be-hono": {
+      "answers": {
+        "analytics": "no",
+        "ci-gate": "yes",
+        "deepseek-review": "yes",
+        "payload-encryption": "no",
+        "pr-templates": "yes",
+        "serena-workspace": "no"
+      },
+      "claudeMd": "sha256:fdeb5f3788b2b6a44c30157739388352f5011becd419c31d8a90f5ed45dcbf77",
+      "files": {
+        ".claude/anti-patterns/a-check-that-matches-nothing-passes.md": "sha256:6f40e6ddd94a72687ef4d252c9847d5432ee7ffaa228d48548a42007ccda8dc2",
+        ".claude/anti-patterns/auth-cookie-cache-outlives-revocation.md": "sha256:26867a2bea1aecd961aac99c5a4abfa2eb5310f555e5de70728445ce14fa514e",
+        ".claude/anti-patterns/better-auth-account-endpoints-are-gated.md": "sha256:d8538a5c0c16e4f75d2410681796dc6c84f4f01a70e5849ddef2b68ea7b526d4",
+        ".claude/anti-patterns/better-auth-list-option-replaces-defaults.md": "sha256:4484d772f9e0eb9859bb986ea962538f569573d76b92f72bb0c62cf151652fa1",
+        ".claude/anti-patterns/better-auth-passkey-quirks.md": "sha256:8beaac833e12a67603b0fbd08611515ecd08e40977240dd43dc8960446cccec0",
+        ".claude/anti-patterns/bun-mock-module-is-process-wide.md": "sha256:2be37ba7536308aef5d70f7e65d866f6a59cd7301ddedc9873c5441a23239574",
+        ".claude/anti-patterns/gateway-cancel-result-is-not-the-state.md": "sha256:b5bcb17d1bfd8ca6bb287958bcd369eedc76125bb1bf3882de780ad5d1592af3",
+        ".claude/anti-patterns/queue-job-id-cannot-contain-colon.md": "sha256:ce1d3cc8aaa78e89e8c4bc47575a19da37a1a019fe274dd5817dce4b951cb42a",
+        ".claude/anti-patterns/session-rows-are-a-mirror-not-the-session.md": "sha256:3e1f52147360ce111a8b95bdc0916fd051c3626d12eaf5f8cb2eb796ef9d6fe3",
+        ".claude/rules/common/error-codes.md": "sha256:e7ab16eb3596ff7a7427460ff108c2dd710b1a80fe907536cdad0b5e0d7787c0",
+        ".claude/rules/typescript/coverage.md": "sha256:84d1962739c1d82e5f5071d046b442e91e91a81afe8cd323c9f92c9daf4a69ab",
+        ".claude/test-preload.example.ts": "sha256:e141091feaecefae3cc65a94b1e16e1e07474280fc2e97be9202e7cc233ffef0",
+        ".github/workflows/deepseek-review.yml": "sha256:0920a5ed69f1f2455b6effba1addb909874bf586427a2aee55100814c6eb657a",
+        ".github/workflows/quality-gate.yml": "sha256:12b6da22c4a489867503807451b9dc336312cf3b2eb48bf4639e55a7d77ac2be",
+        "scripts/check/constants.ts": "sha256:9044e98abd7568969516f2558a586b9dc19064c4a548a35a51fdf637dd067337",
+        "scripts/check/coverage-files.mjs": "sha256:b711605103ea52cce72a2f59b321b242cd3bf7e35cd334beaf69bd1f82019312",
+        "scripts/check/coverage-policy.mjs": "sha256:9e527c3e89316870332a2275c2aed82dc6a7f2086fc195adf1f4f97cd0f343f4",
+        "scripts/check/dockerfile.ts": "sha256:0eeac768c63e8f5171443d1db0324d2d24db861f461b5c222648791432825af5",
+        "scripts/check/index-coverage.sh": "sha256:f078523942fd55b1eaca0bacf80a43b3ae9f9fd522b176617da0ebf87f475386",
+        "scripts/check/migrations.sh": "sha256:8ba2bb8a82ee757c5cc2bf6f5fb730ec20f9d2f5c3758b494a663d61f29d46e2",
+        "scripts/check/openapi.ts": "sha256:25d9d68353fe87121f1209fba72d245d7176b31e97f215b47e85862457cb5369",
+        "scripts/generate/openapi.ts": "sha256:98494e6fb57e82b506ed2d1122072b3f7c726b5399a0b0c8e062a9e842a8e698",
+        "scripts/lib/openapi-document.ts": "sha256:b13fdffc317dfaa404430a8a3c44b42dcb7bd27c9e9d7591fd77e1380e582432",
+        "scripts/lib/source-scan.ts": "sha256:91027dacb54be39c5eaca4a68a01d9e089f3ceaa17088a921ee9904131090bda"
+      },
+      "gitignore": [
+        ".env",
+        ".env.*.local",
+        ".env.development",
+        ".env.local",
+        ".env.production",
+        ".env.staging",
+        ".env.test",
+        ".envrc",
+        ".serena/",
+        ".skillspector/",
+        "/coverage",
+        "build/",
+        "dist/",
+        "node_modules/"
+      ],
+      "kept": [],
+      "owned": [
+        ".claude/anti-patterns/better-auth-user-hook-runs-first.md",
+        ".claude/anti-patterns/postgres-max-1-pool.md",
+        ".claude/anti-patterns/rate-limit-double-next.md",
+        ".claude/docs/lint-config.md",
+        ".claude/rules/backend/drizzle.md",
+        ".claude/rules/backend/hono.md",
+        ".claude/rules/backend/performance.md",
+        ".claude/rules/backend/testing.md",
+        ".claude/rules/common/patterns.md",
+        ".claude/rules/common/testing.md",
+        "scripts/check/ci-env.sh"
+      ],
+      "packageScripts": {
+        "check:constants": "bun scripts/check/constants.ts",
+        "check:coverage-policy": "node scripts/check/coverage-policy.mjs",
+        "check:crypto-interop": "if [ -f scripts/check/crypto-interop.ts ]; then bun scripts/check/crypto-interop.ts ; else echo 'check:crypto-interop skipped: setup did not install the payload module'; fi",
+        "check:dead-code": "knip",
+        "check:dockerfile": "bun scripts/check/dockerfile.ts",
+        "check:endpoints": "if [ -f scripts/check/endpoints.ts ]; then bun scripts/check/endpoints.ts ; else echo 'check:endpoints skipped: setup did not install the payload module'; fi",
+        "check:folder-shape": "node scripts/check/folder-shape.mjs",
+        "check:mocks": "bun scripts/check/module-mocks.ts",
+        "check:openapi": "bun scripts/check/openapi.ts",
+        "db:generate": "drizzle-kit generate",
+        "fl": "bun run format && bun run lint",
+        "format": "oxfmt src scripts",
+        "format:check": "oxfmt --check src scripts",
+        "generate:endpoints": "bun scripts/generate/endpoints.ts",
+        "spec:export": "bun scripts/generate/openapi.ts",
+        "test:coverage": "bun test src --coverage && node scripts/check/coverage-files.mjs",
+        "type-check": "tsc --noEmit"
+      },
+      "seeded": [
+        ".claude/anti-patterns/INDEX.md",
+        ".claude/docs/code-review-checklist.md",
+        ".dockerignore",
+        ".env.ci.example",
+        ".github/CODEOWNERS",
+        ".github/PULL_REQUEST_TEMPLATE/dev.md",
+        ".github/PULL_REQUEST_TEMPLATE/promotion.md",
+        ".husky/pre-commit",
+        ".oxfmtrc.json",
+        ".oxlintignore",
+        ".oxlintrc.json",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "SSOT.md",
+        "bunfig.toml",
+        "knip.ts",
+        "scripts/check/constants.config.json",
+        "scripts/check/gates.list",
+        "scripts/check/module-mocks.ts"
+      ],
+      "settings": {
+        "/$schema": "https://json.schemastore.org/claude-code-settings.json",
+        "/permissions/allow": [
+          "Bash(bun run test:*)",
+          "Bash(bun run type-check:*)",
+          "Bash(bun run lint:*)",
+          "Bash(bun run format:*)",
+          "Bash(bun run fl:*)",
+          "Bash(bun run check:*)",
+          "Bash(bun run db:generate:*)",
+          "Bash(bun fl:*)",
+          "Bash(bun test:*)"
+        ],
+        "/permissions/deny": [
+          "Edit(SSOT.md)",
+          "Edit(AGENTS.md)"
+        ]
+      },
+      "stack": "be-hono",
+      "version": "2.0.1"
+    },
+    "agent-core": {
+      "answers": {
+        "language": "typescript",
+        "mcp": "yes",
+        "sandbox": "yes",
+        "team-plugins": "yes"
+      },
+      "claudeMd": "sha256:ed1404542d310c9db00aff054b8ca5482c6a8845eafaaf67799ecd685af544bc",
+      "files": {
+        ".claude/CI-RUNNERS.example.md": "sha256:9e2b079d51806a7ba638724af126a2eb4f64faabe5072e90646c087cef93c828",
+        ".claude/DATABASE.example.md": "sha256:243c496c95bb652cf1abd9368606c46529ee9247bce354d32d55d00b24f10f01",
+        ".claude/OPERATIONS.example.md": "sha256:653f6bfa3ab7231c8f1015df33108f3f2f8680eed9b4afa472cd04e3417baaf5",
+        ".claude/agent-config.example.json": "sha256:27bac00fbad8777c743957d13e4933827f7e51cd3515af968b7e490f3763c3c1",
+        ".claude/mcp/cloudflare.example.json": "sha256:bcddeba3f43c96dc405783d96685c7864c4fb4ec979b0c760e62d72cfa2da493",
+        ".claude/mcp/deploy-platform.example.json": "sha256:297ae29b8564ed57aec8b548fa2f8a15325bbdf6648b8a09bccfccc11789e717",
+        ".claude/mcp/vps-provider.example.json": "sha256:c466e558cdda2f0d605f40115795a8d57ff188f4abe3f675f7862623f2b9c4e4",
+        ".claude/rules/common/folder-shape.md": "sha256:443ae4deb5fa0b8614ec4c10efe0e22410d18e67d99624a8248fb7625f6b7b61",
+        ".claude/rules/typescript/dead-code.md": "sha256:afdd221eb9c53ca954a0661d2e46c20d92a9e8d37b14be9405f7f1124942323d",
+        ".claude/rules/typescript/types.md": "sha256:35b31709d196c8caa63912b33f5afe2fbc5099232970c03576d327fd173af220",
+        ".github/workflows/codeql.yml": "sha256:0971d9d7370ecf45f0d02329bbcc77ac922d1073a1cd68436385f92f4d3ecf7a",
+        ".github/workflows/dependency-review.yml": "sha256:080f40471b9c785b74df7ceee676dc88d78a69992466b26fc1456babd7f3e337",
+        ".github/workflows/workflows-lint.yml": "sha256:f563339aa6b62f5378b3b49432aea9f15c026a954ec26ed5c59ff076d77e3105",
+        "docs/unlock.md": "sha256:0f38a8283db097a92d3be9060b3ab966f7cf1021d7dfb525b1c11a68503fe535",
+        "scripts/check/ai-config.sh": "sha256:460ff0091e6305cab14ef59335b5301fb03f3ec713106e940dcafc62c43c146b",
+        "scripts/check/double-assertion.sh": "sha256:94bc75d179dfc360b747b5ae024061097798e71f61380de15dafcaa92390a5a2",
+        "scripts/check/folder-shape.mjs": "sha256:b46030fc7e230048d764659966ce00a9cfdccd759c6bd7ab19f913fe1bdbf836",
+        "scripts/check/gates.sh": "sha256:d861a983ea509bb185df11b37d9d57dbfc13950c59eccd3bd40638d62adc06eb",
+        "scripts/check/hook-probes.sh": "sha256:fbccd5f17279d57378de12f6508f759d03a5fd42c4c6fdb101fbfb36960c853d",
+        "scripts/check/hook-probes.tsv": "sha256:7ccc1a348488d5d2f5d85b505dc29819f50c2add811e5c21f7f8a68321367d42",
+        "scripts/check/secrets.sh": "sha256:cbac8c3aa1e46dab73b32d77b5f716fa4bf2b2edaea2f72d3fa337279d8e86d7",
+        "scripts/check/skills.sh": "sha256:4eef76ed5ecb9b5a2f1d4d655c781e89096dff64f302134938a17fe3bb5758d3",
+        "scripts/env/envfile.py": "sha256:5341f982368b7bc5362b95d4d996203ab9f2cce10456323bad61a91431e059ad",
+        "scripts/env/set.sh": "sha256:7f18ffd55c6360909fe6cd527e2ce28f8cbbf63b2eb23d224f7dbebac01dea1e",
+        "scripts/env/show.sh": "sha256:6ff0a58bfe1bdc8a3996f737792c3855f223394dc451c8955c7e918d5ea2f07a",
+        "scripts/ops/pr-ready.sh": "sha256:12aef688a47fb2af4fa5a8346b6819259f9a1a5a278d17101d0fd6d7150af50a",
+        "scripts/ops/unlock.sh": "sha256:89df9a19cafc08fa536c6691a7fd26b8d29c1256fe5656a27898c738d7ece8c2",
+        "scripts/sync/workflows.sh": "sha256:2a6aa3aabf14eeb12893775508ef01513498fd5293a86ccb871b147318f735aa"
+      },
+      "gitignore": [
+        ".claude/state/",
+        ".claude/settings.local.json",
+        ".claude/session-logs/"
+      ],
+      "kept": [],
+      "owned": [],
+      "packageScripts": {
+        "unlock": "bash scripts/ops/unlock.sh"
+      },
+      "seeded": [
+        ".claude/rules/common/working-agreements.md",
+        ".gitleaks.toml",
+        ".mcp.json",
+        ".skillspector-baseline.yaml"
+      ],
+      "settings": {
+        "/$schema": "https://json.schemastore.org/claude-code-settings.json",
+        "/enabledPlugins/agent-core@agent-config-kit": true,
+        "/extraKnownMarketplaces/agent-config-kit/source/repo": "adhibuchori/agent-config-kit",
+        "/extraKnownMarketplaces/agent-config-kit/source/source": "github",
+        "/permissions/allow": [
+          "Bash(git add:*)",
+          "Bash(git commit:*)",
+          "Bash(git status:*)",
+          "Bash(git diff:*)",
+          "Bash(git log:*)",
+          "Read(**)"
+        ],
+        "/permissions/ask": [
+          "mcp__db-prod__execute_sql",
+          "Edit(.claude/agent-config.json)",
+          "Edit(.claude/agent-config-kit.lock)",
+          "Edit(.claude/hooks/**)",
+          "Edit(scripts/check/hook-probes.*)",
+          "Edit(scripts/ops/unlock.sh)",
+          "Edit(scripts/env/**)"
+        ],
+        "/permissions/deny": [
+          "Bash(rm -rf:*)",
+          "Bash(git push origin dev:*)",
+          "Bash(git push origin prod:*)",
+          "Bash(git push origin main:*)",
+          "Bash(git push origin master:*)",
+          "Edit(.env*)",
+          "Edit(!.env*.example)",
+          "Edit(.claude/state/**)",
+          "Read(.env*)",
+          "Read(!.env*.example)",
+          "Read(.claude/state/env-backups/**)"
+        ],
+        "/sandbox/enabled": true,
+        "/sandbox/excludedCommands": [
+          "bash scripts/env/show.sh*",
+          "bash scripts/env/set.sh*",
+          "./scripts/env/show.sh*",
+          "./scripts/env/set.sh*",
+          "scripts/env/show.sh*",
+          "scripts/env/set.sh*"
+        ],
+        "/sandbox/filesystem/allowRead": [
+          ".env.example",
+          ".env.*.example",
+          ".env-*.example",
+          ".env_*.example",
+          "./**/.env.example",
+          "./**/.env.*.example",
+          "./**/.env-*.example",
+          "./**/.env_*.example"
+        ],
+        "/sandbox/filesystem/denyRead": [
+          ".env",
+          ".env.*",
+          ".env-*",
+          ".env_*",
+          ".envrc",
+          "./**/.env",
+          "./**/.env.*",
+          "./**/.env-*",
+          "./**/.env_*",
+          "./**/.envrc",
+          ".claude/state/env-backups",
+          ".claude/state/env-backups/**"
+        ],
+        "/sandbox/filesystem/denyWrite": [
+          ".claude/state/unlock",
+          ".claude/state/unlock/**"
+        ]
+      },
+      "stack": "common",
+      "version": "1.2.2"
+    },
+    "agent-deploy": {
+      "answers": {
+        "deploy-on-merge": "yes",
+        "strip-ai": "yes",
+        "webhook": "yes"
+      },
+      "claudeMd": "sha256:7fed40dab60a2787c89811f4780515e492a14dbe8f61e5bfaca756d871578544",
+      "files": {
+        ".github/workflows/deploy.yml": "sha256:ab89aab7d4bb0f95a360102442f3ba2b1a16351ec1abbcad164cbb5baf566fa1",
+        ".github/workflows/strip-ai.yml": "sha256:79f88053d9b77ff6b82b383741db17a4249d106b17f110f1acbe9f3429c3b751",
+        "scripts/deploy/trigger-deploy.sh": "sha256:04c7b47d1138b86f833e742c2f3a7b90a48c2c4e8d99b17e3f68ce6c2f7e4935",
+        "scripts/deploy/verify-deploy.sh": "sha256:989b1d9acbd481d653ac9678575044871ddbe2f7c01d3ade2eb83bbbbae0787a"
+      },
+      "gitignore": [],
+      "kept": [],
+      "owned": [],
+      "packageScripts": {},
+      "seeded": [],
+      "settings": {
+        "/$schema": "https://json.schemastore.org/claude-code-settings.json",
+        "/permissions/ask": [
+          "Bash(bash scripts/deploy/verify-deploy.sh:*)",
+          "Bash(bash ./scripts/deploy/verify-deploy.sh:*)",
+          "Bash(./scripts/deploy/verify-deploy.sh:*)",
+          "Bash(scripts/deploy/verify-deploy.sh:*)",
+          "Bash(bash scripts/deploy/trigger-deploy.sh:*)",
+          "Bash(bash ./scripts/deploy/trigger-deploy.sh:*)",
+          "Bash(./scripts/deploy/trigger-deploy.sh:*)",
+          "Bash(scripts/deploy/trigger-deploy.sh:*)"
+        ]
+      },
+      "stack": "deploy",
+      "version": "1.1.4"
+    }
+  }
+}
