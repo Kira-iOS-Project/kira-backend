@@ -272,7 +272,7 @@
       },
       "claudeMd": "sha256:7fed40dab60a2787c89811f4780515e492a14dbe8f61e5bfaca756d871578544",
       "files": {
-        ".github/workflows/deploy.yml": "sha256:ab89aab7d4bb0f95a360102442f3ba2b1a16351ec1abbcad164cbb5baf566fa1",
+        ".github/workflows/deploy.yml": "sha256:ffd748e31f9775db23e069cd6f3ce03673f52c9fae3b8f5f801387a70150e77e",
         ".github/workflows/strip-ai.yml": "sha256:b1ab7cf4030f524650e8726d700aa573897581052cb77640a646c9715cd58c0b",
         "scripts/deploy/trigger-deploy.sh": "sha256:04c7b47d1138b86f833e742c2f3a7b90a48c2c4e8d99b17e3f68ce6c2f7e4935",
         "scripts/deploy/verify-deploy.sh": "sha256:989b1d9acbd481d653ac9678575044871ddbe2f7c01d3ade2eb83bbbbae0787a"
@@ -296,7 +296,7 @@
         ]
       },
       "stack": "deploy",
-      "version": "1.2.0"
+      "version": "1.2.1"
     }
   }
 }
