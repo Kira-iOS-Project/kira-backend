@@ -157,7 +157,7 @@
         ".github/workflows/dependency-review.yml": "sha256:080f40471b9c785b74df7ceee676dc88d78a69992466b26fc1456babd7f3e337",
         ".github/workflows/workflows-lint.yml": "sha256:f563339aa6b62f5378b3b49432aea9f15c026a954ec26ed5c59ff076d77e3105",
         "docs/unlock.md": "sha256:0f38a8283db097a92d3be9060b3ab966f7cf1021d7dfb525b1c11a68503fe535",
-        "scripts/check/ai-config.sh": "sha256:092f0d4019f9c9a04fb2d14f5b859f648a56af44d687bfd226c963c9096fda53",
+        "scripts/check/ai-config.sh": "sha256:460ff0091e6305cab14ef59335b5301fb03f3ec713106e940dcafc62c43c146b",
         "scripts/check/double-assertion.sh": "sha256:94bc75d179dfc360b747b5ae024061097798e71f61380de15dafcaa92390a5a2",
         "scripts/check/folder-shape.mjs": "sha256:b46030fc7e230048d764659966ce00a9cfdccd759c6bd7ab19f913fe1bdbf836",
         "scripts/check/gates.sh": "sha256:d861a983ea509bb185df11b37d9d57dbfc13950c59eccd3bd40638d62adc06eb",
@@ -170,7 +170,7 @@
         "scripts/env/show.sh": "sha256:6ff0a58bfe1bdc8a3996f737792c3855f223394dc451c8955c7e918d5ea2f07a",
         "scripts/ops/pr-ready.sh": "sha256:12aef688a47fb2af4fa5a8346b6819259f9a1a5a278d17101d0fd6d7150af50a",
         "scripts/ops/unlock.sh": "sha256:89df9a19cafc08fa536c6691a7fd26b8d29c1256fe5656a27898c738d7ece8c2",
-        "scripts/sync/workflows.sh": "sha256:8eda83e14aa824fc3f81ce1c6fe6ba5872e00508bf1f5ae45a62dcaab8ae03c1"
+        "scripts/sync/workflows.sh": "sha256:2a6aa3aabf14eeb12893775508ef01513498fd5293a86ccb871b147318f735aa"
       },
       "gitignore": [
         ".claude/state/",
@@ -262,7 +262,7 @@
         ]
       },
       "stack": "common",
-      "version": "1.2.1"
+      "version": "1.2.2"
     },
     "agent-deploy": {
       "answers": {
